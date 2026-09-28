@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "freesound": {
+      "command": "uv",
+      "args": [
+        "run", "--quiet", "--no-project",
+        "--with", "git+https://github.com/johnkimdw/freesound-mcp-server@a8f1fbb03208a6d60fcaed77d091045453e9a59e",
+        "python", "-m", "freesound_mcp_server.freesound"
+      ],
+      "env": {
+        "FREESOUND_API_KEY": "${FREESOUND_API_KEY}"
+      }
+    }
+  }
+}
