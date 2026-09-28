@@ -31,3 +31,22 @@ blender -b -P gin_bottle.py -- --save wrap_gin.blend
 - **Glaskanten:** Abstand und Größe von `GEO-flag-L/R`. Näher und größer ergibt härtere, grafischere Konturen.
 - **Farbe:** View Transform steht auf *Standard*, damit Pink und Weiß 1:1 aus der Druckdatei kommen.
 - **Hintergrund in Markenfarbe:** Farbe von `MAT-backdrop` und die Emission in `MAT-floor` gleich setzen.
+
+## Szenenbilder (`scenes.py`)
+
+Vier Looks, orientiert an aktuellen Spirits-Packshots auf BP&O, The Brand Identity, Visuelle und Visual Journal: eine Farbe als Raum, harte Schatten als zweite Form, echte Materialien statt Deko.
+
+| Szene | Idee | Licht |
+|---|---|---|
+| `pink` – Hard Light | Markenpink als Hohlkehle, schwarzer Sockel, der lange Schatten als Grafik | Sonne flach von links, Strip rechts für die Glaskante |
+| `noir` – Film Noir | Schwarzer Raum, Spiegelboden, Flasche als Silhouette | Spot von oben, Rim links weiß, rechts Pink |
+| `stone` – Botanicals | Travertin-Blöcke, halbe Grapefruit, Wacholder (aus dem Rezept) | Warme Sonne durch eine Jalousie, weiches Fill |
+| `set` – It's a Wrap | Filmset: Half Apple Box, Gaffer-X in Pink | Harter Key-Spot, Pink-Gel von hinten |
+
+```bash
+blender -b -P scenes.py -- --scene noir --render noir.png          # 1200 × 1500 (4:5), 192 Samples
+blender -b -P scenes.py -- --scene all --outdir renders/
+blender -b -P scenes.py -- --scene stone --save stone.blend         # zum Weiterbauen
+```
+
+Die Glas- und Gin-Materialien lassen in den Szenen 75 % des Schattenlichts durch. Das ist physikalisch geschummelt, ergibt aber den hellen, glasigen Schatten wie im Foto (echte Kaustiken wären um ein Vielfaches teurer).
