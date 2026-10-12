@@ -1,0 +1,43 @@
+{%- assign p = section.settings.product -%}
+<section class="sec wrap" id="{{ section.id }}">
+  <div class="feature{% if section.settings.reverse %} feature--reverse{% endif %}">
+    <div class="feature__img rvimg card__media" style="--feature-bg: {{ section.settings.bg }}">
+      {%- if section.settings.image != blank -%}
+        {{ section.settings.image | image_url: width: 1600 | image_tag: loading: 'lazy', sizes: '(min-width: 820px) 50vw, 100vw', widths: '600, 900, 1200, 1600' }}
+      {%- elsif p != blank and p.featured_media -%}
+        {{ p.featured_media.preview_image | image_url: width: 1600 | image_tag: loading: 'lazy', sizes: '(min-width: 820px) 50vw, 100vw', widths: '600, 900, 1200, 1600' }}
+      {%- else -%}
+        {% render 'cb-emblem' %}
+      {%- endif -%}
+      {%- if p != blank -%}{% render 'play-button', product: p %}{%- endif -%}
+    </div>
+    <div>
+      {%- if section.settings.label != blank -%}<span class="label">{{ section.settings.label }}</span>{%- endif -%}
+      <h2>{{ section.settings.heading | default: p.title }}</h2>
+      {%- if section.settings.text != blank -%}<div class="lead">{{ section.settings.text }}</div>{%- endif -%}
+      {%- if p != blank and section.settings.show_price -%}<div class="feature__price">{% render 'price', product: p %}</div>{%- endif -%}
+      {%- if section.settings.button_label != blank -%}
+        <a class="btn" href="{{ section.settings.button_link | default: p.url | default: routes.all_products_collection_url }}">{{ section.settings.button_label }}</a>
+      {%- endif -%}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Feature",
+  "settings": [
+    { "type": "product", "id": "product", "label": "Produkt" },
+    { "type": "image_picker", "id": "image", "label": "Bild (statt Produktbild)" },
+    { "type": "color", "id": "bg", "label": "Flächenfarbe ohne Bild", "default": "#C56E82" },
+    { "type": "text", "id": "label", "label": "Label", "default": "Signature Suite" },
+    { "type": "textarea", "id": "heading", "label": "Headline", "default": "Das komplette LUX-Arsenal. Ein Download." },
+    { "type": "richtext", "id": "text", "label": "Text", "default": "<p>Alle Packs, Presets und Sessions gebündelt, kuratiert wie ein Release und dauerhaft aktualisiert. Ein Zugang, das ganze Studio.</p>" },
+    { "type": "checkbox", "id": "show_price", "label": "Preis zeigen", "default": true },
+    { "type": "text", "id": "button_label", "label": "Button", "default": "Suite sichern" },
+    { "type": "url", "id": "button_link", "label": "Button-Link (leer = Produkt)" },
+    { "type": "checkbox", "id": "reverse", "label": "Bild rechts", "default": false }
+  ],
+  "presets": [ { "name": "Feature" } ]
+}
+{% endschema %}

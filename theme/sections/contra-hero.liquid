@@ -1,0 +1,34 @@
+<section class="stage{% if section.settings.static %} stage--static{% endif %}" data-tag="{{ section.settings.tag }}" data-stage style="--mark-scale: {{ section.settings.scale | divided_by: 100.0 }}">
+  <div class="stage__mark" data-stage-mark>
+    {%- assign show_tag = true -%}
+    {%- if section.settings.tag == 'none' -%}{%- assign show_tag = false -%}{%- endif -%}
+    {% render 'contra-wordmark', uid: section.id, tag: show_tag, class: 'cb-contra' %}
+  </div>
+  {%- if section.settings.link != blank -%}
+    <a class="stage__link" href="{{ section.settings.link }}" aria-label="{{ section.settings.link_label | default: 'Zum Shop' | escape }}"></a>
+  {%- endif -%}
+  {%- if section.settings.cue != blank -%}
+    <div class="stage__cue" aria-hidden="true">{{ section.settings.cue }}<i></i></div>
+  {%- endif -%}
+  <h1 class="visually-hidden">{{ section.settings.heading | default: shop.name }}</h1>
+</section>
+
+{% schema %}
+{
+  "name": "CONTRA-Bühne",
+  "settings": [
+    { "type": "select", "id": "tag", "label": "Spray-Tag „Shop“", "default": "side", "options": [
+      { "value": "side", "label": "Rechts neben CONTRA" },
+      { "value": "over", "label": "Über R und A" },
+      { "value": "none", "label": "Ohne Tag" }
+    ] },
+    { "type": "range", "id": "scale", "label": "Größe der Wortmarke", "min": 60, "max": 130, "step": 5, "unit": "%", "default": 100 },
+    { "type": "checkbox", "id": "static", "label": "Ohne Sticky-Effekt", "info": "Aus: Die Bühne bleibt stehen und die Sektionen darunter schieben sich darüber.", "default": false },
+    { "type": "text", "id": "cue", "label": "Scroll-Hinweis", "default": "Scroll" },
+    { "type": "url", "id": "link", "label": "Klick auf die Bühne führt zu" },
+    { "type": "text", "id": "link_label", "label": "Link-Beschreibung (Screenreader)", "default": "Zum Shop" },
+    { "type": "text", "id": "heading", "label": "Unsichtbare H1 (SEO)", "default": "CONTRABEATZ Shop: Drum Kits, One Shots und Sample Packs" }
+  ],
+  "presets": [ { "name": "CONTRA-Bühne" } ]
+}
+{% endschema %}

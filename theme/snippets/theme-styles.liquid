@@ -1,34 +1,32 @@
 {%- liquid
-  assign font_body_bold = settings.font_body | font_modify: 'weight', 'bold'
-  assign font_body_medium = settings.font_body | font_modify: 'weight', '500'
+  assign f500 = settings.font_body | font_modify: 'weight', '500'
+  assign f600 = settings.font_body | font_modify: 'weight', '600'
+  assign f700 = settings.font_body | font_modify: 'weight', '700'
 -%}
 <style>
   {{ settings.font_body | font_face: font_display: 'swap' }}
-  {%- if font_body_bold %}{{ font_body_bold | font_face: font_display: 'swap' }}{% endif -%}
-  {%- if font_body_medium %}{{ font_body_medium | font_face: font_display: 'swap' }}{% endif -%}
-  {{ settings.font_mono | font_face: font_display: 'swap' }}
+  {%- if f500 %}{{ f500 | font_face: font_display: 'swap' }}{% endif -%}
+  {%- if f600 %}{{ f600 | font_face: font_display: 'swap' }}{% endif -%}
+  {%- if f700 %}{{ f700 | font_face: font_display: 'swap' }}{% endif -%}
 
   :root {
     --bg: {{ settings.color_bg }};
+    --bg-soft: color-mix(in srgb, {{ settings.color_bg }} 92%, #E8E6E1);
     --ink: {{ settings.color_ink }};
-    --line: {{ settings.color_line }};
+    --ink-2: {{ settings.color_ink_2 }};
+    --mute: {{ settings.color_mute }};
+    --body-mute: {{ settings.color_body_mute }};
+    --dot: color-mix(in srgb, {{ settings.color_mute }} 55%, {{ settings.color_bg }});
+    --line: color-mix(in srgb, {{ settings.color_ink }} 8%, transparent);
+    --line-strong: color-mix(in srgb, {{ settings.color_ink }} 16%, transparent);
     --accent: {{ settings.color_accent }};
-    --footer-bg: {{ settings.color_footer_bg }};
-    --footer-ink: {{ settings.color_footer_ink }};
-    --muted: color-mix(in srgb, var(--ink) 58%, var(--bg));
-    --surface: color-mix(in srgb, var(--ink) 5%, var(--bg));
-
-    --font-sans: {{ settings.font_body.family }}, "Helvetica Neue", Helvetica, Arial, sans-serif;
-    --font-sans-weight: {{ settings.font_body.weight }};
-    --font-sans-bold: {% if font_body_medium %}500{% else %}{{ font_body_bold.weight | default: 700 }}{% endif %};
-    --font-mono: {{ settings.font_mono.family }}, ui-monospace, "SFMono-Regular", Menlo, monospace;
+    --accent-2: {{ settings.color_accent_2 }};
+    --cover-bg: {{ settings.color_cover_bg }};
+    --sans: {{ settings.font_body.family }}, -apple-system, "Helvetica Neue", Arial, sans-serif;
     --heading-scale: {{ settings.heading_scale | divided_by: 100.0 }};
-
-    --cover-1: {{ settings.cover_1 }};
-    --cover-2: {{ settings.cover_2 }};
-    --cover-3: {{ settings.cover_3 }};
-    --cover-4: {{ settings.cover_4 }};
-    --cover-5: {{ settings.cover_5 }};
-    --cover-6: {{ settings.cover_6 }};
+    --edge: {{ settings.edge }}px;
+    --sec-pad: {{ settings.section_padding }}px;
+    --gap: {{ settings.grid_gap }}px;
+    --logo-h: {{ settings.logo_height }}px;
   }
 </style>

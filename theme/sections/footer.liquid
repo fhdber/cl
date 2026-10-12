@@ -1,67 +1,57 @@
-<footer class="footer">
-  <div class="wrap">
-    <div class="footer__grid">
-      <div class="footer__lead">
-        <p class="h3">{{ section.settings.heading }}</p>
-        {%- form 'customer', class: 'inline-form', id: 'footer-newsletter' -%}
-          <input type="hidden" name="contact[tags]" value="newsletter">
-          <label class="visually-hidden" for="footer-email">E-Mail</label>
-          <input class="input" id="footer-email" type="email" name="contact[email]" placeholder="E-Mail-Adresse" required autocomplete="email">
-          <button class="btn" type="submit">Eintragen</button>
-          {%- if form.posted_successfully? -%}<p class="mono" role="status">Danke. Du bist dabei.</p>{%- endif -%}
-          {%- if form.errors -%}<p class="mono" role="alert">{{ form.errors | default_errors }}</p>{%- endif -%}
-        {%- endform -%}
-      </div>
+<footer class="footer{% unless section.settings.animate %} footer--static{% endunless %}" data-footer>
+  <div class="footer__mark">
+    <div class="fmk-inner" data-trail>
+      <div class="fmk-wrap"><div class="fmk-word" data-fmk>{% render 'contra-wordmark', uid: 'foot', tag: false, class: 'cb-contra' %}</div></div>
       {%- for block in section.blocks -%}
-        <div class="footer__col" {{ block.shopify_attributes }}>
-          <h2 class="mono">{{ block.settings.title }}</h2>
-          <ul class="footer__col">
-            {%- for link in block.settings.menu.links -%}
-              <li><a href="{{ link.url }}">{{ link.title }}</a></li>
-            {%- endfor -%}
-          </ul>
-        </div>
+        {%- if block.settings.image != blank -%}
+          {{ block.settings.image | image_url: width: 400 | image_tag: class: 'fmk-img', loading: 'lazy', alt: '' }}
+        {%- endif -%}
       {%- endfor -%}
-      {%- if settings.social_instagram != blank or settings.social_tiktok != blank or settings.social_youtube != blank or settings.social_spotify != blank or settings.social_website != blank -%}
-      <div class="footer__col">
-        <h2 class="mono">Folgen</h2>
-        <ul class="footer__col">
-          {%- if settings.social_instagram != blank -%}<li><a href="{{ settings.social_instagram }}" target="_blank" rel="noopener">Instagram</a></li>{%- endif -%}
-          {%- if settings.social_tiktok != blank -%}<li><a href="{{ settings.social_tiktok }}" target="_blank" rel="noopener">TikTok</a></li>{%- endif -%}
-          {%- if settings.social_youtube != blank -%}<li><a href="{{ settings.social_youtube }}" target="_blank" rel="noopener">YouTube</a></li>{%- endif -%}
-          {%- if settings.social_spotify != blank -%}<li><a href="{{ settings.social_spotify }}" target="_blank" rel="noopener">Spotify</a></li>{%- endif -%}
-          {%- if settings.social_website != blank -%}<li><a href="{{ settings.social_website }}" target="_blank" rel="noopener">{{ settings.social_website | remove: 'https://' | remove: 'www.' }}</a></li>{%- endif -%}
-        </ul>
-      </div>
-      {%- endif -%}
-    </div>
-
-    <div class="footer__legal mono">
-      <span>© {{ 'now' | date: '%Y' }} {{ shop.name }}</span>
-      <span>{{ section.settings.legal_note }}</span>
     </div>
   </div>
-  <div class="footer__mark" aria-hidden="true">{{ section.settings.wordmark | default: shop.name }}</div>
+
+  {%- if section.settings.newsletter -%}
+    <div class="footer__nl">
+      <div class="footer__nl-inner">
+        <span class="label">Newsletter</span>
+        <p class="big">{{ section.settings.nl_heading }}</p>
+        {%- form 'customer', class: 'line-input' -%}
+          <input type="hidden" name="contact[tags]" value="newsletter">
+          <label class="visually-hidden" for="nl-email">E-Mail</label>
+          <input id="nl-email" type="email" name="contact[email]" placeholder="E-Mail-Adresse" required autocomplete="email">
+          <button type="submit" aria-label="Eintragen">↳</button>
+        {%- endform -%}
+      </div>
+    </div>
+  {%- endif -%}
+
+  <div class="footer__bar">
+    <nav aria-label="Rechtliches">
+      {%- for link in section.settings.legal_menu.links -%}<a href="{{ link.url }}">{{ link.title }}</a>{%- endfor -%}
+    </nav>
+    <nav aria-label="Social">
+      {%- if settings.social_tiktok != blank -%}<a href="{{ settings.social_tiktok }}" target="_blank" rel="noopener">TikTok</a>{%- endif -%}
+      {%- if settings.social_instagram != blank -%}<a href="{{ settings.social_instagram }}" target="_blank" rel="noopener">Instagram</a>{%- endif -%}
+      {%- if settings.social_youtube != blank -%}<a href="{{ settings.social_youtube }}" target="_blank" rel="noopener">YouTube</a>{%- endif -%}
+      {%- if settings.social_spotify != blank -%}<a href="{{ settings.social_spotify }}" target="_blank" rel="noopener">Spotify</a>{%- endif -%}
+    </nav>
+    <span class="footer__copy">© {{ shop.name }} {{ 'now' | date: '%Y' }}</span>
+  </div>
 </footer>
 
 {% schema %}
 {
   "name": "Footer",
-  "max_blocks": 3,
   "settings": [
-    { "type": "text", "id": "heading", "label": "Newsletter-Headline", "default": "Neue Kits zuerst. Ein Free Pack zur Begrüßung." },
-    { "type": "text", "id": "legal_note", "label": "Hinweis", "default": "Alle Sounds 100 % royalty-free" },
-    { "type": "text", "id": "wordmark", "label": "Wortmarke", "default": "Contrabeatz" }
+    { "type": "checkbox", "id": "animate", "label": "CONTRA fährt beim Scrollen von oben ein", "default": true },
+    { "type": "link_list", "id": "legal_menu", "label": "Links in der Fußleiste", "default": "footer" },
+    { "type": "checkbox", "id": "newsletter", "label": "Newsletter zeigen", "default": false },
+    { "type": "text", "id": "nl_heading", "label": "Newsletter-Text", "default": "Neue Drops zuerst." }
   ],
   "blocks": [
-    {
-      "type": "menu",
-      "name": "Menü",
-      "settings": [
-        { "type": "text", "id": "title", "label": "Titel", "default": "Shop" },
-        { "type": "link_list", "id": "menu", "label": "Menü", "default": "footer" }
-      ]
-    }
+    { "type": "image", "name": "Trail-Bild", "limit": 12, "settings": [
+      { "type": "image_picker", "id": "image", "label": "Bild", "info": "Folgt der Maus über der Wortmarke (Hochformat 3:4)." }
+    ] }
   ]
 }
 {% endschema %}

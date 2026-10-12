@@ -2,42 +2,52 @@
 
 Eigenes Shopify-Theme (Online Store 2.0), gebaut für Drum Kits, One Shots, Loops, MIDI und Presets.
 
-## Prinzip
+## Gestaltung (v2)
 
-**Jeder Produkttyp hat eine Form.** Drum Kit = 16-Step-Raster, One Shot = Punkt, Loop = Kreis,
-MIDI = Piano-Roll, Phrase = Welle, Preset = Regler, Suite = Schichten, Session = Überlagerung.
-Die Form taucht im Platzhalter-Cover, im Kategorie-Index auf der Startseite und in der Navigation auf.
-Meta-Infos (Katalognummer, Typ, BPM, Key, Samples) laufen in Mono wie auf einem Plattenlabel.
+Das Theme folgt Florians Shop-Layout (`docs/layout-referenz-index_35.html`):
+Weiß und Ink `#0D0D0D`, Inter, Versalien-Labels mit orangem Punkt (`#D0532A`), Header mit CB-Emblem in der Mitte,
+CONTRA-Wortmarke mit gesprühtem „Shop“-Tag als Bühne, schwarze Cover mit Waveform, Format-Kacheln,
+Signature-Suite-Feature und die CONTRA-Wortmarke, die im Footer von oben einfährt.
+
+Das Layout ist noch nicht final. Deshalb ist fast alles im Theme-Editor einstellbar:
+Farben, Seitenrand, Sektionsabstand, Spaltenabstand, Spaltenzahl, Tag-Position (rechts / über R und A / ohne),
+Größe der Wortmarke, Schwarz-Weiß-Cover, Reihenfolge der Sektionen.
+
+Zusätzlich, inspiriert von Balmoral, als frei kombinierbare Sektionen:
+- **Editorial-Raster**: randlos, 4 Spalten, große Bildkachel (2 × 2) neben Produktkacheln
+- **Produkt-Raster** im Stil „Randlos“: enge Fugen, Titel und Preis erst beim Hover
+- **Service-Karten**: Lizenz, Download, Kontakt, Free Pack mit Bild und einer Zeile Text
 
 ## Was im Shop schon angelegt ist
 
 | Bereich | Stand |
 |---|---|
-| Theme | `CONTRABEATZ v1` (unveröffentlicht). `CONTRABEATZ Entwurf` kann gelöscht werden. |
-| Produkte | 9 Platzhalter (Tag `platzhalter`), je Typ eins plus Free Pack, alle Metafelder gefüllt |
+| Theme | `CONTRABEATZ v2 (Layout Florian)` (unveröffentlicht). `v1 (alt)` und `Entwurf` können gelöscht werden. |
+| Produkte | 10 Platzhalter (Tag `platzhalter`), u. a. 808 Cathedral, Vapor One-Shots, Midnight Keys, Signature Suite, Beat „Late Drive“ mit Lizenzstufen |
 | Metafelder | Katalognummer, Demo (Audio), Previews (Audio), Inhalt, Dateigröße, plus BPM, Key, Genre, Format, DAW, Sample Count |
 | Seiten | Lizenz (`/pages/lizenz`), FAQ (`/pages/faq`), Kontakt mit Formular |
-| Menüs | Hauptmenü, Fußzeile (inkl. Rechtstexte), `shop-menu` für die Filter-Chips |
+| Menüs | Hauptmenü wie im Layout (Sample Packs, Drum Kits, One Shot Kits, Beats), Fußzeile, `shop-menu` für die Filter auf Kollektionsseiten |
 | Audio | `CB_Platzhalter_Demo.mp3` in Inhalte → Dateien (synthetischer Loop, ersetzen) |
 
 ## Deine Schritte
 
 ### 1. Theme ansehen und veröffentlichen
-Onlineshop → Themes → `CONTRABEATZ v1` → Vorschau. Wenn alles passt: Veröffentlichen.
+Onlineshop → Themes → `CONTRABEATZ v2 (Layout Florian)` → Anpassen. Wenn alles passt: Veröffentlichen.
 Im Theme-Editor sind alle Texte, Farben, Cover-Farben, Schriften und Sections änderbar.
 
 ### 2. Pro Kit: Produkt anlegen oder Platzhalter überschreiben
 - **Titel, Preis, Beschreibung** (2–4 ruhige Sätze, kein Hype)
 - **Produkttyp** muss exakt einer dieser Werte sein, sonst landet das Kit in keiner Kollektion:
-  `Drum Kit` · `One Shot Kit` · `Loop Kit` · `MIDI Kit` · `Phrase Kit` · `Preset Bank` · `Suite` · `Session`
+  `Drum Kit` · `One Shot Kit` · `Loop Kit` · `MIDI Kit` · `Phrase Kit` · `Preset Bank` · `Suite` · `Session` · `Beat`
+- **Beats:** Lizenzen als Varianten anlegen (Option „Lizenz“: MP3 Lease, WAV Lease, Trackouts). Die Produktseite zeigt sie als Auswahl.
 - **Free-Kits:** Preis 0 und Tag `free`
 - **Versand:** „Physisches Produkt“ deaktivieren
 
 ### 3. Cover / Packshot
-Einfach ein Bild als Produktmedium hochladen. Es ersetzt das Platzhalter-Cover automatisch.
+Einfach ein Bild als Produktmedium hochladen. Es ersetzt die schwarze Waveform-Fläche automatisch.
 - Format **1:1**, mind. **2000 × 2000 px**, JPG oder WebP
-- Ohne Bild bleibt das typografische Cover stehen. Das ist bewusst gewollt und kann dauerhaft so bleiben.
-- Vorlage für eigene Cover im gleichen System: `docs/cover-template.svg` (3000 × 3000 px, Raster und Textpositionen wie im Shop)
+- Standard wie im Layout: Cover in Schwarz-Weiß mit Waveform darüber, Farbe beim Hover (Theme-Einstellungen → Produktkarten)
+- Ohne Bild bleibt die schwarze Fläche mit Waveform, Katalognummer und Typ stehen
 
 ### 4. Audio-Previews
 1. Inhalte → Dateien → MP3s hochladen (**256 kbps oder mehr**, gemastert)
@@ -64,10 +74,11 @@ Produkte mit Tag `platzhalter` löschen oder überschreiben. Die Platzhalter-MP3
 
 ```
 layout/      theme.liquid, password.liquid
-sections/    hero, featured-collection, type-index, split, facts, rich-text, faq,
-             main-product, related-products, main-collection, main-cart, cart-drawer, …
-snippets/    cover (Fallback-Cover), glyph (Typ-Formen), product-card, play-button, player, …
-assets/      base.css, theme.js (Player, Warenkorb-Leiste, Varianten; ohne Framework)
+sections/    contra-hero, featured-collection, format-tiles, feature, editorial-grid, statement,
+             service-cards, facts, faq, main-product, related-products, main-collection, cart-drawer, …
+snippets/    contra-wordmark (CONTRA + Spray-Tag), cb-emblem, cover, waveform, product-card,
+             product-tile, meta-line, play-button, player, …
+assets/      base.css, theme.js (Player, Warenkorb, Hero-Intro, Reveal, Footer-Wortmarke; ohne Framework)
 templates/   JSON-Templates; page.license, page.faq, page.contact für die Seiten
 ```
 

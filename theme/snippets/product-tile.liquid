@@ -1,0 +1,12 @@
+{%- comment -%} Randlose Produktkachel: nur Cover, Titel/Preis beim Hover. {%- endcomment -%}
+{%- assign tile_sizes = sizes | default: '(min-width: 1100px) 25vw, 50vw' -%}
+<article class="ptile">
+  <div class="card__media">
+    {% render 'cover', product: product, sizes: tile_sizes %}
+    {% render 'play-button', product: product %}
+  </div>
+  <a class="ptile__info" href="{{ product.url }}">
+    <span class="ptile__title">{{ product.title }}</span>
+    <span class="ptile__price">{% render 'price', product: product %}</span>
+  </a>
+</article>

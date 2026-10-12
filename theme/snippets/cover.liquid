@@ -1,58 +1,27 @@
 {%- comment -%}
-  Cover: Produktbild, sonst typografisches Fallback-Cover aus dem Cover-System.
-  Usage: {% render 'cover', product: product, sizes: '...', eager: false %}
+  Cover im Layout-Duktus: Packshot (optional Schwarz-Weiß) oder schwarze Fläche mit Waveform.
+  Usage: {% render 'cover', product: product, sizes: '…', loading: 'eager' %}
 {%- endcomment -%}
 {%- liquid
   assign img = image | default: product.featured_media.preview_image
-  assign sizes = sizes | default: '(min-width: 1200px) 25vw, (min-width: 768px) 33vw, 50vw'
+  assign sizes = sizes | default: '(min-width: 1100px) 33vw, (min-width: 560px) 50vw, 100vw'
   assign load = loading | default: 'lazy'
   assign alt_text = img.alt | default: product.title
+  assign cover_class = 'cover'
+  if img and settings.card_grayscale
+    assign cover_class = 'cover cover--mono'
+  endif
 -%}
-{%- if img -%}
-  <div class="cover">
-    {{ img | image_url: width: 1600 | image_tag:
-      widths: '360, 540, 720, 900, 1200, 1600',
-      sizes: sizes,
-      loading: load,
-      alt: alt_text
-    }}
-  </div>
-{%- else -%}
-  {%- liquid
-    assign n = product.id | modulo: 6 | plus: 1
-    case n
-      when 1
-        assign c_bg = settings.cover_1
-      when 2
-        assign c_bg = settings.cover_2
-      when 3
-        assign c_bg = settings.cover_3
-      when 4
-        assign c_bg = settings.cover_4
-      when 5
-        assign c_bg = settings.cover_5
-      else
-        assign c_bg = settings.cover_6
-    endcase
-    assign brightness = c_bg | color_brightness
-    if brightness > 150
-      assign c_ink = '#0B0B0B'
-    else
-      assign c_ink = '#F4F4F2'
-    endif
-    assign catalog = product.metafields.specs.catalog_number.value
-    if catalog == blank
-      assign catalog = 'CB ' | append: product.id | slice: -3, 3
-      assign catalog = 'CB—' | append: catalog
-    endif
-    assign count = product.metafields.specs.sample_count.value
-  -%}
-  <div class="cover cover--fallback" style="--c-bg: {{ c_bg }}; --c-ink: {{ c_ink }};" role="img" aria-label="{{ product.title | escape }} – Cover">
-    <div class="cf">
-      <div class="cf__row mono"><span>{{ catalog }}</span><span>{{ product.type | default: 'Sample Pack' }}</span></div>
-      <div class="cf__glyph">{% render 'glyph', type: product.type %}</div>
-      <div class="cf__title">{{ product.title }}</div>
-      <div class="cf__row mono"><span>{{ shop.name }}</span><span>{% if count %}{{ count }} Samples{% else %}24-bit WAV{% endif %}</span></div>
-    </div>
-  </div>
-{%- endif -%}
+<div class="{{ cover_class }}">
+  {%- if img -%}
+    {{ img | image_url: width: 1600 | image_tag: widths: '360, 540, 720, 900, 1200, 1600', sizes: sizes, loading: load, alt: alt_text }}
+  {%- else -%}
+    {%- if settings.card_cover_meta -%}
+      <div class="cover__row cover__row--top" aria-hidden="true">
+        <span>{{ product.metafields.specs.catalog_number.value }}</span>
+        <span>{{ product.type }}</span>
+      </div>
+    {%- endif -%}
+  {%- endif -%}
+  {% render 'waveform', seed: product.id %}
+</div>

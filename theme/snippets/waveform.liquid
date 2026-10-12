@@ -1,0 +1,15 @@
+{%- comment -%}
+  Waveform-Balken wie in Florians Layout (20 Balken, |sin|-Verlauf).
+  Pro Produkt um einen Versatz rotiert, damit nicht jedes Cover gleich aussieht.
+  Usage: {% render 'waveform', seed: product.id %}
+{%- endcomment -%}
+{%- liquid
+  assign heights = '18,81,96,52,53,96,80,19,81,96,51,55,96,79,21,82,95,50,56,97' | split: ','
+  assign offset = seed | modulo: 20
+-%}
+<div class="wv" aria-hidden="true">
+  {%- for i in (0..19) -%}
+    {%- assign idx = i | plus: offset | modulo: 20 -%}
+    <i style="height:{{ heights[idx] }}%"></i>
+  {%- endfor -%}
+</div>

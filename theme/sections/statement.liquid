@@ -1,0 +1,19 @@
+<section class="sec wrap fs-rv" id="{{ section.id }}">
+  <div class="statement">
+    {%- if section.settings.label != blank -%}<span class="label">{{ section.settings.label }}</span>{%- endif -%}
+    <h2>{{ section.settings.heading }}</h2>
+    {%- if section.settings.link_label != blank -%}<a class="link" href="{{ section.settings.link }}">{{ section.settings.link_label }}</a>{%- endif -%}
+  </div>
+</section>
+{% schema %}
+{
+  "name": "Statement",
+  "settings": [
+    { "type": "text", "id": "label", "label": "Label", "default": "Herkunft" },
+    { "type": "textarea", "id": "heading", "label": "Statement", "default": "Aufgenommen und gemischt im LUX Studio in Berlin-Friedrichshain. Sounds aus echten Produktionen." },
+    { "type": "text", "id": "link_label", "label": "Link-Text", "default": "contrabeatz.de ↳" },
+    { "type": "url", "id": "link", "label": "Link" }
+  ],
+  "presets": [ { "name": "Statement" } ]
+}
+{% endschema %}

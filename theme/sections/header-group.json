@@ -2,8 +2,8 @@
   "type": "header",
   "name": "Header",
   "sections": {
-    "announcement": { "type": "announcement", "settings": { "text": "Free Pack: One Shots kostenlos laden", "link": "shopify://collections/free-pack" } },
-    "header": { "type": "header", "settings": { "menu": "main-menu" } }
+    "announcement": { "type": "announcement", "disabled": true, "settings": { "text": "Free Pack: One Shots kostenlos laden", "link": "shopify://collections/free-pack" } },
+    "header": { "type": "header", "settings": { "left_label": "Shop", "left_link": "shopify://collections/all", "menu": "main-menu", "mobile_links": 0 } }
   },
   "order": ["announcement", "header"]
 }

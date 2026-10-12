@@ -1,9 +1,9 @@
-<div class="wrap">
-  <div class="split section" style="align-items:start">
-    <h1 class="h1" style="max-width:12ch">{{ page.title }}</h1>
+<div class="wrap sec">
+  <div class="feature" style="align-items:start">
+    <div style="display:grid;gap:18px;align-content:start"><span class="label">{{ section.settings.label }}</span><h1 class="h1" style="max-width:12ch">{{ page.title }}</h1></div>
     <div class="rte">{{ page.content }}</div>
   </div>
 </div>
 {% schema %}
-{ "name": "Seite" }
+{ "name": "Seite", "settings": [ { "type": "text", "id": "label", "label": "Label", "default": "CONTRABEATZ" } ] }
 {% endschema %}

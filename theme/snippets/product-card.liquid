@@ -1,24 +1,9 @@
-{%- liquid
-  assign count = product.metafields.specs.sample_count.value
-  assign bpm = product.metafields.specs.bpm.value
--%}
-<article class="card{% if reveal %} reveal{% endif %}">
-  <div class="card__media">
+<article class="card">
+  <div class="card__media rvimg">
     {% render 'cover', product: product, sizes: sizes %}
     {% render 'play-button', product: product %}
   </div>
-  <div class="card__body">
-    <div class="card__row">
-      <h3 class="card__title"><a href="{{ product.url }}">{{ product.title }}</a></h3>
-      <span class="card__price mono">{% render 'price', product: product %}</span>
-    </div>
-    <p class="mono muted">
-      {%- if product.metafields.specs.catalog_number.value != blank -%}{{ product.metafields.specs.catalog_number.value }} · {% endif -%}
-      {{- product.type | default: 'Sample Pack' -}}
-      {%- case settings.card_meta -%}
-        {%- when 'type_count' -%}{% if count %} · {{ count }} Samples{% endif %}
-        {%- when 'type_bpm' -%}{% if bpm %} · {{ bpm }} BPM{% endif %}
-      {%- endcase -%}
-    </p>
-  </div>
+  <h3 class="card__title"><a href="{{ product.url }}">{{ product.title }}</a></h3>
+  {% render 'meta-line', product: product %}
+  <div class="card__price">{% render 'price', product: product %}</div>
 </article>

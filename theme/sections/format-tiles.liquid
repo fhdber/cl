@@ -1,0 +1,40 @@
+<section class="sec wrap fs-rv" id="{{ section.id }}">
+  {%- if section.settings.heading != blank -%}
+    <div class="head"><span class="label">{{ section.settings.heading }}</span></div>
+  {%- endif -%}
+  <div class="tiles" style="--cols: {{ section.settings.columns }}">
+    {%- for block in section.blocks -%}
+      {%- assign c = block.settings.collection -%}
+      <a class="tile rvimg" href="{{ block.settings.link | default: c.url | default: '#' }}" {{ block.shopify_attributes }}>
+        {%- if block.settings.image != blank -%}
+          {{ block.settings.image | image_url: width: 1200 | image_tag: class: 'tile__img', loading: 'lazy', alt: '', sizes: '(min-width: 820px) 50vw, 100vw', widths: '600, 900, 1200' }}
+        {%- endif -%}
+        {%- if section.settings.numbers -%}<span class="tile__n">{{ forloop.index | prepend: '0' | slice: -2, 2 }}</span>{%- endif -%}
+        <span class="tile__arrow" aria-hidden="true">↳</span>
+        <span class="tile__name">{{ block.settings.title | default: c.title }}</span>
+        {%- if section.settings.counts and c != blank -%}<span class="tile__count">{{ c.products_count }}</span>{%- endif -%}
+      </a>
+    {%- endfor -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Format-Kacheln",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Label", "default": "Nach Format shoppen" },
+    { "type": "range", "id": "columns", "label": "Spalten Desktop", "min": 2, "max": 4, "step": 1, "default": 2 },
+    { "type": "checkbox", "id": "numbers", "label": "Nummern 01, 02 …", "default": true },
+    { "type": "checkbox", "id": "counts", "label": "Anzahl Produkte zeigen", "default": false }
+  ],
+  "blocks": [
+    { "type": "tile", "name": "Kachel", "settings": [
+      { "type": "collection", "id": "collection", "label": "Kollektion" },
+      { "type": "text", "id": "title", "label": "Titel (optional)" },
+      { "type": "url", "id": "link", "label": "Eigener Link (optional)" },
+      { "type": "image_picker", "id": "image", "label": "Bild (optional)", "info": "Wird in Schwarz-Weiß unter den Titel gelegt." }
+    ] }
+  ],
+  "presets": [ { "name": "Format-Kacheln" } ]
+}
+{% endschema %}

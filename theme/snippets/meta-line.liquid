@@ -1,0 +1,38 @@
+{%- comment -%} Meta-Zeile mit Punkt-Trennern wie im Layout. {%- endcomment -%}
+{%- liquid
+  assign m = product.metafields.specs
+  assign parts = ''
+  case settings.card_meta
+    when 'type'
+      assign parts = product.type
+    when 'type_count'
+      if m.sample_count.value
+        assign parts = m.sample_count.value | append: ' Samples|'
+      endif
+      assign parts = parts | append: product.type
+    else
+      if m.bpm.value
+        assign parts = m.bpm.value | append: ' BPM'
+        if m.key.value
+          assign parts = parts | append: '|' | append: m.key.value
+        endif
+        if m.genre.value
+          assign parts = parts | append: '|' | append: m.genre.value.first
+        endif
+      else
+        if m.sample_count.value
+          assign parts = m.sample_count.value | append: ' Samples|'
+        endif
+        if m.genre.value
+          assign parts = parts | append: m.genre.value.first | append: '|'
+        endif
+        assign parts = parts | append: product.type
+      endif
+  endcase
+  assign items = parts | split: '|'
+-%}
+<div class="meta">
+  {%- for it in items -%}
+    {%- unless forloop.first %}<span class="d"></span>{% endunless -%}{{ it }}
+  {%- endfor -%}
+</div>

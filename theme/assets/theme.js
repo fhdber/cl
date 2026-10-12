@@ -51,7 +51,8 @@
     $('[data-player-title]', player).textContent = btn.dataset.title || '';
     $('[data-player-sub]', player).textContent = btn.dataset.sub || '';
     const img = $('[data-player-cover]', player);
-    if (btn.dataset.cover) { img.src = btn.dataset.cover; img.hidden = false; } else { img.hidden = true; }
+    const fb = $('[data-player-cover-fallback]', player);
+    if (btn.dataset.cover) { img.src = btn.dataset.cover; img.hidden = false; if (fb) fb.hidden = true; } else { img.hidden = true; if (fb) fb.hidden = false; }
     $('[data-player-cover-link]', player).href = btn.dataset.url || '#';
     player.classList.add('is-active');
     document.body.classList.add('has-player');
@@ -224,6 +225,96 @@
       if (img) { img.srcset = t.dataset.srcset; img.src = t.dataset.src; img.alt = t.dataset.alt || ''; }
     }));
   });
+
+
+  /* ---------- Layout-Motion (aus Florians Layout) ---------- */
+  const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Hero-Intro: CONTRA skaliert ein, danach wird der Tag Buchstabe für Buchstabe aufgesprüht
+  $$('[data-stage]').forEach((st) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => st.classList.add('is-in')));
+    const first = st.querySelector('animate[begin="indefinite"]');
+    if (!still && first && first.beginElement) {
+      $$('.cb-rv', st).forEach((r) => r.setAttribute('width', '0'));
+      setTimeout(() => first.beginElement(), 720);
+    }
+  });
+
+  // Hero-Parallaxe
+  const mark = $('[data-stage-mark]');
+  if (mark && !still) {
+    let tick = false;
+    const upd = () => {
+      tick = false;
+      mark.style.transform = window.innerWidth <= 820 ? '' : `translate(-50%, calc(-50% + ${window.scrollY * -0.05}px))`;
+    };
+    window.addEventListener('scroll', () => { if (!tick) { requestAnimationFrame(upd); tick = true; } }, { passive: true });
+    window.addEventListener('resize', upd);
+  }
+
+  // Reveal der Sektionen, gestaffelt von oben nach unten
+  if ('IntersectionObserver' in window && !still) {
+    const STEP = 140;
+    const io = new IntersectionObserver((es) => {
+      es.filter((e) => e.isIntersecting)
+        .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+        .forEach((en, i) => {
+          const d = `${(i * STEP) / 1000}s`;
+          en.target.style.transitionDelay = d;
+          en.target.style.animationDelay = d;
+          en.target.classList.add('in');
+          io.unobserve(en.target);
+        });
+    }, { threshold: 0.14 });
+    $$('.fs-rv, .rvimg').forEach((el) => io.observe(el));
+  } else {
+    $$('.fs-rv').forEach((el) => el.classList.add('in'));
+  }
+
+  // Footer: CONTRA schiebt sich scroll-gekoppelt von oben in den Footer
+  const foot = $('[data-footer]:not(.footer--static)');
+  const word = foot && $('[data-fmk]', foot);
+  if (word) {
+    if (still) { word.style.transform = 'none'; } else {
+      let tick = false;
+      const markEl = $('.footer__mark', foot);
+      const upd = () => {
+        tick = false;
+        const r = markEl.getBoundingClientRect(), vh = window.innerHeight;
+        const p = Math.max(0, Math.min(1, (vh - r.top) / (vh * 0.6)));
+        word.style.transform = `translateY(${-(1 - p) * 100}%)`;
+      };
+      window.addEventListener('scroll', () => { if (!tick) { requestAnimationFrame(upd); tick = true; } }, { passive: true });
+      window.addEventListener('resize', upd);
+      upd();
+    }
+  }
+
+  // Footer: Bilder folgen der Maus über der Wortmarke
+  const trail = $('[data-trail]');
+  const pool = trail ? $$('.fmk-img', trail) : [];
+  if (pool.length && !still) {
+    let pi = 0, lx = 0, ly = 0, primed = false;
+    trail.addEventListener('mousemove', (e) => {
+      const r = trail.getBoundingClientRect();
+      const x = e.clientX - r.left, y = e.clientY - r.top;
+      if (!primed) { lx = x; ly = y; primed = true; }
+      if (Math.hypot(x - lx, y - ly) < 70) return;
+      lx = x; ly = y;
+      const im = pool[pi++ % pool.length];
+      const rot = (Math.random() * 10 - 5).toFixed(1);
+      im.style.left = `${x}px`; im.style.top = `${y}px`;
+      im.style.transition = 'none'; im.style.opacity = '0';
+      im.style.transform = `translate(-50%,-50%) scale(.72) rotate(${rot}deg)`;
+      void im.offsetWidth;
+      im.style.transition = 'opacity .45s ease, transform .6s cubic-bezier(.16,1,.3,1)';
+      im.style.opacity = '1';
+      im.style.transform = `translate(-50%,-50%) scale(1) rotate(${rot}deg)`;
+      clearTimeout(im._t);
+      im._t = setTimeout(() => { im.style.opacity = '0'; im.style.transform = `translate(-50%,-50%) scale(.94) rotate(${rot}deg)`; }, 560);
+    });
+    trail.addEventListener('mouseleave', () => { primed = false; pool.forEach((im) => { im.style.opacity = '0'; }); });
+  }
 
   /* ---------- Sortierung ---------- */
   $$('[data-sort]').forEach((sel) => sel.addEventListener('change', () => {

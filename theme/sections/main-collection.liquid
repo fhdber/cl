@@ -2,20 +2,20 @@
 <div class="wrap">
   <header class="coll-head">
     <div class="coll-head__row">
-      <h1 class="h1">{{ collection.title }}</h1>
-      <p class="mono muted">{{ collection.products_count }} {% if collection.products_count == 1 %}Kit{% else %}Kits{% endif %}</p>
+      <div style="display:grid;gap:18px"><span class="label">Shop</span><h1 class="h1">{{ collection.title }}</h1></div>
+      <p class="meta">{{ collection.products_count }} {% if collection.products_count == 1 %}Produkt{% else %}Produkte{% endif %}</p>
     </div>
     {%- if collection.description != blank -%}<div class="lead muted">{{ collection.description }}</div>{%- endif -%}
   </header>
 
   <div class="toolbar">
     <nav class="chips" aria-label="Kategorien">
-      <a class="tag{% if collection.handle == 'all' %} is-active{% endif %}" href="{{ routes.all_products_collection_url }}">Alle</a>
+      <a class="ul{% if collection.handle == 'all' %} is-active{% endif %}" href="{{ routes.all_products_collection_url }}">Alle</a>
       {%- for link in section.settings.filter_menu.links -%}
-        <a class="tag{% if link.active or link.url == collection.url %} is-active{% endif %}" href="{{ link.url }}">{{ link.title }}</a>
+        <a class="ul{% if link.active or link.url == collection.url %} is-active{% endif %}" href="{{ link.url }}">{{ link.title }}</a>
       {%- endfor -%}
     </nav>
-    <label class="mono" style="display:flex;gap:8px;align-items:center">
+    <label class="mono" style="display:flex;gap:10px;align-items:center">
       <span class="muted">Sortieren</span>
       <select class="select" data-sort aria-label="Sortieren">
         {%- assign sort_by = collection.sort_by | default: collection.default_sort_by -%}
@@ -27,26 +27,26 @@
   </div>
 
   {%- if collection.products.size > 0 -%}
-    <div class="grid grid--4">
+    <div class="grid" style="--cols: {{ section.settings.columns }}">
       {%- for product in collection.products -%}
-        {% render 'product-card', product: product, reveal: true %}
+        {% render 'product-card', product: product %}
       {%- endfor -%}
     </div>
   {%- else -%}
     <div class="empty">
       <p class="h3">Hier kommt bald was.</p>
-      <a class="mono link-arrow" href="{{ routes.all_products_collection_url }}">Alle Kits ansehen</a>
+      <a class="link" href="{{ routes.all_products_collection_url }}">Alle Kits ansehen</a>
     </div>
   {%- endif -%}
 
   {%- if paginate.pages > 1 -%}
-    <nav class="pagination mono" aria-label="Seiten">
+    <nav class="pagination" aria-label="Seiten">
       {%- for part in paginate.parts -%}
         {%- if part.is_link -%}<a href="{{ part.url }}">{{ part.title }}</a>{%- elsif part.title == paginate.current_page -%}<span class="is-current" aria-current="page">{{ part.title }}</span>{%- else -%}<span>{{ part.title }}</span>{%- endif -%}
       {%- endfor -%}
     </nav>
   {%- endif -%}
-  <div style="height:clamp(56px,8vw,128px)"></div>
+  <div style="height:var(--sec-pad)"></div>
 </div>
 {%- endpaginate -%}
 {% schema %}
@@ -54,7 +54,8 @@
   "name": "Kollektion",
   "settings": [
     { "type": "link_list", "id": "filter_menu", "label": "Kategorie-Chips", "default": "main-menu" },
-    { "type": "range", "id": "per_page", "label": "Produkte pro Seite", "min": 12, "max": 48, "step": 4, "default": 48 }
+    { "type": "range", "id": "columns", "label": "Spalten Desktop", "min": 2, "max": 5, "step": 1, "default": 3 },
+    { "type": "range", "id": "per_page", "label": "Produkte pro Seite", "min": 12, "max": 48, "step": 3, "default": 48 }
   ]
 }
 {% endschema %}

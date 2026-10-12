@@ -1,19 +1,19 @@
-<section class="section section--tight">
-  <div class="wrap">
-    <div class="facts" style="--cols: {{ section.blocks.size | at_least: 1 }}">
-      {%- for block in section.blocks -%}
-        <div class="facts__item" {{ block.shopify_attributes }}>
-          <p class="facts__title">{{ block.settings.title }}</p>
-          <p class="muted">{{ block.settings.text }}</p>
-        </div>
-      {%- endfor -%}
-    </div>
+<section class="sec--tight wrap fs-rv" id="{{ section.id }}">
+  {%- if section.settings.heading != blank -%}<div class="head"><span class="label">{{ section.settings.heading }}</span></div>{%- endif -%}
+  <div class="facts" style="--cols: {{ section.blocks.size | at_least: 1 }}">
+    {%- for block in section.blocks -%}
+      <div class="facts__item" {{ block.shopify_attributes }}>
+        <p class="facts__title">{{ block.settings.title }}</p>
+        <p class="lead">{{ block.settings.text }}</p>
+      </div>
+    {%- endfor -%}
   </div>
 </section>
 {% schema %}
 {
   "name": "Fakten",
   "max_blocks": 4,
+  "settings": [ { "type": "text", "id": "heading", "label": "Label" } ],
   "blocks": [
     { "type": "fact", "name": "Fakt", "settings": [
       { "type": "text", "id": "title", "label": "Titel", "default": "Royalty-free" },

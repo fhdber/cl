@@ -1,5 +1,5 @@
 <div class="wrap">
-  <header class="coll-head"><h1 class="h1">Warenkorb</h1></header>
+  <header class="coll-head"><span class="label">Cart</span><h1 class="h1">Warenkorb</h1></header>
   {%- if cart.item_count == 0 -%}
     <div class="empty">
       <p class="h3">Noch leer.</p>
@@ -7,16 +7,16 @@
     </div>
   {%- else -%}
     <div class="cart-page" style="padding-top:0">
-      <div style="border-top:1px solid var(--ink)">
+      <div style="border-top:1px solid var(--line-strong)">
         {%- for item in cart.items -%}
           {% render 'cart-line', item: item, index: forloop.index %}
         {%- endfor -%}
       </div>
       <form class="cart-page__aside" action="{{ routes.cart_url }}" method="post" style="display:grid;gap:16px">
-        <div class="total"><span>Summe</span><span class="mono">{{ cart.total_price | money }}</span></div>
-        <p class="mono muted">{{ settings.cart_note_text }}</p>
+        <div class="total"><span>Summe</span><span>{{ cart.total_price | money }}</span></div>
+        <p class="meta">{{ settings.cart_note_text }}</p>
         <button class="btn btn--block" type="submit" name="checkout"><span class="btn__label">Zur Kasse</span></button>
-        <a class="mono link-arrow" href="{{ routes.all_products_collection_url }}">Weiter stöbern</a>
+        <a class="link" href="{{ routes.all_products_collection_url }}">Weiter stöbern</a>
       </form>
     </div>
   {%- endif -%}

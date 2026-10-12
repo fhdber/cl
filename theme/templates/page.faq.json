@@ -1,19 +1,70 @@
 {
   "sections": {
-    "main": { "type": "main-page", "settings": {} },
+    "main": {
+      "type": "main-page",
+      "settings": {}
+    },
     "faq": {
       "type": "faq",
       "blocks": {
-        "q1": { "type": "item", "settings": { "q": "Darf ich die Sounds kommerziell nutzen?", "a": "<p>Ja. Alle Sounds sind royalty-free: eigene Releases, Beats, Auftragsproduktionen, Werbung und Social. Ohne Abrechnung, ohne Meldung.</p>" } },
-        "q2": { "type": "item", "settings": { "q": "Wie bekomme ich die Dateien?", "a": "<p>Direkt nach dem Kauf per Download-Link, per Mail und auf der Bestellbestätigung. Die Kits kommen als ZIP.</p>" } },
-        "q3": { "type": "item", "settings": { "q": "Welches Format haben die Samples?", "a": "<p>24-bit WAV, 44,1 kHz. MIDI-Kits als .mid, Presets im Format des jeweiligen Synths. Details stehen auf jeder Produktseite.</p>" } },
-        "q4": { "type": "item", "settings": { "q": "Funktioniert das in meiner DAW?", "a": "<p>WAV und MIDI laufen in jeder DAW: Ableton, FL Studio, Logic, Cubase, Bitwig, Studio One, Reaper.</p>" } },
-        "q5": { "type": "item", "settings": { "q": "Kann ich zurückgeben?", "a": "<p>Bei digitalen Inhalten erlischt das Widerrufsrecht mit Beginn des Downloads. Deshalb gibt es zu jedem Kit Hörproben. Bei technischen Problemen schreib mir, ich kümmere mich.</p>" } },
-        "q6": { "type": "item", "settings": { "q": "Mein Download-Link funktioniert nicht.", "a": "<p>Schreib mir über das <a href=\"/pages/contact\">Kontaktformular</a> mit deiner Bestellnummer. Du bekommst einen neuen Link.</p>" } }
+        "q1": {
+          "type": "item",
+          "settings": {
+            "q": "Darf ich die Sounds kommerziell nutzen?",
+            "a": "<p>Ja. Alle Sounds sind royalty-free: eigene Releases, Beats, Auftragsproduktionen, Werbung und Social. Ohne Abrechnung, ohne Meldung.</p>"
+          }
+        },
+        "q2": {
+          "type": "item",
+          "settings": {
+            "q": "Wie bekomme ich die Dateien?",
+            "a": "<p>Direkt nach dem Kauf per Download-Link, per Mail und auf der Bestellbestätigung. Die Kits kommen als ZIP.</p>"
+          }
+        },
+        "q3": {
+          "type": "item",
+          "settings": {
+            "q": "Welches Format haben die Samples?",
+            "a": "<p>24-bit WAV, 44,1 kHz. MIDI-Kits als .mid, Presets im Format des jeweiligen Synths. Details stehen auf jeder Produktseite.</p>"
+          }
+        },
+        "q4": {
+          "type": "item",
+          "settings": {
+            "q": "Funktioniert das in meiner DAW?",
+            "a": "<p>WAV und MIDI laufen in jeder DAW: Ableton, FL Studio, Logic, Cubase, Bitwig, Studio One, Reaper.</p>"
+          }
+        },
+        "q5": {
+          "type": "item",
+          "settings": {
+            "q": "Kann ich zurückgeben?",
+            "a": "<p>Bei digitalen Inhalten erlischt das Widerrufsrecht mit Beginn des Downloads. Deshalb gibt es zu jedem Kit Hörproben. Bei technischen Problemen schreib mir, ich kümmere mich.</p>"
+          }
+        },
+        "q6": {
+          "type": "item",
+          "settings": {
+            "q": "Mein Download-Link funktioniert nicht.",
+            "a": "<p>Schreib mir über das <a href=\"/pages/contact\">Kontaktformular</a> mit deiner Bestellnummer. Du bekommst einen neuen Link.</p>"
+          }
+        }
       },
-      "block_order": ["q1", "q2", "q3", "q4", "q5", "q6"],
-      "settings": { "heading": "Häufige Fragen" }
+      "block_order": [
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+        "q5",
+        "q6"
+      ],
+      "settings": {
+        "heading": "Häufige Fragen"
+      }
     }
   },
-  "order": ["main", "faq"]
+  "order": [
+    "main",
+    "faq"
+  ]
 }

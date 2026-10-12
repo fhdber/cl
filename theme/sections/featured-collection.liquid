@@ -1,34 +1,43 @@
 {%- liquid
   assign coll = section.settings.collection | default: collections.all
-  assign limit = section.settings.limit
 -%}
-<section class="section{% if section.settings.rule %} section--rule{% endif %}">
-  <div class="wrap">
-    <div class="head">
-      <h2 class="h2 head__title">{{ section.settings.heading | default: coll.title }}</h2>
-      <a class="mono link-arrow" href="{{ coll.url }}">{{ section.settings.link_label }}</a>
-    </div>
-    {%- if coll.products_count > 0 -%}
-      <div class="grid grid--4">
-        {%- for product in coll.products limit: limit -%}
-          {% render 'product-card', product: product, reveal: true %}
+<section class="{% if section.settings.style == 'edge' %}edge-sec{% else %}sec wrap{% endif %}" id="{{ section.id }}">
+  <div class="head{% if section.settings.style == 'edge' %} head--edge{% endif %}">
+    <span class="label">{{ section.settings.heading | default: coll.title }}</span>
+    {%- if section.settings.link_label != blank -%}<a class="link" href="{{ coll.url }}">{{ section.settings.link_label }}</a>{%- endif -%}
+  </div>
+  {%- if coll.products_count > 0 -%}
+    {%- if section.settings.style == 'edge' -%}
+      <div class="edge-grid" style="--cols: {{ section.settings.columns }}">
+        {%- for product in coll.products limit: section.settings.limit -%}
+          {% render 'product-tile', product: product %}
         {%- endfor -%}
       </div>
     {%- else -%}
-      <p class="mono muted">Noch keine Produkte in dieser Kollektion.</p>
+      <div class="grid" style="--cols: {{ section.settings.columns }}">
+        {%- for product in coll.products limit: section.settings.limit -%}
+          {% render 'product-card', product: product %}
+        {%- endfor -%}
+      </div>
     {%- endif -%}
-  </div>
+  {%- else -%}
+    <p class="meta">Noch keine Produkte in dieser Kollektion.</p>
+  {%- endif -%}
 </section>
 
 {% schema %}
 {
   "name": "Produkt-Raster",
   "settings": [
-    { "type": "text", "id": "heading", "label": "Headline", "default": "Neu im Shop" },
+    { "type": "select", "id": "style", "label": "Stil", "default": "classic", "options": [
+      { "value": "classic", "label": "Karten mit Titel und Meta (Layout)" },
+      { "value": "edge", "label": "Randlos, enge Fugen, Infos beim Hover" }
+    ] },
+    { "type": "text", "id": "heading", "label": "Label", "default": "Neueste Drops" },
     { "type": "collection", "id": "collection", "label": "Kollektion" },
-    { "type": "range", "id": "limit", "label": "Anzahl", "min": 2, "max": 16, "step": 1, "default": 8 },
-    { "type": "text", "id": "link_label", "label": "Link-Text", "default": "Alle ansehen" },
-    { "type": "checkbox", "id": "rule", "label": "Trennlinie oben", "default": false }
+    { "type": "range", "id": "limit", "label": "Anzahl", "min": 2, "max": 24, "step": 1, "default": 3 },
+    { "type": "range", "id": "columns", "label": "Spalten Desktop", "min": 2, "max": 5, "step": 1, "default": 3 },
+    { "type": "text", "id": "link_label", "label": "Link-Text", "default": "Alle ansehen ↳" }
   ],
   "presets": [ { "name": "Produkt-Raster" } ]
 }

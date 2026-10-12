@@ -1,0 +1,33 @@
+<section class="edge-sec service" id="{{ section.id }}">
+  <div class="edge-grid" style="--cols: {{ section.blocks.size | at_least: 1 | at_most: 4 }}">
+    {%- for block in section.blocks -%}
+      <a class="service__card" href="{{ block.settings.link | default: '#' }}" {{ block.shopify_attributes }}>
+        <span class="service__title">{{ block.settings.title }}</span>
+        <span class="service__media" style="--story-bg: {{ block.settings.bg }}">
+          {%- if block.settings.image != blank -%}
+            {{ block.settings.image | image_url: width: 900 | image_tag: loading: 'lazy', alt: '', sizes: '(min-width: 820px) 25vw, 50vw', widths: '450, 900' }}
+          {%- else -%}
+            <span class="story__emblem">{% render 'cb-emblem' %}</span>
+          {%- endif -%}
+        </span>
+        <span class="service__text">{{ block.settings.text }}</span>
+      </a>
+    {%- endfor -%}
+  </div>
+</section>
+{% schema %}
+{
+  "name": "Service-Karten",
+  "max_blocks": 4,
+  "blocks": [
+    { "type": "card", "name": "Karte", "settings": [
+      { "type": "text", "id": "title", "label": "Titel", "default": "Lizenz" },
+      { "type": "image_picker", "id": "image", "label": "Bild" },
+      { "type": "color", "id": "bg", "label": "Fläche ohne Bild", "default": "#EDECE8" },
+      { "type": "text", "id": "text", "label": "Text", "default": "Was du mit den Sounds machen darfst" },
+      { "type": "url", "id": "link", "label": "Link" }
+    ] }
+  ],
+  "presets": [ { "name": "Service-Karten" } ]
+}
+{% endschema %}

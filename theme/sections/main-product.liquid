@@ -6,7 +6,7 @@
   assign previews = m.previews.value
 -%}
 <div class="wrap">
-  <nav class="breadcrumb mono" aria-label="Breadcrumb" style="padding-top:24px">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
     <a href="{{ routes.all_products_collection_url }}">Shop</a><span>/</span>
     {%- if collection -%}<a href="{{ collection.url }}">{{ collection.title }}</a><span>/</span>{%- elsif product.type != blank -%}<span>{{ product.type }}</span><span>/</span>{%- endif -%}
     <span aria-current="page">{{ product.title }}</span>
@@ -38,18 +38,19 @@
     </div>
 
     <div class="product__info">
-      <div style="display:grid;gap:16px">
-        <p class="mono muted">{% if catalog %}{{ catalog }} · {% endif %}{{ product.type | default: 'Sample Pack' }}</p>
+      <div>
+        <span class="label">{% if catalog %}{{ catalog }} · {% endif %}{{ product.type | default: 'Sample Pack' }}</span>
         <h1 class="product__title">{{ product.title }}</h1>
-        <p class="product__price mono" data-price>{% render 'price', product: product, variant: current %}</p>
+        {% render 'meta-line', product: product %}
+        <p class="product__price" data-price style="margin-top:8px">{% render 'price', product: product, variant: current %}</p>
       </div>
 
       {%- if demo != blank -%}
         <div class="product__demo">
           {% render 'play-button', product: product, src: demo.url, label: section.settings.demo_label %}
           <div>
-            <p style="font-weight:var(--font-sans-bold)">{{ section.settings.demo_label }}</p>
-            <p class="mono muted">{{ section.settings.demo_hint }}</p>
+            <p class="product__demo-title">{{ section.settings.demo_label }}</p>
+            <p class="meta">{{ section.settings.demo_hint }}</p>
           </div>
         </div>
       {%- endif -%}
@@ -59,42 +60,42 @@
           <input type="hidden" name="id" value="{{ current.id }}">
         {%- else -%}
           <fieldset class="variants">
-            <legend class="mono muted">{{ product.options.first }}</legend>
+            <legend class="label">{{ product.options.first }}</legend>
             {%- for variant in product.variants -%}
               {%- capture vp -%}{% render 'price', product: product, variant: variant %}{%- endcapture -%}
               <input type="radio" name="id" id="v-{{ variant.id }}" value="{{ variant.id }}"
                 {% if variant == current %}checked{% endif %}
                 data-available="{{ variant.available }}" data-price="{{ vp | escape }}">
-              <label class="tag" for="v-{{ variant.id }}">{{ variant.title }}</label>
+              <label for="v-{{ variant.id }}">{{ variant.title }}</label>
             {%- endfor -%}
           </fieldset>
         {%- endif -%}
         <input type="hidden" name="quantity" value="1">
         <button type="submit" class="btn btn--block" {% unless current.available %}disabled{% endunless %}>
           <span class="btn__label" data-add="{% if product.price == 0 %}Kostenlos laden{% else %}In den Warenkorb{% endif %}" data-soldout="Nicht verfügbar">
-            {%- if current.available -%}{% if product.price == 0 %}Kostenlos laden{% else %}In den Warenkorb{% endif %}{%- else -%}Nicht verfügbar{%- endif -%}
+            {%- if current.available -%}{% if current.price == 0 %}Kostenlos laden{% else %}In den Warenkorb{% endif %}{%- else -%}Nicht verfügbar{%- endif -%}
           </span>
         </button>
-        <p class="mono muted">{{ section.settings.delivery_note }}</p>
+        <p class="meta">{{ section.settings.delivery_note }}</p>
       {%- endform -%}
 
       {%- if m.contents.value != blank -%}
         {%- assign lines = m.contents.value | newline_to_br | split: '<br />' -%}
         <div style="display:grid;gap:12px">
-          <h2 class="mono muted">Was drin ist</h2>
+          <h2 class="label">Was drin ist</h2>
           <div class="contents">
             {%- for l in lines -%}
               {%- assign l = l | strip -%}
               {%- if l != blank -%}
                 {%- assign num = l | split: ' ' | first -%}
-                <div><strong>{{ num }}</strong><span class="mono muted">{{ l | remove_first: num | strip }}</span></div>
+                <div><strong>{{ num }}</strong><span class="meta">{{ l | remove_first: num | strip }}</span></div>
               {%- endif -%}
             {%- endfor -%}
           </div>
         </div>
       {%- endif -%}
 
-      <dl class="specs mono">
+      <dl class="specs">
         {%- if m.sample_count.value -%}<div><dt>Samples</dt><dd>{{ m.sample_count.value }}</dd></div>{%- endif -%}
         {%- if m.format.value -%}<div><dt>Format</dt><dd>{{ m.format.value }}</dd></div>{%- endif -%}
         {%- if m.bpm.value -%}<div><dt>BPM</dt><dd>{{ m.bpm.value }}</dd></div>{%- endif -%}
@@ -107,7 +108,7 @@
 
       {%- if previews != blank -%}
         <div style="display:grid;gap:12px">
-          <h2 class="mono muted">Previews</h2>
+          <h2 class="label">Previews</h2>
           <ol class="tracks">
             {%- for file in previews -%}
               {%- liquid
@@ -121,7 +122,7 @@
               <li>
                 <button type="button" class="track" data-play data-src="{{ file.url }}" data-title="{{ label | escape }}" data-sub="{{ product.title | escape }}"
                   data-cover="{% if product.featured_media %}{{ product.featured_media.preview_image | image_url: width: 120 }}{% endif %}" data-url="{{ product.url }}">
-                  <span class="track__num mono"></span>
+                  <span class="track__num"></span>
                   <span>{{ label }}</span>
                   <span class="track__icon">{% render 'icon', icon: 'play' %}{% render 'icon', icon: 'pause' %}</span>
                 </button>
@@ -134,16 +135,16 @@
       <div>
         {%- if product.description != blank -%}
           <details class="details" open>
-            <summary class="mono">Beschreibung</summary>
+            <summary>Beschreibung</summary>
             <div class="details__body rte">{{ product.description }}</div>
           </details>
         {%- endif -%}
         <details class="details">
-          <summary class="mono">Lizenz</summary>
+          <summary>Lizenz</summary>
           <div class="details__body rte">{{ section.settings.license_text }}</div>
         </details>
         <details class="details">
-          <summary class="mono">Download</summary>
+          <summary>Download</summary>
           <div class="details__body rte">{{ section.settings.download_text }}</div>
         </details>
       </div>

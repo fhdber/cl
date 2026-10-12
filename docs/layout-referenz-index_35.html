@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CONTRABEATZ — Hero → 3D-Emblem Komposition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0D0D0D;--paper:#FFFFFF;--mute:#8A8A85;
+    --orange:#D0532A;--lime:#57AC6C;
+    --line-soft:rgba(10,10,10,0.07);
+    --sans:'Inter',-apple-system,'Helvetica Neue',Arial,sans-serif;
+    --edge:max(40px, calc((100vw - 1400px) / 2 + 40px));
+    --hdr:79px;   /* Nav-Hoehe 78px + 1px Border — Bezug fuer die Hero */
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1400px;margin:0 auto;padding:0 40px}
+
+  /* NAV */
+  header{position:sticky;top:0;z-index:50;background:var(--paper);border-bottom:1px solid var(--line-soft)}
+  header>.wrap{max-width:none;padding:0 40px}
+  header nav{display:flex;align-items:center;justify-content:space-between;height:78px;position:relative}
+  .navlabel{font-family:var(--sans);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink);opacity:.85;transform:translateY(-2px)}
+  .brand{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center}
+  .brand svg{height:35px;width:auto;display:block}
+  .brand svg path,.brand svg rect{fill:var(--ink)}
+  .navlinks{display:flex;gap:28px;align-items:center;transform:translateY(-2px)}
+  .navlinks a,.cart{font-family:var(--sans);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink);opacity:.85;position:relative;transition:opacity .2s}
+  .navlinks a::after,.cart::after{content:"";position:absolute;left:0;bottom:-6px;width:100%;height:2px;background:var(--ink);transform:scaleX(0);transform-origin:left center;transition:transform .3s cubic-bezier(.16,1,.3,1)}
+  .navlinks a:hover::after,.cart:hover::after{transform:scaleX(1)}
+  @media(max-width:900px){.navlinks .hide-m{display:none}}
+
+  /* HERO-STAGE */
+  /* Die Hero lag um die Nav-Hoehe zu tief: sie beginnt im Fluss UNTER der
+     Nav, 50% von 100vh landen dadurch bei ~60% des Fensters. Negativer
+     margin-top zieht sie hinter die Nav -> optische Mitte = exakt 50vh.
+     Die Nav liegt opak darueber (z-50), Cover werden dort sauber beschnitten. */
+  /* width:100vw + margin-left:calc(50% - 50vw) war der Full-Bleed-Trick aus
+     der Zeit, als die Stage in einem zentrierten Container lag. Sie haengt
+     inzwischen direkt am <body>. 100vw zaehlt die Scrollbar mit, 100% nicht
+     -> die Stage stand um die halbe Scrollbarbreite links vom Rest der Seite,
+     also auch CONTRA gegenueber dem CB-Logo in der Nav. */
+  .stage{position:sticky;top:0;z-index:0;width:100%;
+     margin-top:calc(var(--hdr) * -1);
+     height:100vh;height:100svh;
+     overflow:hidden;color:var(--ink);background:var(--paper)}
+  .stage-inner{position:relative;max-width:1500px;margin:0 auto;height:100%;padding:96px 48px 60px}
+  .after-stage{position:relative;z-index:2;background:#050505}
+  .mega-bg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:auto;z-index:4;pointer-events:none}
+
+  /* ---------- CONTRA + SHOP-TAG ----------
+     Platzierung am <section class="stage" data-tag="…">:
+       side  Tag haengt rechts neben CONTRA   (CONTRA max. ~58vw, sonst
+             laeuft der Tag aus dem Bild)
+       over  Tag liegt ueber R und A          (CONTRA 74vw wie contrabeatz.de)
+     Die Box des SVG ist nur CONTRA (viewBox), der Tag ragt per overflow
+     heraus -> CONTRA bleibt exakt auf der Achse des CB-Logos. */
+  .cb-mark{display:block}
+  .cb-contra{display:block;height:auto;overflow:visible;
+    transform-origin:50% 55%;transform:scale(.93);opacity:0;
+    transition:transform 1.8s cubic-bezier(.16,1,.3,1), opacity .8s ease}
+  .stage.is-in .cb-contra{transform:none;opacity:1}
+  .cb-letters{fill:var(--ink)}
+  .cb-tag--out{fill:var(--ink)}
+  .cb-tag--in{fill:var(--paper)}
+
+  /* Groesse: Breite nach vw, gedeckelt ueber vh, damit CONTRA auf
+     flachen Breitbild-Fenstern nicht die ganze Hoehe frisst */
+  .stage[data-tag="side"] .cb-contra{width:min(54vw,88vh)}
+  .stage[data-tag="over"] .cb-contra{width:min(74vw,120vh)}
+
+  /* Tag-Position in viewBox-Einheiten der Wortmarke (CONTRA = 0..1196 x 0..585) */
+  .cb-tag{transform-box:view-box;transform-origin:0 0}
+  /* Spray-Intro laeuft als SMIL in den Masken #cbRv1-4 (Start per JS) */
+  /* Bei "over" ohne Spruehtextur: die Knockout-Kanten an den Buchstaben sind
+     hart, eine weiche Spruehkante daneben wirkt wie ein Renderfehler.
+     Die Spruehanimation (Masken) laeuft trotzdem. Zum Testen: Zeile loeschen. */
+  .stage[data-tag="over"] #cbTag{filter:none}
+  .stage[data-tag="side"] .cb-tag{transform:translate(1178px,382px) rotate(-7deg) scale(2.9)}
+  .stage[data-tag="over"] .cb-tag{transform:translate(728px,368px) rotate(-7deg) scale(2.95)}
+
+  @media(prefers-reduced-motion:reduce){
+    .cb-contra{transition:none !important;transform:none;opacity:1}
+  }
+  .shop-badge{position:absolute;z-index:6;top:14%;right:12%;width:clamp(104px,10vw,150px);display:block;cursor:pointer;text-decoration:none;transition:filter .2s}
+  .shop-badge:hover{filter:brightness(1.06)}
+  .shop-badge svg{width:100%;height:auto;display:block;overflow:visible}
+  .shop-badge .badge-disc{fill:var(--orange)}
+  .shop-badge .badge-ring{transform-box:view-box;transform-origin:100px 100px;animation:badgeSpin 16s linear infinite}
+  .shop-badge .ringtext{fill:#fff;font-family:var(--sans);font-size:12px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600}
+  .shop-badge .badge-arrow{transform-box:view-box;transform-origin:100px 100px;transition:transform .12s ease-out}
+  @keyframes badgeSpin{to{transform:rotate(360deg)}}
+  @media(max-width:640px){.shop-badge{top:11%;right:6%;width:90px}}
+  @media(max-width:820px){
+    .stage[data-tag="side"] .cb-contra{width:52vw}
+    .stage[data-tag="over"] .cb-contra{width:92vw}   /* Live-Seite: 96% */
+    .stage[data-tag="over"] .cb-tag{transform:translate(712px,372px) rotate(-7deg) scale(2.7)}
+  }
+
+  /* ---------- WEAR THE SOUND — DARK 3D SECTION ---------- */
+  #ws{position:relative;min-height:100vh;background:#050505;color:#fff;overflow:hidden;
+     border-top:1px solid rgba(255,255,255,.10)}
+  .ws-eyebrow{position:absolute;left:40px;right:40px;top:56px;z-index:5;
+     display:flex;justify-content:space-between;align-items:baseline;
+     font-size:11px;font-weight:500;letter-spacing:.22em;color:#fff;text-transform:uppercase}
+  .ws-headline{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;z-index:1;
+     overflow:hidden;padding:0 .12em;white-space:nowrap;
+     font-weight:900;text-transform:uppercase;color:#fff;
+     font-size:clamp(120px,30vw,520px);line-height:.86;letter-spacing:-.03em;user-select:none;will-change:transform}
+  .ws-ch{display:inline-block;overflow:hidden;vertical-align:bottom;padding:.02em .08em;margin:-.02em -.08em}
+  .ws-ch>span{display:inline-block;transform:translateY(120%);transition:transform 1s cubic-bezier(.16,1,.3,1)}
+  .ws-headline.reveal .ws-ch>span{transform:translateY(0)}
+  .ws-headline.noanim .ws-ch>span{transition:none}
+  .ws-headline .ws-ch:nth-child(1)>span{transition-delay:0s}
+  .ws-headline .ws-ch:nth-child(2)>span{transition-delay:.09s}
+  .ws-headline .ws-ch:nth-child(3)>span{transition-delay:.18s}
+  .ws-headline .ws-ch:nth-child(4)>span{transition-delay:.27s}
+  .ws-emblem-fb{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+     height:78vh;width:auto;z-index:2;pointer-events:none;transition:opacity .4s ease;
+     filter:drop-shadow(0 30px 60px rgba(0,0,0,.55))}
+  .ws-emblem-fb path,.ws-emblem-fb rect{fill:#bdc0c4}
+  #ws-stage{position:absolute;inset:0;z-index:3;display:block;pointer-events:none;opacity:0;transition:opacity .5s ease}
+  #ws-stage.on{opacity:1}
+  .ws-note{position:absolute;right:var(--edge);bottom:78px;z-index:5;max-width:300px;
+     font-size:14px;line-height:1.5;color:rgba(255,255,255,.62);will-change:transform}
+  .ws-note .k{display:block;font-size:11px;letter-spacing:.2em;color:rgba(255,255,255,.32);text-transform:uppercase;margin-bottom:12px}
+  .ws-foot{position:absolute;left:40px;bottom:34px;z-index:5;
+     font-size:11px;letter-spacing:.2em;color:rgba(255,255,255,.32);text-transform:uppercase}
+  .ws-cue{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);z-index:5;
+     font-size:10px;letter-spacing:.24em;color:rgba(255,255,255,.32);text-transform:uppercase;
+     display:flex;flex-direction:column;align-items:center;gap:8px}
+  .ws-cue .ln{width:1px;height:26px;background:linear-gradient(rgba(255,255,255,.32),transparent);animation:cue 1.8s ease-in-out infinite}
+  @keyframes cue{0%,100%{opacity:.3;transform:scaleY(.6)}50%{opacity:1;transform:scaleY(1)}}
+  #err{position:absolute;left:var(--edge);bottom:120px;z-index:9;display:none;max-width:440px;
+     font:12px/1.5 monospace;color:#ff6b6b;background:rgba(0,0,0,.6);padding:10px;border:1px solid rgba(255,107,107,.4)}
+  /* placeholder unter der Sektion, damit man weiterscrollen kann */
+  #tail{min-height:60vh;background:#050505;padding:110px var(--edge)}
+  #tail .k{font-size:11px;font-weight:500;letter-spacing:.22em;color:rgba(255,255,255,.32);text-transform:uppercase;margin-bottom:24px}
+  #tail h2{color:#fff;font-weight:900;text-transform:uppercase;font-size:clamp(40px,7vw,104px);line-height:.92;letter-spacing:-.02em}
+  @media(max-width:820px){
+    .ws-headline{top:50%;left:50%;transform:translate(-50%,-50%);font-size:clamp(52px,17vw,120px)}
+    .ws-emblem-fb{height:42vh;top:56%}
+    .ws-note{right:var(--edge);left:var(--edge);bottom:56px;max-width:none}
+  }
+
+  /* ================= SHOP-SEKTIONEN — fume-Duktus ================= */
+  .fs{background:#FFFFFF;color:#0D0D0D;position:relative;z-index:2}
+  .fs-wrap{max-width:none;margin:0 auto;padding-left:40px;padding-right:40px}
+  .fs-sec{padding-top:120px;padding-bottom:120px}
+  .fs-label{display:inline-flex;align-items:center;gap:9px;font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+  .fs-label::before{content:"";width:7px;height:7px;border-radius:50%;background:#D0532A;flex:none}
+  .fs-link{font-size:11px;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;transition:opacity .2s}
+  .fs-link:hover{opacity:.55}
+  .fs-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:48px}
+  .fs-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:40px}
+  .fs-card .fs-cover{position:relative;aspect-ratio:1/1;background:#0D0D0D;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .fs-card .fs-cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.03);display:block}
+  .fs-card .fs-cover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.32));z-index:1}
+  .fs-card .fs-wv{position:relative;z-index:2;display:flex;align-items:center;gap:5px;height:36%}
+  .fs-card .fs-wv i{width:4px;background:#fff;opacity:.9}
+  .fs-card h3{font-size:19px;font-weight:600;margin:24px 0 9px;letter-spacing:-.01em}
+  .fs-meta{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A85;display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+  .fs-meta .d{width:4px;height:4px;border-radius:50%;background:#C9C4B9;flex:none}
+  .fs-price{margin-top:13px;font-size:14px;font-weight:600}
+  .fs-statement{text-align:center;max-width:1080px;margin:0 auto}
+  .fs-statement h2{font-size:clamp(30px,3.6vw,52px);font-weight:600;line-height:1.12;letter-spacing:-.02em}
+  .fs-statement .fs-link{display:inline-block;margin-top:36px}
+  .fs-tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .fs-tile{position:relative;aspect-ratio:1.25/1;background:#0D0D0D;overflow:hidden;display:flex;align-items:flex-end;padding:34px;transition:background .3s}
+  .fs-tile:nth-child(even){background:#1b1a18}
+  .fs-tile:hover{background:#D0532A}
+  .fs-tile .t-name{color:#fff;font-size:clamp(28px,3.6vw,50px);font-weight:700;letter-spacing:-.02em;text-transform:uppercase}
+  .fs-tile .t-arrow{position:absolute;top:30px;right:32px;color:#fff;font-size:15px}
+  .fs-tile .t-n{position:absolute;top:32px;left:34px;color:rgba(255,255,255,.5);font-size:11px;letter-spacing:.15em}
+  .fs-feature{display:grid;grid-template-columns:calc((100% - 12px)/2) 1fr;gap:56px;align-items:center}
+  .fs-feature .f-img{aspect-ratio:1/1;width:100%;background:#C56E82;display:flex;align-items:center;justify-content:center}
+  .fs-feature .f-img svg{height:50%;width:auto}
+  .fs-feature .f-img svg path,.fs-feature .f-img svg rect{fill:#fff}
+  .fs-feature h2{font-size:clamp(30px,3.2vw,46px);font-weight:600;letter-spacing:-.02em;margin:18px 0 18px;line-height:1.08}
+  .fs-feature p{font-size:16px;line-height:1.6;color:#54524d;max-width:440px}
+  .fs-feature .f-price{font-size:15px;font-weight:600;margin-top:22px}
+  .fs-btn{display:inline-block;margin-top:26px;background:#0D0D0D;color:#F4F4F2;font-size:11px;letter-spacing:.16em;text-transform:uppercase;padding:15px 28px;transition:background .2s}
+  .fs-btn:hover{background:#D0532A}
+  .fs-foot{background:#0D0D0D;color:#F4F4F2;position:relative;z-index:2;display:flex;flex-direction:column}
+  .fs-foot-mark{order:-1}
+  .fs-foot-top{display:grid;grid-template-columns:1fr 1fr;gap:40px;padding:70px 40px 56px;max-width:none;margin:0}
+  .fs-foot .k{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(244,244,242,.5);display:inline-flex;align-items:center;gap:9px}
+  .fs-foot .k::before{content:"";width:7px;height:7px;border-radius:50%;background:#D0532A}
+  .fs-foot .big{font-size:clamp(26px,3vw,40px);font-weight:600;letter-spacing:-.01em;margin-top:16px}
+  .fs-nl{display:flex;align-items:center;border-bottom:1px solid rgba(244,244,242,.3);max-width:340px;margin-top:18px;padding-bottom:11px;gap:12px}
+  .fs-nl input{background:none;border:none;color:#F4F4F2;font-size:14px;outline:none;width:100%}
+  .fs-nl input::placeholder{color:rgba(244,244,242,.45)}
+  .fs-nl span{font-size:16px;flex:none}
+  .fs-links{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 40px;padding:0 40px 48px;max-width:none;margin:0;font-size:13px}
+  .fs-links a{color:rgba(244,244,242,.7);transition:color .2s}
+  .fs-links a:hover{color:#F4F4F2}
+  .fs-foot-mark{padding:150px 40px 130px;display:flex;justify-content:center;background:#FFFFFF}
+  .fmk-inner{position:relative;display:inline-block}
+  .fmk-word-wrap{overflow:hidden;line-height:0;display:block}
+  .fmk-word{height:64vh;width:auto;max-width:100%;display:block;transform:translateY(-100%);will-change:transform}
+  .fmk-word path{fill:#0D0D0D}
+  .fmk-img{position:absolute;left:0;top:0;width:clamp(96px,10vw,158px);aspect-ratio:3/4;object-fit:cover;
+     filter:grayscale(1) contrast(1.04);opacity:0;
+     transform:translate(-50%,-50%) scale(.7);
+     pointer-events:none;z-index:4;box-shadow:0 24px 60px rgba(0,0,0,.45);will-change:transform,opacity}
+  .fs-foot-bar{border-top:1px solid rgba(244,244,242,.15);padding:22px 40px;display:flex;justify-content:space-between;align-items:center;max-width:none;margin:0;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(244,244,242,.5)}
+  .fs-foot-bar .fbar-links{display:flex;gap:24px}
+  .fs-foot-bar .fbar-links a{color:rgba(244,244,242,.5);transition:color .2s}
+  .fs-foot-bar .fbar-links a:hover{color:#F4F4F2}
+  .fs-foot-bar .fbar-copy{margin-left:auto}
+  @media(max-width:640px){.fs-foot-bar{flex-direction:column;gap:16px;align-items:flex-start}.fs-foot-bar .fbar-copy{margin-left:auto}}
+  .fs-rv{opacity:0;transform:translateY(26px);transition:opacity .9s ease,transform .9s cubic-bezier(.16,1,.3,1)}
+  .fs-rv.in{opacity:1;transform:none}
+  /* noth.in / Benoist Bild-Reveal: Clip-Maske von unten + sanfter Scale */
+  /* Bulletproof: standardmäßig sichtbar; Reveal spielt nur als Animation beim Reinscrollen */
+  .rvimg{will-change:clip-path,transform}
+  .rvimg.in{animation:rvReveal 1.15s cubic-bezier(.16,1,.3,1) both}
+  @keyframes rvReveal{from{clip-path:inset(101% 0 0 0);transform:scale(1.05)}to{clip-path:inset(0 0 0 0);transform:scale(1)}}
+  .fs-grid3 .fs-card:nth-child(2) .rvimg.in{animation-delay:.09s}
+  .fs-grid3 .fs-card:nth-child(3) .rvimg.in{animation-delay:.18s}
+  .fs-tiles .fs-tile:nth-child(2).rvimg.in{animation-delay:.07s}
+  .fs-tiles .fs-tile:nth-child(3).rvimg.in{animation-delay:.14s}
+  .fs-tiles .fs-tile:nth-child(4).rvimg.in{animation-delay:.21s}
+  @media(max-width:820px){
+    .fs-sec{padding-top:80px;padding-bottom:80px}
+    .fs-grid3{grid-template-columns:1fr;gap:32px}
+    .fs-tiles{grid-template-columns:1fr}
+    .fs-feature{grid-template-columns:1fr;gap:32px}
+    .fs-foot-top,.fs-links{grid-template-columns:1fr 1fr}
+  }
+
+/* NEWSLETTER-RIGHT-ALIGN: Newsletter-Block rechtsbuendig zu © CONTRABEATZ 2026 */
+.fs-foot-top>div:last-child{text-align:right}
+.fs-foot-top>div:last-child .fs-nl{margin-left:auto}
+.fs-foot-top>div:last-child .fs-nl input{text-align:left}
+
+/* FOOT-SINGLE-COL: Social entfernt -> Newsletter allein, rechtsbuendig */
+.fs-foot-top{grid-template-columns:1fr}
+
+/* FOOT-BAR-WHITE: untere Footer-Zeile weiss */
+.fs-foot-bar{background:#FFFFFF;color:rgba(13,13,13,.85);border-top:1px solid rgba(13,13,13,.12)}
+.fs-foot-bar a,.fs-foot-bar .fbar-links a,.fs-foot-bar .fbar-copy{color:rgba(13,13,13,.85)}
+.fs-foot-bar .fbar-links a:hover{color:#0D0D0D}
+
+/* FOOT-BAR-UNDERLINE: Hover-Unterstrich wie Topbar */
+.fs-foot-bar .fbar-links a{position:relative}
+.fs-foot-bar .fbar-links a::after{content:'';position:absolute;left:0;bottom:-4px;width:100%;height:1px;background:currentColor;transform:scaleX(0);transform-origin:left center;transition:transform .3s cubic-bezier(.16,1,.3,1)}
+.fs-foot-bar .fbar-links a:hover::after{transform:scaleX(1)}
+
+/* FOOT-COMPACT: Footer-Hoehe wie contrabeatz.de (~80px, weiss) */
+.fs-foot{background:#FFFFFF}
+.fs-foot-bar{min-height:80px}
+
+/* FOOT-SOCIAL: Legal links links, Social+Copyright rechts */
+.fs-foot-bar{justify-content:flex-start;gap:28px}
+.fs-foot-bar .fbar-social{display:flex;gap:24px}
+.fs-foot-bar .fbar-social a{position:relative}
+.fs-foot-bar .fbar-social a::after{content:'';position:absolute;left:0;bottom:-4px;width:100%;height:1px;background:currentColor;transform:scaleX(0);transform-origin:left center;transition:transform .3s cubic-bezier(.16,1,.3,1)}
+.fs-foot-bar .fbar-social a:hover::after{transform:scaleX(1)}
+.fs-foot-bar .fbar-copy{margin-left:auto}
+
+  #ws-pendant{position:absolute;inset:0;width:100%;height:100%;z-index:4;display:block;pointer-events:none}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="wrap"><nav>
+    <a href="cb-hero-3d-komposition.html" class="navlabel hide-m">Shop</a>
+    <a class="brand" href="#" aria-label="CONTRABEATZ">
+      <svg viewBox="0 0 46.62 74.06" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CONTRABEATZ Logo">
+        <rect x="9.11" y="19.7" width="5.04" height="11.95"/>
+        <path d="M46.04,39.93v-.03c-.37-.72-.83-1.3-1.36-1.73-.62-.53-1.3-.91-2.02-1.15v-.36c.62-.24,1.18-.6,1.66-1.08.38-.38.74-.92,1.08-1.62.33-.7.5-1.6.5-2.7v-11.16c0-2.54-.73-4.56-2.2-6.05-1.46-1.49-3.37-2.23-5.72-2.23h-.47v-3.83c0-2.46-.73-4.4-2.2-5.84-1.46-1.44-3.37-2.15-5.72-2.15h-12.57c-2.35,0-4.26.72-5.72,2.15-1.46,1.43-2.2,3.37-2.2,5.82v3.86H0v50.4h9.1v3.86c0,2.45.73,4.39,2.2,5.82,1.46,1.43,3.37,2.15,5.72,2.15h12.57c2.35,0,4.26-.72,5.72-2.15,1.46-1.44,2.2-3.38,2.2-5.83v-3.83h1.19c2.35,0,4.26-.74,5.72-2.23,1.46-1.49,2.2-3.5,2.2-6.05v-11.16c0-1.2-.19-2.16-.58-2.88ZM5.04,16.86h24.6v-5.04h-15.5v-3.7c0-2.06.96-3.09,2.88-3.09h12.57c1.92,0,2.88,1.03,2.88,3.09v21.33h5.04v-12.59h.47c1.92,0,2.88,1.08,2.88,3.24v11.16c0,2.16-.96,3.24-2.88,3.24H5.04v-17.64ZM41.59,53.93h0c0,2.17-.96,3.25-2.88,3.25h-1.19v-12.61h-5.04v21.34c0,2.06-.96,3.09-2.88,3.09h-12.57c-1.92,0-2.88-1.03-2.88-3.09v-3.7h15.5v-5.04H5.05v-17.65h33.66c1.92,0,2.88,1.09,2.88,3.25,0,0,0,11.16,0,11.16Z"/>
+        <rect x="9.11" y="42.38" width="5.04" height="11.97"/>
+      </svg>
+    </a>
+    <div class="navlinks">
+      <a href="contrabeatz-kollektion.html">Sample Packs</a>
+      <a href="contrabeatz-drum-kits.html" class="hide-m">Drum Kits</a>
+      <a href="contrabeatz-one-shot-kits.html" class="hide-m">One Shot Kits</a>
+      <a href="contrabeatz-beats.html">Beats</a>
+      <a href="contrabeatz-warenkorb.html" class="cart">Cart · 0</a>
+    </div>
+  </nav></div>
+</header>
+
+<!-- HERO-STAGE -->
+<section class="stage" data-tag="side">
+  <div class="stage-inner">
+    <div class="mega-bg">
+      <div class="cb-mark">
+      <!-- CONTRA + SHOP-Tag in EINEM SVG. Grund: wo der Tag die Buchstaben
+           kreuzt, wird er weiss ausgespart (Knockout). Das geht sauber nur,
+           wenn Wortmarke und Tag im selben Koordinatensystem liegen. -->
+      <svg class="cb-contra" viewBox="-72 0 1340 585" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CONTRA Shop">
+        <defs>
+          <path id="cbL1" d="M92.5225 585C30.37 585 0 556.102 0 497.602V87.3976C0 28.8976 30.37 0 92.5225 0C153.969 0 184.339 28.8976 184.339 87.3976V244.572L106.648 256.554V83.8735C106.648 67.6627 102.41 61.3193 92.5225 61.3193C82.6346 61.3193 77.6907 67.6627 77.6907 83.8735V501.126C77.6907 516.633 82.6346 523.681 92.5225 523.681C102.41 523.681 106.648 516.633 106.648 501.126V280.518L184.339 297.434V497.602C184.339 556.102 153.969 585 92.5225 585Z"/>
+          <path id="cbL2" d="M303.578 585C241.426 585 211.056 556.102 211.056 497.602V87.3976C211.056 28.8976 241.426 0 303.578 0C365.025 0 395.395 28.8976 395.395 87.3976V497.602C395.395 556.102 365.025 585 303.578 585ZM303.578 523.681C313.466 523.681 317.704 516.633 317.704 501.126V83.8735C317.704 67.6627 313.466 61.3193 303.578 61.3193C293.691 61.3193 288.747 67.6627 288.747 83.8735V501.126C288.747 516.633 293.691 523.681 303.578 523.681Z"/>
+          <path id="cbL3" d="M422.112 577.952V7.04819H533.704L560.542 491.964H569.724L558.424 7.04819H631.17V577.952H520.285L489.915 59.9097H480.027L494.859 577.952H422.112Z"/>
+          <path id="cbL4" d="M683.424 577.952V68.3675H650.935V7.04819H793.603V68.3675H761.115V577.952H683.424Z"/>
+          <path id="cbL5" d="M813.186 577.952V7.04819H901.471C965.742 7.04819 996.818 35.9458 996.818 94.4458V298.843C996.818 327.741 987.637 350.295 953.029 360.163V365.096C985.518 377.078 993.287 399.633 993.993 427.12L996.818 518.747C997.525 543.416 998.937 558.217 1003.17 577.952H924.072C921.247 568.789 920.54 549.759 919.834 521.566L917.009 424.301C917.009 408.09 911.359 401.042 901.471 401.042H890.877V577.952H813.186ZM901.471 345.361C914.184 345.361 919.128 338.313 919.128 322.102V90.9217C919.128 74.006 914.184 66.9578 901.471 66.9578H890.877V345.361H901.471Z"/>
+          <path id="cbL6" d="M1010.25 577.952L1032.14 7.04819H1174.11L1196 577.952H1118.31L1115.48 451.789H1087.94L1085.11 577.952H1010.25ZM1089.35 396.108H1114.07L1107.01 65.5482H1096.41L1089.35 396.108Z"/>
+          <g id="cbTag" filter="url(#cbSpray)">
+            <path mask="url(#cbRv1)" d="M62.3,63.13c1.27,7.27.13,13.03-3.4,17.3-3.67,4.53-9.17,6.93-16.5,7.2h-1.4c-2.67,0-5.2-.3-7.6-.9s-4.5-1.42-6.3-2.45c-1.8-1.03-3.47-2.15-5-3.35-1.53-1.2-2.87-2.55-4-4.05-1.13-1.5-2.1-2.87-2.9-4.1-.8-1.23-1.48-2.5-2.05-3.8-.57-1.3-.97-2.27-1.2-2.9-.23-.63-.42-1.22-.55-1.75-2-8.93-1.6-14.93,1.2-18,1.13-1.27,2.27-1.83,3.4-1.7.07,0,.2.03.4.1,1.8.13,3.1.7,3.9,1.7,1.33,1.73,1.6,4.73.8,9-.4,2.47-.27,5.4.4,8.8.67,3.4,2.07,6.3,4.2,8.7,3.67,4.13,9.07,6,16.2,5.6,4.6-.27,7.77-1.6,9.5-4,1.6-2.27,1.83-5.4.7-9.4-.47-1.6-1.57-3.25-3.3-4.95-1.73-1.7-3.98-3.33-6.75-4.9-2.77-1.57-5.02-2.78-6.75-3.65-1.73-.87-3.9-1.87-6.5-3-2-.87-3.2-1.43-3.6-1.7-4.53-2.67-7.42-5.87-8.65-9.6-1.23-3.73-.72-7.77,1.55-12.1,1.53-2.8,3.92-4.83,7.15-6.1,3.23-1.27,6.85-1.57,10.85-.9,3.73.67,7.23,2.2,10.5,4.6-.2-.73-.63-1.77-1.3-3.1-1.27-2.47-2.13-4.53-2.6-6.2-.6-2.27-.1-4.03,1.5-5.3.67-.53,1.43-.87,2.3-1,.87-.13,1.5-.07,1.9.2,1.07.6,1.8,1.63,2.2,3.1.8,2.87,2.43,7.57,4.9,14.1,1.27,3.13,2.17,5.47,2.7,7,.53,1.6,1.2,3.13,2,4.6.53,1.2.83,2.17.9,2.9.2,2.13-.37,3.7-1.7,4.7-1.13.93-2.47,1.13-4,.6-1.33-.47-2.23-1.57-2.7-3.3-.27-1.07-.63-1.83-1.1-2.3-1.2-1.07-2.83-2.67-4.9-4.8-3.27-3.33-5.67-5.47-7.2-6.4-3.8-2.07-7.23-2.53-10.3-1.4-3.33,1.2-5.2,2.93-5.6,5.2-.27,1.27.03,2.57.9,3.9,1.27,2.07,3.6,3.83,7,5.3,2.87,1.2,6,2.5,9.4,3.9,2.67,1.13,5.03,2.23,7.1,3.3,2.07,1.07,4.2,2.37,6.4,3.9,2.2,1.53,3.98,3.27,5.35,5.2,1.37,1.93,2.22,4,2.55,6.2Z"/>
+            <path mask="url(#cbRv2)" d="M77.4,60.33c-.33.13-.7.2-1.1.2-.53,0-.98.08-1.35.25-.37.17-.65.32-.85.45-.2.13-.37.37-.5.7-.13.33-.22.57-.25.7-.03.13-.05.6-.05,1.4-.13,1.8-.23,4.73-.3,8.8-.07,4.07-.1,6.4-.1,7-.07,1.93.07,3.87.4,5.8.33,1.93.4,3.5.2,4.7-.13.73-.6,1.45-1.4,2.15-.8.7-1.7,1.22-2.7,1.55-1,.33-2.03.3-3.1-.1-1.07-.4-1.87-1.27-2.4-2.6-.27-.27-.37-.82-.3-1.65.07-.83.15-1.52.25-2.05.1-.53.25-1.28.45-2.25.2-.97.33-1.75.4-2.35.6-4,.93-7.53,1-10.6.07-3.07.03-6-.1-8.8-.07-1.07-.37-1.87-.9-2.4-.53-.53-.8-1.17-.8-1.9-.07-1.6.43-2.93,1.5-4,1.27-1.13,1.95-3.8,2.05-8,.1-4.2-.05-9.27-.45-15.2-.13-3.87.23-6.55,1.1-8.05.87-1.5,2.57-2.55,5.1-3.15,1.4-.33,2.52-.1,3.35.7.83.8,1.32,1.95,1.45,3.45.13,1.5.17,2.83.1,4-.07,1.17-.2,2.28-.4,3.35-.33,1.73-.73,3.77-1.2,6.1-.47,2.33-.82,4.2-1.05,5.6-.23,1.4-.38,2.87-.45,4.4-.13,2.4.5,3.93,1.9,4.6,3.4-.47,7.73-1.2,13-2.2.6-.07,1.1-.25,1.5-.55.4-.3.78-.93,1.15-1.9.37-.97.58-2.28.65-3.95.27-6,.47-10.53.6-13.6.07-2-.07-4.07-.4-6.2-.33-2.13-.63-3.78-.9-4.95-.27-1.17-.18-2.4.25-3.7.43-1.3,1.35-2.52,2.75-3.65,1.13-.93,2.37-1.15,3.7-.65,1.33.5,2.47,1.68,3.4,3.55.47,3.93.17,11.33-.9,22.2-.47,4.87-.73,10.9-.8,18.1-.07,7.2.07,13.3.4,18.3.07.8.18,2.08.35,3.85.17,1.77.28,3.03.35,3.8.07.77.07,1.62,0,2.55-.53,2.07-1.67,3.52-3.4,4.35-1.73.83-3.35.57-4.85-.8-1.5-1.37-2.12-3.75-1.85-7.15.6-10.07.9-15.8.9-17.2,0-1-.37-1.93-1.1-2.8-.73-.87-1.57-1.27-2.5-1.2-.93,0-2.07.07-3.4.2-1.33.13-2.85.28-4.55.45-1.7.17-2.98.28-3.85.35Z"/>
+            <path mask="url(#cbRv3)" d="M140.3,83.03c.4.67.5,1.4.3,2.2-.13.27-.3.43-.5.5-.13.07-.3.03-.5-.1-.33-.13-.63-.5-.9-1.1-.27-.6-.78-1.68-1.55-3.25-.77-1.57-1.42-2.85-1.95-3.85-.4-.53-.77-.68-1.1-.45-.33.23-1.03,1.05-2.1,2.45-.8,1-1.68,1.9-2.65,2.7-.97.8-1.93,1.42-2.9,1.85-.97.43-1.88.78-2.75,1.05-.87.27-1.63.4-2.3.4-2.67,0-4.83-.57-6.5-1.7-2.47-1.67-4.37-4.43-5.7-8.3-1.33-3.87-2-8.23-2-13.1s.32-9.55.95-13.65c.63-4.1,1.33-7.13,2.1-9.1.77-1.97,1.42-3.63,1.95-5,.53-1.37.7-2.28.5-2.75-.67-2.07-1.5-3.93-2.5-5.6-.13-.27-.35-.62-.65-1.05-.3-.43-.55-.8-.75-1.1-.2-.3-.3-.55-.3-.75-.13-1,.17-1.53.9-1.6.87-.07,1.63.83,2.3,2.7.6,1.67,1.37,3.23,2.3,4.7.07.13.15.25.25.35s.22.13.35.1c.13-.03.25-.07.35-.1.1-.03.23-.13.4-.3.17-.17.35-.32.55-.45.2-.13.43-.32.7-.55.27-.23.53-.45.8-.65.2-.13.55-.7,1.05-1.7s1.05-1.57,1.65-1.7c7.27-2.4,13.6.03,19,7.3,3.33,4.47,5,9.83,5,16.1,0,3.27-.38,6.65-1.15,10.15-.77,3.5-1.73,6.67-2.9,9.5-1.17,2.83-2.42,5.25-3.75,7.25-.13.2-.17.4-.1.6,2.27,4.6,3.63,7.27,4.1,8ZM122.1,76.03c.07,0,.17-.03.3-.1,1.33-.2,2.58-.85,3.75-1.95,1.17-1.1,2.08-2.35,2.75-3.75.4-1.13.57-2.3.5-3.5-.07-1.2-.2-2.03-.4-2.5-.93-1.87-2.58-5.08-4.95-9.65-2.37-4.57-4.02-7.88-4.95-9.95-.13-.27-.33-.4-.6-.4s-.43.17-.5.5c-2.07,8.73-2.87,15.9-2.4,21.5.47,6.2,2.63,9.47,6.5,9.8ZM131.8,65.13c0-.07.1-.28.3-.65.2-.37.4-.78.6-1.25.2-.47.45-1.08.75-1.85.3-.77.58-1.55.85-2.35.27-.8.53-1.72.8-2.75.27-1.03.48-2.07.65-3.1.17-1.03.3-2.13.4-3.3.1-1.17.13-2.3.1-3.4-.03-1.1-.15-2.23-.35-3.4-.2-1.17-.5-2.32-.9-3.45-1.73-4.87-4-7-6.8-6.4-1.93.4-3.57,1.33-4.9,2.8-1.33,1.47-2.2,2.78-2.6,3.95-.4,1.17-.57,1.92-.5,2.25l.1.3c.47,1.27,1.97,4.5,4.5,9.7,2.53,5.2,4.33,8.7,5.4,10.5,1,1.67,1.53,2.47,1.6,2.4Z"/>
+            <path mask="url(#cbRv4)" d="M155.6,89.63c-.47.33-1.1.58-1.9.75-.8.17-1.65.2-2.55.1-.9-.1-1.67-.6-2.3-1.5-.63-.9-.92-2.15-.85-3.75,0-.27.22-1.27.65-3,.43-1.73.62-3.47.55-5.2-.2-2.87-.28-7.2-.25-13,.03-5.8-.05-10.6-.25-14.4,0-.13-.2-.37-.6-.7-1.13-.87-1.67-1.83-1.6-2.9.07-1.2.8-2.5,2.2-3.9.2-.13.3-.3.3-.5-.07-1.53-.12-2.83-.15-3.9-.03-1.07-.08-2.17-.15-3.3-.07-1.13-.13-2-.2-2.6-.07-.6-.18-1.7-.35-3.3-.17-1.6-.32-2.93-.45-4-1.07-.87-1.78-1.72-2.15-2.55-.37-.83-.35-1.85.05-3.05.13-.47.37-.88.7-1.25.33-.37.73-.62,1.2-.75.47-.13.95-.23,1.45-.3.5-.07,1.03-.08,1.6-.05.57.03,1.05.07,1.45.1.4.03.83.08,1.3.15.47.07.77.1.9.1.33.07.87.13,1.6.2,10,1.07,16.48,2.2,19.45,3.4,2.97,1.2,4.65,3.97,5.05,8.3.33,3.13-1.25,6.32-4.75,9.55-3.5,3.23-8.85,6.28-16.05,9.15-.47.2-1.02.78-1.65,1.75-.63.97-.92,1.82-.85,2.55.13,6.4.28,13.03.45,19.9.17,6.87.25,10.6.25,11.2.07,3.33-.63,5.57-2.1,6.7ZM156.7,40.53c0,.13.07.2.2.2s.3-.02.5-.05c.2-.03.33-.05.4-.05.4,0,1.57-.22,3.5-.65,1.93-.43,4.25-1.35,6.95-2.75,2.7-1.4,4.45-3.1,5.25-5.1.33-.93.3-1.98-.1-3.15-.4-1.17-1-2.05-1.8-2.65-2.13-1.47-7.37-2.1-15.7-1.9-.2,0-.37.03-.5.1-.13.2-.2.4-.2.6.93,10.07,1.43,15.2,1.5,15.4Z"/>
+          </g>
+          <!-- SPRAY-OPTIK: raue Kante + Overspray-Schleier + Spruehpunkte.
+               Arbeitet auf SourceGraphic, uebernimmt also je Instanz die Fuellfarbe:
+               schwarze Punkte auf Papier, weisse Punkte im Knockout. -->
+          <filter id="cbSpray" filterUnits="userSpaceOnUse" x="-24" y="-24" width="240" height="158" color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="1.15" numOctaves="2" seed="3" result="n1"/>
+            <feDisplacementMap in="SourceGraphic" in2="n1" scale="1.9" xChannelSelector="R" yChannelSelector="G" result="rough"/>
+            <feGaussianBlur in="rough" stdDeviation="1.5" result="haze"/>
+            <feComponentTransfer in="haze" result="hazeA"><feFuncA type="linear" slope=".36"/></feComponentTransfer>
+            <feMorphology in="SourceGraphic" operator="dilate" radius="3.4" result="fat"/>
+            <feGaussianBlur in="fat" stdDeviation="2.2" result="fatB"/>
+            <feTurbulence type="fractalNoise" baseFrequency="2.3" numOctaves="1" seed="11" result="n2"/>
+            <feColorMatrix in="n2" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  7.5 0 0 0 -4.6" result="dots"/>
+            <feComposite in="fatB" in2="dots" operator="in" result="speck"/>
+            <feMerge><feMergeNode in="hazeA"/><feMergeNode in="speck"/><feMergeNode in="rough"/></feMerge>
+          </filter>
+          <!-- SPRUEHFRONT: macht die Reveal-Kante weich und koernig, statt hart zu wischen -->
+          <filter id="cbFront" filterUnits="userSpaceOnUse" x="-30" y="-30" width="252" height="170">
+            <feTurbulence type="fractalNoise" baseFrequency=".55" numOctaves="2" seed="5" result="fn"/>
+            <feDisplacementMap in="SourceGraphic" in2="fn" scale="14" xChannelSelector="R" yChannelSelector="G" result="d"/>
+            <feGaussianBlur in="d" stdDeviation="2.4"/>
+          </filter>
+          <!-- REVEAL je Buchstabe: die Dose geht S -> H -> O -> P -->
+          <mask id="cbRv1" maskUnits="userSpaceOnUse" x="-20" y="-20" width="232" height="150">
+            <g filter="url(#cbFront)"><rect class="cb-rv" x="-1.9" y="-4.8" width="76.7" height="104.5" fill="#fff"><animate id="cbRvA1" attributeName="width" from="0" to="76.7" dur="0.36s" begin="indefinite" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".3 0 .45 1"/></rect></g>
+          </mask>
+          <mask id="cbRv2" maskUnits="userSpaceOnUse" x="-20" y="-20" width="232" height="150">
+            <g filter="url(#cbFront)"><rect class="cb-rv" x="51.6" y="-0.5" width="63.2" height="106.7" fill="#fff"><animate id="cbRvA2" attributeName="width" from="0" to="63.2" dur="0.36s" begin="cbRvA1.begin+0.26s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".3 0 .45 1"/></rect></g>
+          </mask>
+          <mask id="cbRv3" maskUnits="userSpaceOnUse" x="-20" y="-20" width="232" height="150">
+            <g filter="url(#cbFront)"><rect class="cb-rv" x="95.2" y="9.7" width="60.9" height="88.0" fill="#fff"><animate id="cbRvA3" attributeName="width" from="0" to="60.9" dur="0.36s" begin="cbRvA1.begin+0.52s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".3 0 .45 1"/></rect></g>
+          </mask>
+          <mask id="cbRv4" maskUnits="userSpaceOnUse" x="-20" y="-20" width="232" height="150">
+            <g filter="url(#cbFront)"><rect class="cb-rv" x="133.3" y="4.6" width="59.1" height="98.0" fill="#fff"><animate id="cbRvA4" attributeName="width" from="0" to="59.1" dur="0.36s" begin="cbRvA1.begin+0.78s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".3 0 .45 1"/></rect></g>
+          </mask>
+          <clipPath id="cbIn"><use href="#cbL1"/><use href="#cbL2"/><use href="#cbL3"/><use href="#cbL4"/><use href="#cbL5"/><use href="#cbL6"/></clipPath>
+          <mask id="cbOut" maskUnits="userSpaceOnUse" x="-400" y="-400" width="2400" height="1400">
+            <rect x="-400" y="-400" width="2400" height="1400" fill="#fff"/>
+            <g fill="#000"><use href="#cbL1"/><use href="#cbL2"/><use href="#cbL3"/><use href="#cbL4"/><use href="#cbL5"/><use href="#cbL6"/></g>
+          </mask>
+        </defs>
+        <g class="cb-letters"><use href="#cbL1"/><use href="#cbL2"/><use href="#cbL3"/><use href="#cbL4"/><use href="#cbL5"/><use href="#cbL6"/></g>
+        <g mask="url(#cbOut)"><use href="#cbTag" class="cb-tag cb-tag--out"/></g>
+        <g clip-path="url(#cbIn)"><use href="#cbTag" class="cb-tag cb-tag--in"/></g>
+      </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="after-stage">
+  <!-- [PARKED] #ws Keychain-Section -> _parked/ws-keychain-section.html -->
+
+  <!-- ================= SHOP-SEKTIONEN (fume-Duktus) ================= -->
+  <section class="fs">
+    <!-- Neueste Drops -->
+    <div class="fs-sec fs-wrap" id="packs">
+      <div class="fs-head">
+        <span class="fs-label">Neueste Drops</span>
+        <a class="fs-link" href="#">Alle ansehen ↳</a>
+      </div>
+      <div class="fs-grid3">
+        <article class="fs-card">
+          <div class="fs-cover rvimg"><img src="press3.jpg" alt=""><div class="fs-wv"></div></div>
+          <h3>Midnight Keys</h3>
+          <div class="fs-meta">140 BPM<span class="d"></span>A-Moll<span class="d"></span>Trap</div>
+          <div class="fs-price">€24</div>
+        </article>
+        <article class="fs-card">
+          <div class="fs-cover rvimg"><img src="press5.jpg" alt=""><div class="fs-wv"></div></div>
+          <h3>808 Cathedral</h3>
+          <div class="fs-meta">24 Hits<span class="d"></span>Analog<span class="d"></span>Drum Kit</div>
+          <div class="fs-price">€19</div>
+        </article>
+        <article class="fs-card">
+          <div class="fs-cover rvimg"><img src="press7.jpg" alt=""><div class="fs-wv"></div></div>
+          <h3>Vapor One-Shots</h3>
+          <div class="fs-meta">60 Shots<span class="d"></span>Lo-Fi<span class="d"></span>One Shot</div>
+          <div class="fs-price">€15</div>
+        </article>
+      </div>
+    </div>
+
+    <!-- Kategorien -->
+    <div class="fs-sec fs-wrap fs-rv" id="kategorien">
+      <div class="fs-head"><span class="fs-label">Nach Format shoppen</span></div>
+      <div class="fs-tiles">
+        <a class="fs-tile rvimg" href="#"><span class="t-n">01</span><span class="t-arrow">↳</span><span class="t-name">Sample Packs</span></a>
+        <a class="fs-tile rvimg" href="#"><span class="t-n">02</span><span class="t-arrow">↳</span><span class="t-name">Drum Kits</span></a>
+        <a class="fs-tile rvimg" href="#"><span class="t-n">03</span><span class="t-arrow">↳</span><span class="t-name">One Shot Kits</span></a>
+        <a class="fs-tile rvimg" href="#"><span class="t-n">04</span><span class="t-arrow">↳</span><span class="t-name">Beats</span></a>
+      </div>
+    </div>
+
+    <!-- Feature: Signature Suite -->
+    <div class="fs-sec fs-wrap" id="suite">
+      <div class="fs-feature">
+        <div class="f-img rvimg">
+          <svg viewBox="0 0 46.62 74.06" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="9.11" y="19.7" width="5.04" height="11.95"/>
+            <path d="M46.04,39.93v-.03c-.37-.72-.83-1.3-1.36-1.73-.62-.53-1.3-.91-2.02-1.15v-.36c.62-.24,1.18-.6,1.66-1.08.38-.38.74-.92,1.08-1.62.33-.7.5-1.6.5-2.7v-11.16c0-2.54-.73-4.56-2.2-6.05-1.46-1.49-3.37-2.23-5.72-2.23h-.47v-3.83c0-2.46-.73-4.4-2.2-5.84-1.46-1.44-3.37-2.15-5.72-2.15h-12.57c-2.35,0-4.26.72-5.72,2.15-1.46,1.43-2.2,3.37-2.2,5.82v3.86H0v50.4h9.1v3.86c0,2.45.73,4.39,2.2,5.82,1.46,1.43,3.37,2.15,5.72,2.15h12.57c2.35,0,4.26-.72,5.72-2.15,1.46-1.44,2.2-3.38,2.2-5.83v-3.83h1.19c2.35,0,4.26-.74,5.72-2.23,1.46-1.49,2.2-3.5,2.2-6.05v-11.16c0-1.2-.19-2.16-.58-2.88ZM5.04,16.86h24.6v-5.04h-15.5v-3.7c0-2.06.96-3.09,2.88-3.09h12.57c1.92,0,2.88,1.03,2.88,3.09v21.33h5.04v-12.59h.47c1.92,0,2.88,1.08,2.88,3.24v11.16c0,2.16-.96,3.24-2.88,3.24H5.04v-17.64ZM41.59,53.93h0c0,2.17-.96,3.25-2.88,3.25h-1.19v-12.61h-5.04v21.34c0,2.06-.96,3.09-2.88,3.09h-12.57c-1.92,0-2.88-1.03-2.88-3.09v-3.7h15.5v-5.04H5.05v-17.65h33.66c1.92,0,2.88,1.09,2.88,3.25,0,0,0,11.16,0,11.16Z"/>
+            <rect x="9.11" y="42.38" width="5.04" height="11.97"/>
+          </svg>
+        </div>
+        <div>
+          <span class="fs-label">Signature Suite</span>
+          <h2>Das komplette LUX-Arsenal. Ein Download.</h2>
+          <p>Alle Packs, Presets und Sessions gebündelt — kuratiert wie ein Release und dauerhaft aktualisiert. Ein Zugang, das ganze Studio.</p>
+          <div class="f-price">€149</div>
+          <a class="fs-btn" href="#">Suite sichern</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="fs-foot">
+    
+    
+    
+    <div class="fs-foot-mark">
+    <div class="fmk-inner">
+      <div class="fmk-word-wrap">
+      <svg class="fmk-word" viewBox="-72 0 1340 585" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CONTRA">
+        <path d="M92.5225 585C30.37 585 0 556.102 0 497.602V87.3976C0 28.8976 30.37 0 92.5225 0C153.969 0 184.339 28.8976 184.339 87.3976V244.572L106.648 256.554V83.8735C106.648 67.6627 102.41 61.3193 92.5225 61.3193C82.6346 61.3193 77.6907 67.6627 77.6907 83.8735V501.126C77.6907 516.633 82.6346 523.681 92.5225 523.681C102.41 523.681 106.648 516.633 106.648 501.126V280.518L184.339 297.434V497.602C184.339 556.102 153.969 585 92.5225 585Z"/>
+        <path d="M303.578 585C241.426 585 211.056 556.102 211.056 497.602V87.3976C211.056 28.8976 241.426 0 303.578 0C365.025 0 395.395 28.8976 395.395 87.3976V497.602C395.395 556.102 365.025 585 303.578 585ZM303.578 523.681C313.466 523.681 317.704 516.633 317.704 501.126V83.8735C317.704 67.6627 313.466 61.3193 303.578 61.3193C293.691 61.3193 288.747 67.6627 288.747 83.8735V501.126C288.747 516.633 293.691 523.681 303.578 523.681Z"/>
+        <path d="M422.112 577.952V7.04819H533.704L560.542 491.964H569.724L558.424 7.04819H631.17V577.952H520.285L489.915 59.9097H480.027L494.859 577.952H422.112Z"/>
+        <path d="M683.424 577.952V68.3675H650.935V7.04819H793.603V68.3675H761.115V577.952H683.424Z"/>
+        <path d="M813.186 577.952V7.04819H901.471C965.742 7.04819 996.818 35.9458 996.818 94.4458V298.843C996.818 327.741 987.637 350.295 953.029 360.163V365.096C985.518 377.078 993.287 399.633 993.993 427.12L996.818 518.747C997.525 543.416 998.937 558.217 1003.17 577.952H924.072C921.247 568.789 920.54 549.759 919.834 521.566L917.009 424.301C917.009 408.09 911.359 401.042 901.471 401.042H890.877V577.952H813.186ZM901.471 345.361C914.184 345.361 919.128 338.313 919.128 322.102V90.9217C919.128 74.006 914.184 66.9578 901.471 66.9578H890.877V345.361H901.471Z"/>
+        <path d="M1010.25 577.952L1032.14 7.04819H1174.11L1196 577.952H1118.31L1115.48 451.789H1087.94L1085.11 577.952H1010.25ZM1089.35 396.108H1114.07L1107.01 65.5482H1096.41L1089.35 396.108Z"/>
+      </svg>
+      </div>
+      <img class="fmk-img" src="press1.jpg" alt="" loading="lazy"><img class="fmk-img" src="press2.jpg" alt="" loading="lazy"><img class="fmk-img" src="press3.jpg" alt="" loading="lazy"><img class="fmk-img" src="press4.jpg" alt="" loading="lazy"><img class="fmk-img" src="press5.jpg" alt="" loading="lazy"><img class="fmk-img" src="press6.jpg" alt="" loading="lazy"><img class="fmk-img" src="press7.jpg" alt="" loading="lazy"><img class="fmk-img" src="press8.jpg" alt="" loading="lazy">
+    </div>
+  </div>
+    <div class="fs-foot-bar">
+      <div class="fbar-links"><a href="#">Impressum</a><a href="#">Datenschutz</a><a href="#">AGB</a><a href="#">Widerruf</a></div>
+      <div class="fbar-social"><a href="#">TikTok</a><a href="#">Instagram</a></div>
+      <span class="fbar-copy">© CONTRABEATZ 2026</span>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  // Hero-Parallaxe
+  (function(){
+    var floats=document.querySelectorAll('.float'),m=document.querySelector('.mega-bg');
+    if(!floats.length&&!m)return;var ticking=false;
+    function upd(){ticking=false;var mobile=window.innerWidth<=820,y=window.scrollY;
+      floats.forEach(function(f){if(mobile){f.style.transform='';return;}f.style.transform='translateX(-50%) translateY('+(y*-0.14)+'px)';});
+      if(m)m.style.transform=mobile?'':'translate(-50%,calc(-50% + '+(y*-0.05)+'px))';}
+    window.addEventListener('scroll',function(){if(!ticking){requestAnimationFrame(upd);ticking=true;}},{passive:true});
+    window.addEventListener('resize',upd);upd();
+  })();
+
+  // Shop-Badge: Pfeil folgt Mauszeiger
+  (function(){
+    var badge=document.querySelector('.shop-badge'),arrow=document.getElementById('badgeArrow');
+    if(!badge||!arrow)return;var mx=0,my=0,ticking=false,over=false;
+    function upd(){ticking=false;if(over){arrow.style.transform='rotate(0deg)';return;}
+      var r=badge.getBoundingClientRect();
+      var a=Math.atan2(my-(r.top+r.height/2),mx-(r.left+r.width/2))*180/Math.PI;
+      arrow.style.transform='rotate('+(a-90)+'deg)';}
+    badge.addEventListener('pointerenter',function(){over=true;arrow.style.transform='rotate(0deg)';});
+    badge.addEventListener('pointerleave',function(){over=false;});
+    window.addEventListener('pointermove',function(e){mx=e.clientX;my=e.clientY;if(!ticking){requestAnimationFrame(upd);ticking=true;}},{passive:true});
+  })();
+
+  // Mask-Reveal der SHOP-Typo beim Eintritt der Sektion (hellohello-Stil)
+  (function(){
+    var head=document.querySelector('.ws-headline');if(!head)return;
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(en){
+        if(en.isIntersecting){
+          head.classList.remove('noanim');
+          head.classList.add('reveal');           // links→rechts einfahren
+        }else{
+          head.classList.add('noanim');            // sofort & unsichtbar zurücksetzen
+          head.classList.remove('reveal');
+          void head.offsetWidth;                   // Reflow, damit Reset ohne Animation greift
+        }
+      });
+    },{threshold:0.30});
+    io.observe(document.getElementById('ws'));
+  })();
+
+  // Parallaxe der SHOP-Typo + Kopplung des 3D-Emblems an das O-Feld
+  (function(){
+    var ws=document.getElementById('ws'),head=document.querySelector('.ws-headline');
+    var stage=document.getElementById('ws-stage'),oSlot=document.getElementById('oSlot');
+    if(!ws||!head)return;var ticking=false;
+    function upd(){ticking=false;
+      var srect=ws.getBoundingClientRect();
+      var off=srect.top*0.16;
+      head.style.transform='translate(-50%,calc(-50% + '+off+'px))';
+      if(stage&&oSlot){
+        var o=oSlot.getBoundingClientRect();
+        var EMBLEM_OFFSET_X=10; // Feinjustierung Sperrung: Emblem minimal nach rechts
+        var dx=(o.left+o.width/2)-(srect.left+srect.width/2)+EMBLEM_OFFSET_X;
+        var dy=(o.top+o.height/2)-(srect.top+srect.height/2);
+        stage.style.transform='translate('+dx+'px,'+dy+'px)';
+      }
+    }
+    window.addEventListener('scroll',function(){if(!ticking){requestAnimationFrame(upd);ticking=true;}},{passive:true});
+    window.addEventListener('resize',upd);
+    // mehrfach nach Load, da Font-Metriken die O-Position verschieben
+    upd();window.addEventListener('load',function(){upd();setTimeout(upd,300);});
+    if(document.fonts&&document.fonts.ready){document.fonts.ready.then(upd);}
+  })();
+
+  // Waveforms in den Produktkarten erzeugen
+  document.querySelectorAll('.fs-wv').forEach(function(wv){
+    for(var i=0;i<20;i++){var b=document.createElement('i');
+      b.style.height=(18+Math.round(Math.abs(Math.sin(i*0.9))*80))+'%';wv.appendChild(b);}
+  });
+  // Reveal der Shop-Sektionen beim Scrollen — gestaffelt nacheinander (oben -> unten)
+  (function(){
+    var STEP=140; // ms Versatz zwischen aufeinanderfolgenden Bildern
+    var io=new IntersectionObserver(function(es){
+      var vis=es.filter(function(e){return e.isIntersecting;});
+      // gleichzeitig sichtbare Elemente von oben nach unten sortieren
+      vis.sort(function(a,b){return a.boundingClientRect.top-b.boundingClientRect.top;});
+      vis.forEach(function(en,i){
+        var el=en.target, d=(i*STEP/1000)+'s';
+        el.style.transitionDelay=d;   // fuer .fs-rv (transition)
+        el.style.animationDelay=d;    // fuer .rvimg (keyframe-animation)
+        el.classList.add('in');
+        io.unobserve(el);
+      });
+    },{threshold:0.14});
+    document.querySelectorAll('.fs-rv, .rvimg').forEach(function(el){io.observe(el);});
+  })();
+
+  // Footer-CONTRA: schiebt sich scroll-gekoppelt von oben aus der Section in den (weißen) Footer-Block
+  (function(){
+    var mark=document.querySelector('.fs-foot-mark'),word=document.querySelector('.fmk-word');
+    if(!mark||!word)return;var ticking=false;
+    function upd(){ticking=false;
+      var r=mark.getBoundingClientRect(),vh=window.innerHeight;
+      var p=(vh - r.top)/(vh*0.6); p=Math.max(0,Math.min(1,p));
+      word.style.transform='translateY('+(-(1-p)*100)+'%)';
+    }
+    window.addEventListener('scroll',function(){if(!ticking){requestAnimationFrame(upd);ticking=true;}},{passive:true});
+    window.addEventListener('resize',upd);upd();
+  })();
+
+  // Footer-CONTRA: Image-Trail — Bilder folgen der Maus über der Wortmarke (OLAF-Prinzip)
+  (function(){
+    var mark=document.querySelector('.fs-foot-mark');
+    var inner=document.querySelector('.fmk-inner');
+    if(!mark||!inner)return;
+    var pool=[].slice.call(inner.querySelectorAll('.fmk-img'));
+    if(!pool.length)return;
+    var pi=0,lastX=0,lastY=0,primed=false,threshold=70;
+    inner.addEventListener('mousemove',function(e){
+      var r=inner.getBoundingClientRect();
+      var x=e.clientX-r.left, y=e.clientY-r.top;
+      if(!primed){lastX=x;lastY=y;primed=true;}
+      var dx=x-lastX, dy=y-lastY;
+      if(Math.sqrt(dx*dx+dy*dy)<threshold)return;
+      lastX=x;lastY=y;
+      var im=pool[pi%pool.length];pi++;
+      var rot=(Math.random()*10-5).toFixed(1);
+      im.style.left=x+'px';im.style.top=y+'px';
+      im.style.transition='none';
+      im.style.opacity='0';
+      im.style.transform='translate(-50%,-50%) scale(.72) rotate('+rot+'deg)';
+      void im.offsetWidth;
+      im.style.transition='opacity .45s ease, transform .6s cubic-bezier(.16,1,.3,1)';
+      im.style.opacity='1';
+      im.style.transform='translate(-50%,-50%) scale(1) rotate('+rot+'deg)';
+      clearTimeout(im._t);
+      im._t=setTimeout(function(){im.style.opacity='0';im.style.transform='translate(-50%,-50%) scale(.94) rotate('+rot+'deg)';},560);
+    });
+    inner.addEventListener('mouseleave',function(){
+      primed=false;
+      pool.forEach(function(im){im.style.opacity='0';});
+    });
+  })();
+
+  // ---------- HERO INTRO ----------
+  // Zwei Frames warten: der Ausgangszustand (scale/clip) muss einmal
+  // gerendert sein, sonst springt die Transition direkt ins Ziel.
+  (function(){
+    var st=document.querySelector('.stage');if(!st)return;
+    requestAnimationFrame(function(){requestAnimationFrame(function(){st.classList.add('is-in');});});
+
+    // Spray: Masken sofort auf 0 (vor dem ersten Paint), dann Buchstabe fuer
+    // Buchstabe aufspruehen. Ohne JS oder bei Reduced Motion bleibt der Tag
+    // einfach sichtbar, weil die Masken im Markup voll offen stehen.
+    var still=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
+    var a1=document.getElementById('cbRvA1');
+    if(!still&&a1&&a1.beginElement){
+      [].forEach.call(document.querySelectorAll('.cb-rv'),function(r){r.setAttribute('width','0');});
+      setTimeout(function(){a1.beginElement();},720);   // setzt ein, wenn CONTRA fast steht
+    }
+  })();
+
+  // Fehleranzeige
+  var errBox=document.getElementById('err');
+  function showErr(m){if(!errBox)return;errBox.textContent='3D nicht geladen — '+m+' (Metall-Fallback aktiv)';errBox.style.display='block';}
+</script>
+
+<!-- [PARKED] three.js-Modul + Keychain-GLB -> _parked/ws-keychain-section.html -->
+
+</body>
+</html>

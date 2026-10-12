@@ -4,7 +4,8 @@
       "type": "main-collection",
       "settings": {
         "filter_menu": "shop-menu",
-        "per_page": 48
+        "per_page": 48,
+        "columns": 3
       }
     }
   },

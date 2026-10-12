@@ -1,193 +1,56 @@
 {
   "sections": {
     "hero": {
-      "type": "hero",
-      "blocks": {
-        "f1": {
-          "type": "fact",
-          "settings": {
-            "text": "24-bit WAV"
-          }
-        },
-        "f2": {
-          "type": "fact",
-          "settings": {
-            "text": "Royalty-free"
-          }
-        },
-        "f3": {
-          "type": "fact",
-          "settings": {
-            "text": "Sofort-Download"
-          }
-        }
-      },
-      "block_order": [
-        "f1",
-        "f2",
-        "f3"
-      ],
-      "settings": {
-        "button_link": "shopify://collections/all",
-        "button2_link": "shopify://collections/free-pack"
-      }
+      "type": "contra-hero",
+      "settings": { "tag": "side", "scale": 100, "static": false, "cue": "Scroll", "link": "shopify://collections/all" }
     },
-    "new": {
+    "drops": {
       "type": "featured-collection",
-      "settings": {
-        "heading": "Neu im Shop",
-        "collection": "all",
-        "limit": 8,
-        "link_label": "Alle Kits",
-        "rule": false
-      }
+      "settings": { "style": "classic", "heading": "Neueste Drops", "collection": "all", "limit": 3, "columns": 3, "link_label": "Alle ansehen ↳" }
     },
-    "index": {
-      "type": "type-index",
+    "formats": {
+      "type": "format-tiles",
       "blocks": {
-        "drums": {
-          "type": "row",
-          "settings": {
-            "collection": "drums",
-            "glyph": "Drum Kit",
-            "desc": "Kicks, Snares, Hats, Percs"
-          }
-        },
-        "oneshots": {
-          "type": "row",
-          "settings": {
-            "collection": "one-shots",
-            "glyph": "One Shot Kit",
-            "desc": "Einzelne Treffer, sofort spielbar"
-          }
-        },
-        "loops": {
-          "type": "row",
-          "settings": {
-            "collection": "loops",
-            "glyph": "Loop Kit",
-            "desc": "Taktgenau, mit BPM und Key"
-          }
-        },
-        "midi": {
-          "type": "row",
-          "settings": {
-            "collection": "midi",
-            "glyph": "MIDI Kit",
-            "desc": "Chords, Melodien, Grooves"
-          }
-        },
-        "phrases": {
-          "type": "row",
-          "settings": {
-            "collection": "phrases",
-            "glyph": "Phrase Kit",
-            "desc": "Melodische Phrasen und Hooks"
-          }
-        },
-        "presets": {
-          "type": "row",
-          "settings": {
-            "collection": "presets",
-            "glyph": "Preset Bank",
-            "desc": "Sounds für deine Synths"
-          }
-        },
-        "suites": {
-          "type": "row",
-          "settings": {
-            "collection": "suites",
-            "glyph": "Suite",
-            "desc": "Komplette Sound-Welten"
-          }
-        },
-        "sessions": {
-          "type": "row",
-          "settings": {
-            "collection": "sessions",
-            "glyph": "Session",
-            "desc": "Stems aus echten Sessions"
-          }
-        }
+        "t1": { "type": "tile", "settings": { "collection": "sample-packs" } },
+        "t2": { "type": "tile", "settings": { "collection": "drums" } },
+        "t3": { "type": "tile", "settings": { "collection": "one-shots" } },
+        "t4": { "type": "tile", "settings": { "collection": "beats" } }
       },
-      "block_order": [
-        "drums",
-        "oneshots",
-        "loops",
-        "midi",
-        "phrases",
-        "presets",
-        "suites",
-        "sessions"
-      ],
-      "settings": {}
+      "block_order": ["t1", "t2", "t3", "t4"],
+      "settings": { "heading": "Nach Format shoppen", "columns": 2, "numbers": true, "counts": false }
     },
-    "free": {
-      "type": "split",
-      "settings": {
-        "kicker": "Free Pack",
-        "button_link": "shopify://products/free-pack",
-        "dark": true,
-        "product": "free-pack"
-      }
+    "suite": {
+      "type": "feature",
+      "settings": { "product": "signature-suite", "bg": "#C56E82", "label": "Signature Suite", "show_price": true, "button_label": "Suite sichern" }
     },
-    "packs": {
+    "editorial": {
+      "type": "editorial-grid",
+      "blocks": {
+        "story": { "type": "story", "settings": { "size": "large", "align": "left", "bg": "#0D0D0D", "title": "Drum Kits", "kicker": "Herbst 2026", "text": "Kicks mit Gewicht, Snares mit Luft. Aufgenommen im LUX Studio in Berlin-Friedrichshain.", "link_label": "Shop Drum Kits", "link": "shopify://collections/drums" } },
+        "items": { "type": "collection", "settings": { "collection": "sample-packs", "limit": 4 } }
+      },
+      "block_order": ["story", "items"],
+      "settings": { "heading": "", "link_label": "", "link": "" }
+    },
+    "beats": {
       "type": "featured-collection",
-      "settings": {
-        "heading": "Sample Packs",
-        "collection": "sample-packs",
-        "limit": 4,
-        "link_label": "Alle Sample Packs",
-        "rule": false
-      }
+      "settings": { "style": "edge", "heading": "Beats", "collection": "beats", "limit": 4, "columns": 4, "link_label": "Shop" }
     },
-    "facts": {
-      "type": "facts",
+    "statement": {
+      "type": "statement",
+      "settings": { "label": "Herkunft", "link_label": "contrabeatz.de ↳", "link": "https://contrabeatz.de" }
+    },
+    "service": {
+      "type": "service-cards",
       "blocks": {
-        "a": {
-          "type": "fact",
-          "settings": {
-            "title": "Royalty-free",
-            "text": "Einmal kaufen, unbegrenzt in eigenen Releases, Beats und Werbung nutzen."
-          }
-        },
-        "b": {
-          "type": "fact",
-          "settings": {
-            "title": "Studio-Qualität",
-            "text": "24-bit WAV, gemischt und gegated. Kein Aufräumen nötig, direkt in die Session."
-          }
-        },
-        "c": {
-          "type": "fact",
-          "settings": {
-            "title": "Sofort da",
-            "text": "Download-Link direkt nach dem Kauf. Sauber benannt, nach Typ sortiert."
-          }
-        }
+        "s1": { "type": "card", "settings": { "title": "Lizenz", "bg": "#EDECE8", "text": "Was du mit den Sounds machen darfst", "link": "shopify://pages/lizenz" } },
+        "s2": { "type": "card", "settings": { "title": "Download", "bg": "#E4E2DC", "text": "Sofort nach dem Kauf, als ZIP per Mail", "link": "shopify://pages/faq" } },
+        "s3": { "type": "card", "settings": { "title": "Kontakt", "bg": "#EDECE8", "text": "Fragen zu Kits, Lizenz oder Bestellung", "link": "shopify://pages/contact" } },
+        "s4": { "type": "card", "settings": { "title": "Free Pack", "bg": "#E4E2DC", "text": "20 One Shots zum Reinhören", "link": "shopify://collections/free-pack" } }
       },
-      "block_order": [
-        "a",
-        "b",
-        "c"
-      ],
+      "block_order": ["s1", "s2", "s3", "s4"],
       "settings": {}
-    },
-    "about": {
-      "type": "rich-text",
-      "settings": {
-        "link": "https://contrabeatz.de",
-        "rule": true
-      }
     }
   },
-  "order": [
-    "hero",
-    "new",
-    "index",
-    "free",
-    "packs",
-    "facts",
-    "about"
-  ]
+  "order": ["hero", "drops", "formats", "suite", "editorial", "beats", "statement", "service"]
 }

@@ -4,12 +4,12 @@
   </div>
   <div class="wrap">
     <div class="player__inner">
-      <a class="player__cover" data-player-cover-link href="#"><img data-player-cover alt="" width="44" height="44" hidden></a>
+      <a class="player__cover" data-player-cover-link href="#"><img data-player-cover alt="" width="44" height="44" hidden><span data-player-cover-fallback>{% render 'cb-emblem' %}</span></a>
       <div style="min-width:0">
         <div class="player__title" data-player-title></div>
-        <div class="player__sub mono" data-player-sub></div>
+        <div class="player__sub" data-player-sub></div>
       </div>
-      <span class="player__time mono" data-player-time>0:00</span>
+      <span class="player__time" data-player-time>0:00</span>
       <div style="display:flex;gap:8px;align-items:center">
         <button type="button" class="player__btn" data-player-toggle aria-label="Abspielen / Pause">
           {%- render 'icon', icon: 'play' -%}{%- render 'icon', icon: 'pause' -%}
@@ -20,4 +20,4 @@
   </div>
   <audio data-player-audio preload="none"></audio>
 </div>
-<div class="toast mono" data-toast role="status"></div>
+<div class="toast" data-toast role="status"></div>

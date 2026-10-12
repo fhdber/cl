@@ -1,51 +1,43 @@
-{%- liquid
-  assign menu = section.settings.menu
--%}
 <header class="header">
-  <div class="wrap header__inner">
-    <button type="button" class="menu-toggle" data-menu-open aria-expanded="false" aria-controls="mobile-menu" aria-label="Menü öffnen">
-      {% render 'icon', icon: 'menu' %}
-    </button>
+  <nav class="header__nav" aria-label="Hauptnavigation">
+    <div class="header__left">
+      <button type="button" class="menu-toggle" data-menu-open aria-expanded="false" aria-controls="mobile-menu">Menü</button>
+      {%- if section.settings.left_label != blank -%}
+        <a class="ul hide-m" href="{{ section.settings.left_link | default: routes.all_products_collection_url }}">{{ section.settings.left_label }}</a>
+      {%- endif -%}
+    </div>
 
-    <a href="{{ routes.root_url }}" class="header__logo" {% if settings.logo %}style="--logo-width: {{ settings.logo_width }}px"{% endif %}>
+    <a class="brand" href="{{ routes.root_url }}" aria-label="{{ shop.name }}">
       {%- if settings.logo -%}
-        {{ settings.logo | image_url: width: 520 | image_tag: alt: shop.name, widths: '260, 520' }}
+        {{ settings.logo | image_url: height: 120 | image_tag: alt: shop.name }}
       {%- else -%}
-        {{ shop.name }}
+        {% render 'cb-emblem' %}
       {%- endif -%}
     </a>
 
-    <nav class="header__nav mono" aria-label="Hauptnavigation">
-      <ul>
-        {%- for link in menu.links -%}
-          <li><a href="{{ link.url }}"{% if link.current %} aria-current="page"{% endif %}>{{ link.title }}</a></li>
-        {%- endfor -%}
-      </ul>
-    </nav>
-
-    <div class="header__tools mono">
-      <a class="hide-mobile" href="{{ routes.search_url }}">Suche</a>
-      {%- if shop.customer_accounts_enabled -%}
-        <a class="hide-mobile" href="{{ routes.account_url }}">Konto</a>
-      {%- endif -%}
-      <a href="{{ routes.cart_url }}" data-cart-open><span class="hide-mobile">Warenkorb</span><span class="show-mobile">Korb</span> (<span class="header__count" data-cart-count>{{ cart.item_count }}</span>)</a>
+    <div class="header__right">
+      {%- for link in section.settings.menu.links -%}
+        <a class="ul{% if forloop.index > section.settings.mobile_links %} hide-m{% endif %}" href="{{ link.url }}"{% if link.current %} aria-current="page"{% endif %}>{{ link.title }}</a>
+      {%- endfor -%}
+      <a class="ul" href="{{ routes.cart_url }}" data-cart-open>Cart · <span data-cart-count>{{ cart.item_count }}</span></a>
     </div>
-  </div>
+  </nav>
 </header>
 
 <div class="mobile-menu" id="mobile-menu" data-mobile-menu>
   <div class="mobile-menu__top">
-    <span class="header__logo">{{ shop.name }}</span>
-    <button type="button" data-menu-close aria-label="Menü schließen">{% render 'icon', icon: 'close' %}</button>
+    <span>{{ shop.name }}</span>
+    <button type="button" data-menu-close>Schließen</button>
   </div>
   <ul class="mobile-menu__list">
-    {%- for link in menu.links -%}
+    {%- if section.settings.left_label != blank -%}<li><a href="{{ section.settings.left_link | default: routes.all_products_collection_url }}">{{ section.settings.left_label }}</a></li>{%- endif -%}
+    {%- for link in section.settings.menu.links -%}
       <li><a href="{{ link.url }}">{{ link.title }}</a></li>
     {%- endfor -%}
   </ul>
-  <div class="mobile-menu__foot mono">
-    {%- if shop.customer_accounts_enabled -%}<a href="{{ routes.account_url }}">Konto</a>{%- endif -%}
+  <div class="mobile-menu__foot">
     <a href="{{ routes.search_url }}">Suche</a>
+    {%- if shop.customer_accounts_enabled -%}<a href="{{ routes.account_url }}">Konto</a>{%- endif -%}
   </div>
 </div>
 
@@ -54,7 +46,10 @@
   "name": "Header",
   "class": "section-header",
   "settings": [
-    { "type": "link_list", "id": "menu", "label": "Menü", "default": "main-menu" }
+    { "type": "text", "id": "left_label", "label": "Label links", "default": "Shop" },
+    { "type": "url", "id": "left_link", "label": "Link links" },
+    { "type": "link_list", "id": "menu", "label": "Menü rechts", "default": "main-menu" },
+    { "type": "range", "id": "mobile_links", "label": "Menüpunkte, die mobil sichtbar bleiben", "min": 0, "max": 5, "step": 1, "default": 0 }
   ]
 }
 {% endschema %}

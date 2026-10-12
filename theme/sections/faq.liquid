@@ -1,6 +1,6 @@
-<section class="section{% if section.settings.rule %} section--rule{% endif %}">
-  <div class="wrap faq">
-    <h2 class="h2">{{ section.settings.heading }}</h2>
+<section class="sec wrap">
+  <div class="faq">
+    <div><span class="label">{{ section.settings.heading }}</span></div>
     <div>
       {%- for block in section.blocks -%}
         <details class="details" {{ block.shopify_attributes }}>

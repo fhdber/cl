@@ -1,16 +1,46 @@
 {
   "sections": {
-    "main": { "type": "main-page", "settings": {} },
+    "main": {
+      "type": "main-page",
+      "settings": {}
+    },
     "facts": {
       "type": "facts",
       "blocks": {
-        "a": { "type": "fact", "settings": { "title": "Erlaubt", "text": "Eigene Songs, Beats, Remixe, Auftragsproduktionen, Werbung, Film, Games, Social, Streaming." } },
-        "b": { "type": "fact", "settings": { "title": "Nicht erlaubt", "text": "Samples einzeln oder als Pack weitergeben, verkaufen oder in andere Sample-Libraries einbauen." } },
-        "c": { "type": "fact", "settings": { "title": "Credit", "text": "Optional. Ein Tag @contrabeatz freut mich trotzdem." } }
+        "a": {
+          "type": "fact",
+          "settings": {
+            "title": "Erlaubt",
+            "text": "Eigene Songs, Beats, Remixe, Auftragsproduktionen, Werbung, Film, Games, Social, Streaming."
+          }
+        },
+        "b": {
+          "type": "fact",
+          "settings": {
+            "title": "Nicht erlaubt",
+            "text": "Samples einzeln oder als Pack weitergeben, verkaufen oder in andere Sample-Libraries einbauen."
+          }
+        },
+        "c": {
+          "type": "fact",
+          "settings": {
+            "title": "Credit",
+            "text": "Optional. Ein Tag @contrabeatz freut mich trotzdem."
+          }
+        }
       },
-      "block_order": ["a", "b", "c"],
-      "settings": {}
+      "block_order": [
+        "a",
+        "b",
+        "c"
+      ],
+      "settings": {
+        "heading": "Kurz gesagt"
+      }
     }
   },
-  "order": ["facts", "main"]
+  "order": [
+    "main",
+    "facts"
+  ]
 }

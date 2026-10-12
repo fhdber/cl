@@ -1,4 +1,4 @@
-<article class="wrap wrap--text section">
+<article class="wrap wrap--text sec">
   <p class="mono muted">{{ article.published_at | date: '%d.%m.%Y' }}</p>
   <h1 class="h1" style="margin-block:16px 48px">{{ article.title }}</h1>
   {%- if article.image -%}<div class="cover" style="aspect-ratio:3/2;margin-bottom:48px">{{ article.image | image_url: width: 1600 | image_tag: widths: '720, 1200, 1600', sizes: '(min-width: 800px) 720px, 100vw' }}</div>{%- endif -%}
