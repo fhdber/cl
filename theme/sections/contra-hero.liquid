@@ -2,7 +2,8 @@
   <div class="stage__mark" data-stage-mark>
     {%- assign show_tag = true -%}
     {%- if section.settings.tag == 'none' -%}{%- assign show_tag = false -%}{%- endif -%}
-    {% render 'contra-wordmark', uid: section.id, tag: show_tag, class: 'cb-contra' %}
+    {%- assign solid_tag = false -%}{%- if section.settings.tag == 'bottom' -%}{%- assign solid_tag = true -%}{%- endif -%}
+    {% render 'contra-wordmark', uid: section.id, tag: show_tag, solid: solid_tag, class: 'cb-contra' %}
   </div>
   {%- if section.settings.link != blank -%}
     <a class="stage__link" href="{{ section.settings.link }}" aria-label="{{ section.settings.link_label | default: 'Zum Shop' | escape }}"></a>

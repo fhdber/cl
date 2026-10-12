@@ -1,6 +1,7 @@
 {%- comment -%}
   CONTRA-Wortmarke, optional mit gesprühtem Tag (aus Florians Hero-Layout).
-  Usage: {% render 'contra-wordmark', uid: section.id, tag: true, class: 'cb-contra' %}
+  Usage: {% render 'contra-wordmark', uid: section.id, tag: true, solid: false, class: 'cb-contra' %}
+  solid: true = Tag als eine Farbebene (ohne Knockout), für den eingefärbten Tag.
 {%- endcomment -%}
 <svg class="{{ class }}" viewBox="-72 0 1340 585" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CONTRA{% if tag %} Shop{% endif %}">
   <defs>
@@ -61,7 +62,12 @@
   </defs>
   <g class="cb-letters"><use href="#cbL1-{{ uid }}"/><use href="#cbL2-{{ uid }}"/><use href="#cbL3-{{ uid }}"/><use href="#cbL4-{{ uid }}"/><use href="#cbL5-{{ uid }}"/><use href="#cbL6-{{ uid }}"/></g>
   {%- if tag -%}
-  <g mask="url(#cbOut-{{ uid }})"><use href="#cbTag-{{ uid }}" class="cb-tag cb-tag--out"/></g>
-  <g clip-path="url(#cbIn-{{ uid }})"><use href="#cbTag-{{ uid }}" class="cb-tag cb-tag--in"/></g>
+    {%- if solid -%}
+      {%- comment -%} Eingefärbter Tag: eine durchgehende Ebene über CONTRA, keine Naht an den Buchstabenkanten {%- endcomment -%}
+      <use href="#cbTag-{{ uid }}" class="cb-tag cb-tag--out cb-tag--solid"/>
+    {%- else -%}
+      <g mask="url(#cbOut-{{ uid }})"><use href="#cbTag-{{ uid }}" class="cb-tag cb-tag--out"/></g>
+      <g clip-path="url(#cbIn-{{ uid }})"><use href="#cbTag-{{ uid }}" class="cb-tag cb-tag--in"/></g>
+    {%- endif -%}
   {%- endif -%}
 </svg>
