@@ -253,7 +253,7 @@
   }
 
   // Reveal der Sektionen, gestaffelt von oben nach unten
-  if ('IntersectionObserver' in window && !still) {
+  if (document.body.classList.contains('reveal-on') && 'IntersectionObserver' in window && !still) {
     const STEP = 140;
     const io = new IntersectionObserver((es) => {
       es.filter((e) => e.isIntersecting)

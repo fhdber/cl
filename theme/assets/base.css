@@ -164,12 +164,12 @@ p { text-wrap: pretty; }
 .card__media::before { content: ""; position: absolute; left: 0; bottom: 0; height: 2px; width: var(--progress, 0%); background: var(--accent); z-index: 4; opacity: 0; transition: opacity .3s; }
 .card__media.is-playing::before { opacity: 1; }
 
-/* Clip-Reveal: Inhalt standardmäßig sichtbar, Animation nur beim Reinscrollen */
-.rvimg.in { animation: rvReveal 1.15s var(--ease) both; }
+/* Scroll-Reveal: standardmäßig aus (Theme-Einstellungen → Bewegung). Inhalte sind sofort sichtbar. */
+.reveal-on .rvimg.in { animation: rvReveal 1.15s var(--ease) both; }
 @keyframes rvReveal { from { clip-path: inset(101% 0 0 0); transform: scale(1.05); } to { clip-path: inset(0 0 0 0); transform: scale(1); } }
-.js .fs-rv { opacity: 0; transform: translateY(26px); transition: opacity .9s ease, transform .9s var(--ease); }
-.js .fs-rv.in { opacity: 1; transform: none; }
-@media (prefers-reduced-motion: reduce) { .rvimg.in { animation: none; } .js .fs-rv { opacity: 1; transform: none; } }
+.js .reveal-on .fs-rv { opacity: 0; transform: translateY(26px); transition: opacity .9s ease, transform .9s var(--ease); }
+.js .reveal-on .fs-rv.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .reveal-on .rvimg.in { animation: none; } .js .reveal-on .fs-rv { opacity: 1; transform: none; } }
 
 /* ---------- Format-Kacheln ---------- */
 .tiles { display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); gap: 12px; }
