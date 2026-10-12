@@ -2,55 +2,188 @@
   "sections": {
     "hero": {
       "type": "contra-hero",
-      "settings": { "tag": "side", "scale": 100, "static": false, "cue": "Scroll", "link": "shopify://collections/all" }
+      "settings": {
+        "tag": "bottom",
+        "scale": 100,
+        "static": false,
+        "cue": "Scroll",
+        "link": "shopify://collections/all",
+        "tag_color": "#D0532A",
+        "tag_size": 100
+      }
     },
     "drops": {
       "type": "featured-collection",
-      "settings": { "style": "classic", "heading": "Neueste Drops", "collection": "all", "limit": 3, "columns": 3, "link_label": "Alle ansehen ↳" }
+      "settings": {
+        "style": "classic",
+        "heading": "Neueste Drops",
+        "collection": "all",
+        "limit": 3,
+        "columns": 3,
+        "link_label": "Alle ansehen ↳"
+      }
     },
     "formats": {
       "type": "format-tiles",
       "blocks": {
-        "t1": { "type": "tile", "settings": { "collection": "sample-packs" } },
-        "t2": { "type": "tile", "settings": { "collection": "drums" } },
-        "t3": { "type": "tile", "settings": { "collection": "one-shots" } },
-        "t4": { "type": "tile", "settings": { "collection": "beats" } }
+        "t1": {
+          "type": "tile",
+          "settings": {
+            "collection": "sample-packs"
+          }
+        },
+        "t2": {
+          "type": "tile",
+          "settings": {
+            "collection": "drums"
+          }
+        },
+        "t3": {
+          "type": "tile",
+          "settings": {
+            "collection": "one-shots"
+          }
+        },
+        "t4": {
+          "type": "tile",
+          "settings": {
+            "collection": "beats"
+          }
+        }
       },
-      "block_order": ["t1", "t2", "t3", "t4"],
-      "settings": { "heading": "Nach Format shoppen", "columns": 2, "numbers": true, "counts": false }
+      "block_order": [
+        "t1",
+        "t2",
+        "t3",
+        "t4"
+      ],
+      "settings": {
+        "heading": "Nach Format shoppen",
+        "columns": 2,
+        "numbers": true,
+        "counts": false
+      }
     },
     "suite": {
       "type": "feature",
-      "settings": { "product": "signature-suite", "bg": "#C56E82", "label": "Signature Suite", "show_price": true, "button_label": "Suite sichern" }
+      "settings": {
+        "product": "signature-suite",
+        "bg": "#C56E82",
+        "label": "Signature Suite",
+        "show_price": true,
+        "button_label": "Suite sichern"
+      }
     },
     "editorial": {
       "type": "editorial-grid",
       "blocks": {
-        "story": { "type": "story", "settings": { "size": "large", "align": "left", "bg": "#0D0D0D", "title": "Drum Kits", "kicker": "Herbst 2026", "text": "Kicks mit Gewicht, Snares mit Luft. Aufgenommen im LUX Studio in Berlin-Friedrichshain.", "link_label": "Shop Drum Kits", "link": "shopify://collections/drums" } },
-        "items": { "type": "collection", "settings": { "collection": "sample-packs", "limit": 4 } }
+        "story": {
+          "type": "story",
+          "settings": {
+            "size": "large",
+            "align": "left",
+            "bg": "#0D0D0D",
+            "title": "Drum Kits",
+            "kicker": "Herbst 2026",
+            "text": "Kicks mit Gewicht, Snares mit Luft. Aufgenommen im LUX Studio in Berlin-Friedrichshain.",
+            "link_label": "Shop Drum Kits",
+            "link": "shopify://collections/drums"
+          }
+        },
+        "items": {
+          "type": "collection",
+          "settings": {
+            "collection": "sample-packs",
+            "limit": 4
+          }
+        }
       },
-      "block_order": ["story", "items"],
-      "settings": { "heading": "", "link_label": "", "link": "" }
+      "block_order": [
+        "story",
+        "items"
+      ],
+      "settings": {
+        "heading": "",
+        "link_label": "",
+        "link": ""
+      }
     },
     "beats": {
       "type": "featured-collection",
-      "settings": { "style": "edge", "heading": "Beats", "collection": "beats", "limit": 4, "columns": 4, "link_label": "Shop" }
+      "settings": {
+        "style": "edge",
+        "heading": "Beats",
+        "collection": "beats",
+        "limit": 4,
+        "columns": 4,
+        "link_label": "Shop"
+      }
     },
     "statement": {
       "type": "statement",
-      "settings": { "label": "Herkunft", "link_label": "contrabeatz.de ↳", "link": "https://contrabeatz.de" }
+      "settings": {
+        "label": "Herkunft",
+        "link_label": "contrabeatz.de ↳",
+        "link": "https://contrabeatz.de"
+      }
     },
     "service": {
       "type": "service-cards",
       "blocks": {
-        "s1": { "type": "card", "settings": { "title": "Lizenz", "bg": "#EDECE8", "text": "Was du mit den Sounds machen darfst", "link": "shopify://pages/lizenz" } },
-        "s2": { "type": "card", "settings": { "title": "Download", "bg": "#E4E2DC", "text": "Sofort nach dem Kauf, als ZIP per Mail", "link": "shopify://pages/faq" } },
-        "s3": { "type": "card", "settings": { "title": "Kontakt", "bg": "#EDECE8", "text": "Fragen zu Kits, Lizenz oder Bestellung", "link": "shopify://pages/contact" } },
-        "s4": { "type": "card", "settings": { "title": "Free Pack", "bg": "#E4E2DC", "text": "20 One Shots zum Reinhören", "link": "shopify://collections/free-pack" } }
+        "s1": {
+          "type": "card",
+          "settings": {
+            "title": "Lizenz",
+            "bg": "#EDECE8",
+            "text": "Was du mit den Sounds machen darfst",
+            "link": "shopify://pages/lizenz"
+          }
+        },
+        "s2": {
+          "type": "card",
+          "settings": {
+            "title": "Download",
+            "bg": "#E4E2DC",
+            "text": "Sofort nach dem Kauf, als ZIP per Mail",
+            "link": "shopify://pages/faq"
+          }
+        },
+        "s3": {
+          "type": "card",
+          "settings": {
+            "title": "Kontakt",
+            "bg": "#EDECE8",
+            "text": "Fragen zu Kits, Lizenz oder Bestellung",
+            "link": "shopify://pages/contact"
+          }
+        },
+        "s4": {
+          "type": "card",
+          "settings": {
+            "title": "Free Pack",
+            "bg": "#E4E2DC",
+            "text": "20 One Shots zum Reinhören",
+            "link": "shopify://collections/free-pack"
+          }
+        }
       },
-      "block_order": ["s1", "s2", "s3", "s4"],
+      "block_order": [
+        "s1",
+        "s2",
+        "s3",
+        "s4"
+      ],
       "settings": {}
     }
   },
-  "order": ["hero", "drops", "formats", "suite", "editorial", "beats", "statement", "service"]
+  "order": [
+    "hero",
+    "drops",
+    "formats",
+    "suite",
+    "editorial",
+    "beats",
+    "statement",
+    "service"
+  ]
 }

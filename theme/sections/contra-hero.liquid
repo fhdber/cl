@@ -1,4 +1,4 @@
-<section class="stage{% if section.settings.static %} stage--static{% endif %}" data-tag="{{ section.settings.tag }}" data-stage style="--mark-scale: {{ section.settings.scale | divided_by: 100.0 }}">
+<section class="stage{% if section.settings.static %} stage--static{% endif %}" data-tag="{{ section.settings.tag }}" data-stage style="--mark-scale: {{ section.settings.scale | divided_by: 100.0 }}; --tag-size: {{ section.settings.tag_size | divided_by: 100.0 }}; --tag-color: {{ section.settings.tag_color }};">
   <div class="stage__mark" data-stage-mark>
     {%- assign show_tag = true -%}
     {%- if section.settings.tag == 'none' -%}{%- assign show_tag = false -%}{%- endif -%}
@@ -17,12 +17,15 @@
 {
   "name": "CONTRA-Bühne",
   "settings": [
-    { "type": "select", "id": "tag", "label": "Spray-Tag „Shop“", "default": "side", "options": [
+    { "type": "select", "id": "tag", "label": "Spray-Tag „Shop“", "default": "bottom", "options": [
+      { "value": "bottom", "label": "Mittig unten, überlappend" },
       { "value": "side", "label": "Rechts neben CONTRA" },
       { "value": "over", "label": "Über R und A" },
       { "value": "none", "label": "Ohne Tag" }
     ] },
-    { "type": "range", "id": "scale", "label": "Größe der Wortmarke", "min": 60, "max": 150, "step": 5, "unit": "%", "default": 100 },
+    { "type": "color", "id": "tag_color", "label": "Farbe des Tags (Position „Mittig unten“)", "default": "#D0532A" },
+    { "type": "range", "id": "tag_size", "label": "Größe des Tags", "min": 60, "max": 140, "step": 5, "unit": "%", "default": 100 },
+    { "type": "range", "id": "scale", "label": "Größe der Wortmarke", "info": "100 % = gleiche Größe wie CONTRA im Footer", "min": 60, "max": 120, "step": 5, "unit": "%", "default": 100 },
     { "type": "checkbox", "id": "static", "label": "Ohne Sticky-Effekt", "info": "Aus: Die Bühne bleibt stehen und die Sektionen darunter schieben sich darüber.", "default": false },
     { "type": "text", "id": "cue", "label": "Scroll-Hinweis", "default": "Scroll" },
     { "type": "url", "id": "link", "label": "Klick auf die Bühne führt zu" },
