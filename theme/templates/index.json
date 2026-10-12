@@ -1,0 +1,193 @@
+{
+  "sections": {
+    "hero": {
+      "type": "hero",
+      "blocks": {
+        "f1": {
+          "type": "fact",
+          "settings": {
+            "text": "24-bit WAV"
+          }
+        },
+        "f2": {
+          "type": "fact",
+          "settings": {
+            "text": "Royalty-free"
+          }
+        },
+        "f3": {
+          "type": "fact",
+          "settings": {
+            "text": "Sofort-Download"
+          }
+        }
+      },
+      "block_order": [
+        "f1",
+        "f2",
+        "f3"
+      ],
+      "settings": {
+        "button_link": "shopify://collections/all",
+        "button2_link": "shopify://collections/free-pack"
+      }
+    },
+    "new": {
+      "type": "featured-collection",
+      "settings": {
+        "heading": "Neu im Shop",
+        "collection": "all",
+        "limit": 8,
+        "link_label": "Alle Kits",
+        "rule": false
+      }
+    },
+    "index": {
+      "type": "type-index",
+      "blocks": {
+        "drums": {
+          "type": "row",
+          "settings": {
+            "collection": "drums",
+            "glyph": "Drum Kit",
+            "desc": "Kicks, Snares, Hats, Percs"
+          }
+        },
+        "oneshots": {
+          "type": "row",
+          "settings": {
+            "collection": "one-shots",
+            "glyph": "One Shot Kit",
+            "desc": "Einzelne Treffer, sofort spielbar"
+          }
+        },
+        "loops": {
+          "type": "row",
+          "settings": {
+            "collection": "loops",
+            "glyph": "Loop Kit",
+            "desc": "Taktgenau, mit BPM und Key"
+          }
+        },
+        "midi": {
+          "type": "row",
+          "settings": {
+            "collection": "midi",
+            "glyph": "MIDI Kit",
+            "desc": "Chords, Melodien, Grooves"
+          }
+        },
+        "phrases": {
+          "type": "row",
+          "settings": {
+            "collection": "phrases",
+            "glyph": "Phrase Kit",
+            "desc": "Melodische Phrasen und Hooks"
+          }
+        },
+        "presets": {
+          "type": "row",
+          "settings": {
+            "collection": "presets",
+            "glyph": "Preset Bank",
+            "desc": "Sounds für deine Synths"
+          }
+        },
+        "suites": {
+          "type": "row",
+          "settings": {
+            "collection": "suites",
+            "glyph": "Suite",
+            "desc": "Komplette Sound-Welten"
+          }
+        },
+        "sessions": {
+          "type": "row",
+          "settings": {
+            "collection": "sessions",
+            "glyph": "Session",
+            "desc": "Stems aus echten Sessions"
+          }
+        }
+      },
+      "block_order": [
+        "drums",
+        "oneshots",
+        "loops",
+        "midi",
+        "phrases",
+        "presets",
+        "suites",
+        "sessions"
+      ],
+      "settings": {}
+    },
+    "free": {
+      "type": "split",
+      "settings": {
+        "kicker": "Free Pack",
+        "button_link": "shopify://products/free-pack",
+        "dark": true,
+        "product": "free-pack"
+      }
+    },
+    "packs": {
+      "type": "featured-collection",
+      "settings": {
+        "heading": "Sample Packs",
+        "collection": "sample-packs",
+        "limit": 4,
+        "link_label": "Alle Sample Packs",
+        "rule": false
+      }
+    },
+    "facts": {
+      "type": "facts",
+      "blocks": {
+        "a": {
+          "type": "fact",
+          "settings": {
+            "title": "Royalty-free",
+            "text": "Einmal kaufen, unbegrenzt in eigenen Releases, Beats und Werbung nutzen."
+          }
+        },
+        "b": {
+          "type": "fact",
+          "settings": {
+            "title": "Studio-Qualität",
+            "text": "24-bit WAV, gemischt und gegated. Kein Aufräumen nötig, direkt in die Session."
+          }
+        },
+        "c": {
+          "type": "fact",
+          "settings": {
+            "title": "Sofort da",
+            "text": "Download-Link direkt nach dem Kauf. Sauber benannt, nach Typ sortiert."
+          }
+        }
+      },
+      "block_order": [
+        "a",
+        "b",
+        "c"
+      ],
+      "settings": {}
+    },
+    "about": {
+      "type": "rich-text",
+      "settings": {
+        "link": "https://contrabeatz.de",
+        "rule": true
+      }
+    }
+  },
+  "order": [
+    "hero",
+    "new",
+    "index",
+    "free",
+    "packs",
+    "facts",
+    "about"
+  ]
+}

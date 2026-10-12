@@ -1,0 +1,9 @@
+{
+  "type": "header",
+  "name": "Header",
+  "sections": {
+    "announcement": { "type": "announcement", "settings": { "text": "Free Pack: One Shots kostenlos laden", "link": "shopify://collections/free-pack" } },
+    "header": { "type": "header", "settings": { "menu": "main-menu" } }
+  },
+  "order": ["announcement", "header"]
+}

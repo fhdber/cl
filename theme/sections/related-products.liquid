@@ -1,0 +1,38 @@
+{%- liquid
+  assign shown = 0
+-%}
+<section class="section section--rule">
+  <div class="wrap">
+    <div class="head">
+      <h2 class="h2 head__title">{{ section.settings.heading }}</h2>
+      <a class="mono link-arrow" href="{{ routes.all_products_collection_url }}">Alle Kits</a>
+    </div>
+    <div class="grid grid--4">
+      {%- for p in collections.all.products -%}
+        {%- if p.id != product.id and shown < 4 -%}
+          {%- if p.type == product.type or section.settings.any_type -%}
+            {% render 'product-card', product: p %}
+            {%- assign shown = shown | plus: 1 -%}
+          {%- endif -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {%- if shown < 4 -%}
+        {%- for p in collections.all.products -%}
+          {%- if p.id != product.id and p.type != product.type and shown < 4 -%}
+            {% render 'product-card', product: p %}
+            {%- assign shown = shown | plus: 1 -%}
+          {%- endif -%}
+        {%- endfor -%}
+      {%- endif -%}
+    </div>
+  </div>
+</section>
+{% schema %}
+{
+  "name": "Ähnliche Kits",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Headline", "default": "Passt dazu" },
+    { "type": "checkbox", "id": "any_type", "label": "Alle Typen mischen", "default": false }
+  ]
+}
+{% endschema %}

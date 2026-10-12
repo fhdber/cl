@@ -1,0 +1,25 @@
+<div class="line">
+  <a href="{{ item.url }}" style="width:72px">
+    {%- if item.image -%}
+      <div class="cover">{{ item.image | image_url: width: 160 | image_tag: alt: item.title, loading: 'lazy' }}</div>
+    {%- else -%}
+      {% render 'cover', product: item.product %}
+    {%- endif -%}
+  </a>
+  <div style="display:grid;gap:6px">
+    <a class="line__title" href="{{ item.url }}">{{ item.product.title }}</a>
+    {%- unless item.product.has_only_default_variant -%}<p class="mono muted">{{ item.variant.title }}</p>{%- endunless -%}
+    <p class="mono muted">{{ item.product.type }}</p>
+    <div style="display:flex;gap:16px;align-items:center;margin-top:4px">
+      {%- if item.quantity > 1 -%}
+        <div class="qty mono">
+          <button type="button" data-line-change data-line="{{ index }}" data-qty="{{ item.quantity | minus: 1 }}" aria-label="Weniger">−</button>
+          <span>{{ item.quantity }}</span>
+          <button type="button" data-line-change data-line="{{ index }}" data-qty="{{ item.quantity | plus: 1 }}" aria-label="Mehr">+</button>
+        </div>
+      {%- endif -%}
+      <button type="button" class="line__remove mono" data-line-change data-line="{{ index }}" data-qty="0">Entfernen</button>
+    </div>
+  </div>
+  <p class="line__price mono">{% if item.final_line_price == 0 %}Kostenlos{% else %}{{ item.final_line_price | money }}{% endif %}</p>
+</div>

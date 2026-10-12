@@ -1,0 +1,25 @@
+<section class="section section--tight">
+  <div class="wrap">
+    <div class="facts" style="--cols: {{ section.blocks.size | at_least: 1 }}">
+      {%- for block in section.blocks -%}
+        <div class="facts__item" {{ block.shopify_attributes }}>
+          <p class="facts__title">{{ block.settings.title }}</p>
+          <p class="muted">{{ block.settings.text }}</p>
+        </div>
+      {%- endfor -%}
+    </div>
+  </div>
+</section>
+{% schema %}
+{
+  "name": "Fakten",
+  "max_blocks": 4,
+  "blocks": [
+    { "type": "fact", "name": "Fakt", "settings": [
+      { "type": "text", "id": "title", "label": "Titel", "default": "Royalty-free" },
+      { "type": "textarea", "id": "text", "label": "Text", "default": "Einmal kaufen, unbegrenzt in eigenen Releases nutzen." }
+    ] }
+  ],
+  "presets": [ { "name": "Fakten" } ]
+}
+{% endschema %}

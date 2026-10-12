@@ -1,0 +1,23 @@
+<div class="player" data-player aria-live="polite">
+  <div class="player__progress" data-player-seek role="slider" aria-label="Position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">
+    <div class="player__bar" data-player-bar></div>
+  </div>
+  <div class="wrap">
+    <div class="player__inner">
+      <a class="player__cover" data-player-cover-link href="#"><img data-player-cover alt="" width="44" height="44" hidden></a>
+      <div style="min-width:0">
+        <div class="player__title" data-player-title></div>
+        <div class="player__sub mono" data-player-sub></div>
+      </div>
+      <span class="player__time mono" data-player-time>0:00</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button type="button" class="player__btn" data-player-toggle aria-label="Abspielen / Pause">
+          {%- render 'icon', icon: 'play' -%}{%- render 'icon', icon: 'pause' -%}
+        </button>
+        <button type="button" class="player__close" data-player-close aria-label="Player schließen">{% render 'icon', icon: 'close' %}</button>
+      </div>
+    </div>
+  </div>
+  <audio data-player-audio preload="none"></audio>
+</div>
+<div class="toast mono" data-toast role="status"></div>

@@ -1,0 +1,29 @@
+<section class="section{% if section.settings.rule %} section--rule{% endif %}">
+  <div class="wrap faq">
+    <h2 class="h2">{{ section.settings.heading }}</h2>
+    <div>
+      {%- for block in section.blocks -%}
+        <details class="details" {{ block.shopify_attributes }}>
+          <summary>{{ block.settings.q }}</summary>
+          <div class="details__body rte muted">{{ block.settings.a }}</div>
+        </details>
+      {%- endfor -%}
+    </div>
+  </div>
+</section>
+{% schema %}
+{
+  "name": "FAQ",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Headline", "default": "Fragen" },
+    { "type": "checkbox", "id": "rule", "label": "Trennlinie oben", "default": false }
+  ],
+  "blocks": [
+    { "type": "item", "name": "Frage", "settings": [
+      { "type": "text", "id": "q", "label": "Frage", "default": "Darf ich die Sounds kommerziell nutzen?" },
+      { "type": "richtext", "id": "a", "label": "Antwort", "default": "<p>Ja. Alle Sounds sind royalty-free für eigene Musik, Beats, Werbung und Social.</p>" }
+    ] }
+  ],
+  "presets": [ { "name": "FAQ" } ]
+}
+{% endschema %}

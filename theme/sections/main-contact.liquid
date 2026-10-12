@@ -1,0 +1,20 @@
+<div class="wrap">
+  <div class="split section" style="align-items:start">
+    <div style="display:grid;gap:24px">
+      <h1 class="h1">{{ page.title }}</h1>
+      {%- if page.content != blank -%}<div class="rte muted">{{ page.content }}</div>{%- endif -%}
+    </div>
+    {%- form 'contact', style: 'display:grid;gap:16px' -%}
+      {%- if form.posted_successfully? -%}<p class="form-msg" role="status">Danke. Ich melde mich zeitnah.</p>{%- endif -%}
+      {%- if form.errors -%}<div class="form-msg form-msg--error" role="alert">{{ form.errors | default_errors }}</div>{%- endif -%}
+      <div class="field"><label class="mono muted" for="c-name">Name</label><input class="input" id="c-name" name="contact[name]" autocomplete="name" value="{{ form.name }}"></div>
+      <div class="field"><label class="mono muted" for="c-email">E-Mail *</label><input class="input" id="c-email" type="email" name="contact[email]" autocomplete="email" required value="{{ form.email }}"></div>
+      <div class="field"><label class="mono muted" for="c-order">Bestellnummer (optional)</label><input class="input" id="c-order" name="contact[order]"></div>
+      <div class="field"><label class="mono muted" for="c-msg">Nachricht</label><textarea class="input" id="c-msg" name="contact[body]">{{ form.body }}</textarea></div>
+      <button class="btn" type="submit"><span class="btn__label">Senden</span></button>
+    {%- endform -%}
+  </div>
+</div>
+{% schema %}
+{ "name": "Kontakt" }
+{% endschema %}

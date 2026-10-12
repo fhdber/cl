@@ -1,0 +1,60 @@
+{%- liquid
+  assign menu = section.settings.menu
+-%}
+<header class="header">
+  <div class="wrap header__inner">
+    <button type="button" class="menu-toggle" data-menu-open aria-expanded="false" aria-controls="mobile-menu" aria-label="Menü öffnen">
+      {% render 'icon', icon: 'menu' %}
+    </button>
+
+    <a href="{{ routes.root_url }}" class="header__logo" {% if settings.logo %}style="--logo-width: {{ settings.logo_width }}px"{% endif %}>
+      {%- if settings.logo -%}
+        {{ settings.logo | image_url: width: 520 | image_tag: alt: shop.name, widths: '260, 520' }}
+      {%- else -%}
+        {{ shop.name }}
+      {%- endif -%}
+    </a>
+
+    <nav class="header__nav mono" aria-label="Hauptnavigation">
+      <ul>
+        {%- for link in menu.links -%}
+          <li><a href="{{ link.url }}"{% if link.current %} aria-current="page"{% endif %}>{{ link.title }}</a></li>
+        {%- endfor -%}
+      </ul>
+    </nav>
+
+    <div class="header__tools mono">
+      <a class="hide-mobile" href="{{ routes.search_url }}">Suche</a>
+      {%- if shop.customer_accounts_enabled -%}
+        <a class="hide-mobile" href="{{ routes.account_url }}">Konto</a>
+      {%- endif -%}
+      <a href="{{ routes.cart_url }}" data-cart-open><span class="hide-mobile">Warenkorb</span><span class="show-mobile">Korb</span> (<span class="header__count" data-cart-count>{{ cart.item_count }}</span>)</a>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-menu" id="mobile-menu" data-mobile-menu>
+  <div class="mobile-menu__top">
+    <span class="header__logo">{{ shop.name }}</span>
+    <button type="button" data-menu-close aria-label="Menü schließen">{% render 'icon', icon: 'close' %}</button>
+  </div>
+  <ul class="mobile-menu__list">
+    {%- for link in menu.links -%}
+      <li><a href="{{ link.url }}">{{ link.title }}</a></li>
+    {%- endfor -%}
+  </ul>
+  <div class="mobile-menu__foot mono">
+    {%- if shop.customer_accounts_enabled -%}<a href="{{ routes.account_url }}">Konto</a>{%- endif -%}
+    <a href="{{ routes.search_url }}">Suche</a>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Header",
+  "class": "section-header",
+  "settings": [
+    { "type": "link_list", "id": "menu", "label": "Menü", "default": "main-menu" }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,57 @@
+<section class="section">
+  <div class="wrap">
+    <div class="head">
+      <h2 class="h2 head__title">{{ section.settings.heading }}</h2>
+      {%- if section.settings.text != blank -%}<p class="mono muted" style="max-width:36ch">{{ section.settings.text }}</p>{%- endif -%}
+    </div>
+    <ul class="index">
+      {%- for block in section.blocks -%}
+        {%- assign c = block.settings.collection -%}
+        {%- if c != blank and c.products_count > 0 -%}
+          {%- assign first = c.products.first -%}
+          <li class="index__row" {{ block.shopify_attributes }}>
+            <span class="index__glyph">{% render 'glyph', type: block.settings.glyph %}</span>
+            <a class="index__name" href="{{ c.url }}">{{ block.settings.title | default: c.title }}<span class="visually-hidden"> ansehen</span></a>
+            <span class="index__desc mono muted">{{ block.settings.desc }}</span>
+            <span class="index__count mono">{{ c.products_count }} {% if c.products_count == 1 %}Kit{% else %}Kits{% endif %}</span>
+            {%- if first -%}<span class="index__preview" aria-hidden="true">{% render 'cover', product: first, sizes: '160px' %}</span>{%- endif -%}
+            <a href="{{ c.url }}" style="position:absolute;inset:0" tabindex="-1" aria-hidden="true"></a>
+          </li>
+        {%- endif -%}
+      {%- endfor -%}
+    </ul>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Kategorie-Index",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Headline", "default": "Nach Typ" },
+    { "type": "text", "id": "text", "label": "Text", "default": "Jeder Typ hat seine Form. Wie im Studio: erst Drums, dann alles andere." }
+  ],
+  "blocks": [
+    {
+      "type": "row",
+      "name": "Kategorie",
+      "settings": [
+        { "type": "collection", "id": "collection", "label": "Kollektion" },
+        { "type": "text", "id": "title", "label": "Titel (optional)" },
+        { "type": "text", "id": "desc", "label": "Kurzbeschreibung" },
+        { "type": "select", "id": "glyph", "label": "Form", "default": "Drum Kit", "options": [
+          { "value": "Drum Kit", "label": "Drum Kit · Step-Raster" },
+          { "value": "One Shot Kit", "label": "One Shot · Punkt" },
+          { "value": "Loop Kit", "label": "Loop · Kreis" },
+          { "value": "MIDI Kit", "label": "MIDI · Piano-Roll" },
+          { "value": "Phrase Kit", "label": "Phrase · Welle" },
+          { "value": "Preset Bank", "label": "Preset · Regler" },
+          { "value": "Suite", "label": "Suite · Schichten" },
+          { "value": "Session", "label": "Session · Überlagerung" },
+          { "value": "Sample Pack", "label": "Sample Pack · Quadranten" }
+        ] }
+      ]
+    }
+  ],
+  "presets": [ { "name": "Kategorie-Index" } ]
+}
+{% endschema %}

@@ -1,0 +1,28 @@
+{%- comment -%}
+  Usage: {% render 'play-button', product: product, src: url, label: 'Demo', class: 'play' %}
+{%- endcomment -%}
+{%- liquid
+  if src == blank
+    assign src = product.metafields.specs.demo.value.url
+  endif
+  if product.featured_media
+    assign cover_src = product.featured_media.preview_image | image_url: width: 120
+  else
+    assign cover_src = ''
+  endif
+-%}
+{%- if src != blank -%}
+<button
+  type="button"
+  class="{{ class | default: 'play' }}"
+  data-play
+  data-src="{{ src }}"
+  data-title="{{ label | default: product.title | escape }}"
+  data-sub="{% if label %}{{ product.title | escape }}{% else %}{{ product.type | escape }}{% endif %}"
+  data-cover="{{ cover_src }}"
+  data-url="{{ product.url }}"
+  aria-label="{{ label | default: product.title | escape }} anhören"
+>
+  {%- render 'icon', icon: 'play' -%}{%- render 'icon', icon: 'pause' -%}
+</button>
+{%- endif -%}

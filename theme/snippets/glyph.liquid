@@ -1,0 +1,32 @@
+{%- comment -%}
+  Generatives Prinzip: Jeder Produkttyp hat eine Form.
+  Usage: {% render 'glyph', type: product.type %}
+{%- endcomment -%}
+{%- assign t = type | downcase -%}
+<svg viewBox="0 0 100 100" aria-hidden="true" focusable="false" fill="currentColor">
+{%- if t contains 'drum' -%}
+  {%- assign hits = '1,0,0,1,0,0,1,0,1,0,1,0,0,1,0,1' | split: ',' -%}
+  {%- for h in hits -%}
+    {%- assign i = forloop.index0 -%}
+    {%- assign col = i | modulo: 4 -%}
+    {%- assign row = i | divided_by: 4 | floor -%}
+    <rect x="{{ col | times: 26 }}" y="{{ row | times: 26 }}" width="22" height="22"{% if h == '0' %} fill="none" stroke="currentColor" stroke-width="1.5"{% endif %}/>
+  {%- endfor -%}
+{%- elsif t contains 'one shot' or t contains 'oneshot' -%}
+  <circle cx="50" cy="50" r="22"/>
+{%- elsif t contains 'loop' -%}
+  <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="12"/>
+{%- elsif t contains 'midi' -%}
+  <rect x="0" y="8" width="34" height="10"/><rect x="38" y="26" width="22" height="10"/><rect x="18" y="44" width="46" height="10"/><rect x="66" y="62" width="34" height="10"/><rect x="4" y="80" width="28" height="10"/>
+{%- elsif t contains 'phrase' -%}
+  <path d="M0 50 C 10 10, 20 10, 25 50 S 40 90, 50 50 S 65 20, 75 50 S 90 70, 100 50" fill="none" stroke="currentColor" stroke-width="7"/>
+{%- elsif t contains 'preset' -%}
+  <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="50" cy="50" r="26"/><rect x="47" y="4" width="6" height="22"/>
+{%- elsif t contains 'suite' -%}
+  <rect x="0" y="6" width="100" height="22"/><rect x="0" y="39" width="100" height="22"/><rect x="0" y="72" width="100" height="22"/>
+{%- elsif t contains 'session' -%}
+  <circle cx="34" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="7"/><circle cx="66" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="7"/>
+{%- else -%}
+  <rect x="0" y="0" width="48" height="48"/><rect x="52" y="52" width="48" height="48"/><rect x="52" y="0" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2"/><rect x="0" y="52" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2"/>
+{%- endif -%}
+</svg>

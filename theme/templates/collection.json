@@ -1,0 +1,14 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-collection",
+      "settings": {
+        "filter_menu": "shop-menu",
+        "per_page": 48
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

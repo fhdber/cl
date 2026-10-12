@@ -1,0 +1,20 @@
+<div class="wrap">
+  <header class="coll-head"><h1 class="h1">Kategorien</h1></header>
+  <ul class="index">
+    {%- for c in collections -%}
+      {%- if c.handle != 'frontpage' and c.products_count > 0 -%}
+        <li class="index__row">
+          <span class="index__glyph">{% render 'glyph', type: c.products.first.type %}</span>
+          <a class="index__name" href="{{ c.url }}">{{ c.title }}</a>
+          <span class="index__desc mono muted"></span>
+          <span class="index__count mono">{{ c.products_count }} Kits</span>
+          <a href="{{ c.url }}" style="position:absolute;inset:0" tabindex="-1" aria-hidden="true"></a>
+        </li>
+      {%- endif -%}
+    {%- endfor -%}
+  </ul>
+  <div style="height:clamp(56px,8vw,128px)"></div>
+</div>
+{% schema %}
+{ "name": "Kategorien" }
+{% endschema %}

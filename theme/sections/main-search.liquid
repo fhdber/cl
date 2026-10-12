@@ -1,0 +1,33 @@
+<div class="wrap">
+  <header class="coll-head">
+    <h1 class="h1">Suche</h1>
+    <form action="{{ routes.search_url }}" method="get" role="search" class="inline-form" style="max-width:640px">
+      <input type="hidden" name="type" value="product">
+      <label class="visually-hidden" for="q">Suchbegriff</label>
+      <input class="input" id="q" type="search" name="q" value="{{ search.terms | escape }}" placeholder="Kick, Trap, 140 BPM …" autofocus>
+      <button class="btn" type="submit">Suchen</button>
+    </form>
+  </header>
+  {%- if search.performed -%}
+    <p class="mono muted" style="margin-bottom:32px">{{ search.results_count }} Ergebnisse für „{{ search.terms | escape }}“</p>
+    {%- paginate search.results by 48 -%}
+      {%- if search.results_count > 0 -%}
+        <div class="grid grid--4">
+          {%- for item in search.results -%}
+            {%- if item.object_type == 'product' -%}
+              {% render 'product-card', product: item %}
+            {%- else -%}
+              <a href="{{ item.url }}" class="h3">{{ item.title }}</a>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+      {%- else -%}
+        <div class="empty"><p class="h3">Nichts gefunden.</p><a class="mono link-arrow" href="{{ routes.all_products_collection_url }}">Alle Kits</a></div>
+      {%- endif -%}
+    {%- endpaginate -%}
+  {%- endif -%}
+  <div style="height:clamp(56px,8vw,128px)"></div>
+</div>
+{% schema %}
+{ "name": "Suche" }
+{% endschema %}

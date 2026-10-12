@@ -1,0 +1,34 @@
+{%- liquid
+  assign font_body_bold = settings.font_body | font_modify: 'weight', 'bold'
+  assign font_body_medium = settings.font_body | font_modify: 'weight', '500'
+-%}
+<style>
+  {{ settings.font_body | font_face: font_display: 'swap' }}
+  {%- if font_body_bold %}{{ font_body_bold | font_face: font_display: 'swap' }}{% endif -%}
+  {%- if font_body_medium %}{{ font_body_medium | font_face: font_display: 'swap' }}{% endif -%}
+  {{ settings.font_mono | font_face: font_display: 'swap' }}
+
+  :root {
+    --bg: {{ settings.color_bg }};
+    --ink: {{ settings.color_ink }};
+    --line: {{ settings.color_line }};
+    --accent: {{ settings.color_accent }};
+    --footer-bg: {{ settings.color_footer_bg }};
+    --footer-ink: {{ settings.color_footer_ink }};
+    --muted: color-mix(in srgb, var(--ink) 58%, var(--bg));
+    --surface: color-mix(in srgb, var(--ink) 5%, var(--bg));
+
+    --font-sans: {{ settings.font_body.family }}, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-sans-weight: {{ settings.font_body.weight }};
+    --font-sans-bold: {% if font_body_medium %}500{% else %}{{ font_body_bold.weight | default: 700 }}{% endif %};
+    --font-mono: {{ settings.font_mono.family }}, ui-monospace, "SFMono-Regular", Menlo, monospace;
+    --heading-scale: {{ settings.heading_scale | divided_by: 100.0 }};
+
+    --cover-1: {{ settings.cover_1 }};
+    --cover-2: {{ settings.cover_2 }};
+    --cover-3: {{ settings.cover_3 }};
+    --cover-4: {{ settings.cover_4 }};
+    --cover-5: {{ settings.cover_5 }};
+    --cover-6: {{ settings.cover_6 }};
+  }
+</style>

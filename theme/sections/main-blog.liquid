@@ -1,0 +1,19 @@
+<div class="wrap">
+  <header class="coll-head"><h1 class="h1">{{ blog.title }}</h1></header>
+  {%- paginate blog.articles by 12 -%}
+    <ul style="border-top:1px solid var(--ink)">
+      {%- for article in blog.articles -%}
+        <li style="border-bottom:1px solid var(--line)">
+          <a href="{{ article.url }}" style="display:grid;gap:8px;padding-block:24px">
+            <span class="mono muted">{{ article.published_at | date: '%d.%m.%Y' }}</span>
+            <span class="h3">{{ article.title }}</span>
+          </a>
+        </li>
+      {%- endfor -%}
+    </ul>
+  {%- endpaginate -%}
+  <div style="height:clamp(56px,8vw,128px)"></div>
+</div>
+{% schema %}
+{ "name": "Blog" }
+{% endschema %}

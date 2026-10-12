@@ -1,0 +1,67 @@
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__grid">
+      <div class="footer__lead">
+        <p class="h3">{{ section.settings.heading }}</p>
+        {%- form 'customer', class: 'inline-form', id: 'footer-newsletter' -%}
+          <input type="hidden" name="contact[tags]" value="newsletter">
+          <label class="visually-hidden" for="footer-email">E-Mail</label>
+          <input class="input" id="footer-email" type="email" name="contact[email]" placeholder="E-Mail-Adresse" required autocomplete="email">
+          <button class="btn" type="submit">Eintragen</button>
+          {%- if form.posted_successfully? -%}<p class="mono" role="status">Danke. Du bist dabei.</p>{%- endif -%}
+          {%- if form.errors -%}<p class="mono" role="alert">{{ form.errors | default_errors }}</p>{%- endif -%}
+        {%- endform -%}
+      </div>
+      {%- for block in section.blocks -%}
+        <div class="footer__col" {{ block.shopify_attributes }}>
+          <h2 class="mono">{{ block.settings.title }}</h2>
+          <ul class="footer__col">
+            {%- for link in block.settings.menu.links -%}
+              <li><a href="{{ link.url }}">{{ link.title }}</a></li>
+            {%- endfor -%}
+          </ul>
+        </div>
+      {%- endfor -%}
+      {%- if settings.social_instagram != blank or settings.social_tiktok != blank or settings.social_youtube != blank or settings.social_spotify != blank or settings.social_website != blank -%}
+      <div class="footer__col">
+        <h2 class="mono">Folgen</h2>
+        <ul class="footer__col">
+          {%- if settings.social_instagram != blank -%}<li><a href="{{ settings.social_instagram }}" target="_blank" rel="noopener">Instagram</a></li>{%- endif -%}
+          {%- if settings.social_tiktok != blank -%}<li><a href="{{ settings.social_tiktok }}" target="_blank" rel="noopener">TikTok</a></li>{%- endif -%}
+          {%- if settings.social_youtube != blank -%}<li><a href="{{ settings.social_youtube }}" target="_blank" rel="noopener">YouTube</a></li>{%- endif -%}
+          {%- if settings.social_spotify != blank -%}<li><a href="{{ settings.social_spotify }}" target="_blank" rel="noopener">Spotify</a></li>{%- endif -%}
+          {%- if settings.social_website != blank -%}<li><a href="{{ settings.social_website }}" target="_blank" rel="noopener">{{ settings.social_website | remove: 'https://' | remove: 'www.' }}</a></li>{%- endif -%}
+        </ul>
+      </div>
+      {%- endif -%}
+    </div>
+
+    <div class="footer__legal mono">
+      <span>© {{ 'now' | date: '%Y' }} {{ shop.name }}</span>
+      <span>{{ section.settings.legal_note }}</span>
+    </div>
+  </div>
+  <div class="footer__mark" aria-hidden="true">{{ section.settings.wordmark | default: shop.name }}</div>
+</footer>
+
+{% schema %}
+{
+  "name": "Footer",
+  "max_blocks": 3,
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Newsletter-Headline", "default": "Neue Kits zuerst. Ein Free Pack zur Begrüßung." },
+    { "type": "text", "id": "legal_note", "label": "Hinweis", "default": "Alle Sounds 100 % royalty-free" },
+    { "type": "text", "id": "wordmark", "label": "Wortmarke", "default": "Contrabeatz" }
+  ],
+  "blocks": [
+    {
+      "type": "menu",
+      "name": "Menü",
+      "settings": [
+        { "type": "text", "id": "title", "label": "Titel", "default": "Shop" },
+        { "type": "link_list", "id": "menu", "label": "Menü", "default": "footer" }
+      ]
+    }
+  ]
+}
+{% endschema %}

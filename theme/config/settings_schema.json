@@ -1,0 +1,75 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "CONTRABEATZ",
+    "theme_version": "1.0.0",
+    "theme_author": "CONTRABEATZ",
+    "theme_documentation_url": "https://contrabeatz.shop",
+    "theme_support_url": "https://contrabeatz.shop/pages/contact"
+  },
+  {
+    "name": "Marke",
+    "settings": [
+      { "type": "image_picker", "id": "logo", "label": "Logo (optional)", "info": "Ohne Logo wird der Shopname als Wortmarke gesetzt." },
+      { "type": "range", "id": "logo_width", "label": "Logobreite", "min": 60, "max": 260, "step": 10, "unit": "px", "default": 140 },
+      { "type": "image_picker", "id": "favicon", "label": "Favicon", "info": "Quadratisch, mind. 64 × 64 px" },
+      { "type": "image_picker", "id": "share_image", "label": "Social-Sharing-Bild", "info": "1200 × 630 px" }
+    ]
+  },
+  {
+    "name": "Farben",
+    "settings": [
+      { "type": "color", "id": "color_bg", "label": "Hintergrund", "default": "#F4F4F2" },
+      { "type": "color", "id": "color_ink", "label": "Text", "default": "#0B0B0B" },
+      { "type": "color", "id": "color_line", "label": "Linien", "default": "#D6D6D2" },
+      { "type": "color", "id": "color_accent", "label": "Signalfarbe", "info": "Nur für Play-Status, Sale und Fokus. Sparsam.", "default": "#FF3D00" },
+      { "type": "color", "id": "color_footer_bg", "label": "Footer Hintergrund", "default": "#0B0B0B" },
+      { "type": "color", "id": "color_footer_ink", "label": "Footer Text", "default": "#F4F4F2" }
+    ]
+  },
+  {
+    "name": "Typografie",
+    "settings": [
+      { "type": "font_picker", "id": "font_body", "label": "Grotesk (Headlines + Text)", "default": "inter_n4" },
+      { "type": "font_picker", "id": "font_mono", "label": "Mono (Meta-Infos: BPM, Key, Samples)", "default": "ibm_plex_mono_n4" },
+      { "type": "range", "id": "heading_scale", "label": "Headline-Größe", "min": 80, "max": 130, "step": 5, "unit": "%", "default": 100 }
+    ]
+  },
+  {
+    "name": "Cover-System",
+    "settings": [
+      { "type": "paragraph", "content": "Produkte ohne Bild bekommen automatisch ein typografisches Cover. Die Form ergibt sich aus dem Produkttyp (Drum Kit = Step-Raster, One Shot = Punkt, Loop = Kreis, MIDI = Piano-Roll …), die Farbe rotiert durch diese sechs Töne. Sobald du ein Produktbild hochlädst, ersetzt es das Cover." },
+      { "type": "color", "id": "cover_1", "label": "Cover-Farbe 1", "default": "#0B0B0B" },
+      { "type": "color", "id": "cover_2", "label": "Cover-Farbe 2", "default": "#FF3D00" },
+      { "type": "color", "id": "cover_3", "label": "Cover-Farbe 3", "default": "#D9D9D4" },
+      { "type": "color", "id": "cover_4", "label": "Cover-Farbe 4", "default": "#2B3BFF" },
+      { "type": "color", "id": "cover_5", "label": "Cover-Farbe 5", "default": "#C8F031" },
+      { "type": "color", "id": "cover_6", "label": "Cover-Farbe 6", "default": "#8E8E88" },
+      { "type": "select", "id": "card_meta", "label": "Meta-Zeile unter Produktkarten", "default": "type_count", "options": [
+        { "value": "type_count", "label": "Typ · Anzahl Samples" },
+        { "value": "type_bpm", "label": "Typ · BPM" },
+        { "value": "type", "label": "Nur Typ" }
+      ] }
+    ]
+  },
+  {
+    "name": "Warenkorb",
+    "settings": [
+      { "type": "select", "id": "cart_type", "label": "Warenkorb-Typ", "default": "drawer", "options": [
+        { "value": "drawer", "label": "Seitenleiste" },
+        { "value": "page", "label": "Seite" }
+      ] },
+      { "type": "text", "id": "cart_note_text", "label": "Hinweis im Warenkorb", "default": "Digitaler Download. Der Link kommt direkt nach dem Kauf per Mail." }
+    ]
+  },
+  {
+    "name": "Social Media",
+    "settings": [
+      { "type": "url", "id": "social_instagram", "label": "Instagram" },
+      { "type": "url", "id": "social_tiktok", "label": "TikTok" },
+      { "type": "url", "id": "social_youtube", "label": "YouTube" },
+      { "type": "url", "id": "social_spotify", "label": "Spotify" },
+      { "type": "url", "id": "social_website", "label": "Website", "info": "z. B. https://contrabeatz.de" }
+    ]
+  }
+]

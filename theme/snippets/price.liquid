@@ -1,0 +1,11 @@
+{%- liquid
+  assign target = variant | default: product.selected_or_first_available_variant
+  assign p = target.price
+  assign cap = target.compare_at_price
+-%}
+{%- if p == 0 -%}
+  <span>Kostenlos</span>
+{%- else -%}
+  <span>{{ p | money }}</span>
+  {%- if cap > p %}<s>{{ cap | money }}</s>{% endif -%}
+{%- endif -%}

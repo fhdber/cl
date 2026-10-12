@@ -1,0 +1,23 @@
+{%- layout none -%}
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Gutschein – {{ shop.name }}</title>
+    {% render 'theme-styles' %}
+    {{ 'base.css' | asset_url | stylesheet_tag }}
+    {{ content_for_header }}
+  </head>
+  <body>
+    <main class="password">
+      <div class="password__inner">
+        <p class="mono muted">{{ shop.name }}</p>
+        <h1 class="h1">{{ gift_card.initial_value | money }} Gutschein</h1>
+        <p class="mono">Code: <strong>{{ gift_card.code | format_code }}</strong></p>
+        <p class="mono muted">Restguthaben: {{ gift_card.balance | money }}</p>
+        <a class="btn" href="{{ shop.url }}">Zum Shop</a>
+      </div>
+    </main>
+  </body>
+</html>
