@@ -6,8 +6,8 @@
 :root {
   --ease: cubic-bezier(.16, 1, .3, 1); --hdr: 79px;
   /* Gemeinsame Höhe der CONTRA-Wortmarke (viewBox 1340 × 585) für Hero und Outro */
-  /* wie contrabeatz.de: Breite 75vw (Buchstaben ≈ 67vw), gedeckelt über Höhe und Seitenrand */
-  --contra-h: min(calc(75vw * .4366), 72vh, calc((100vw - 2 * var(--edge)) * .4366));
+  /* exakt wie contrabeatz.de (Layout-Datei: width: min(74vw, 120vh)), viewBox 1340 × 585 */
+  --contra-h: min(calc(74vw * .4366), calc(120vh * .4366), calc((100vw - 2 * var(--edge)) * .4366));
   --tag-x: 321px; --tag-y: 460px; --tag-s: 2.75;
 }
 @media (max-width: 900px) { :root { --edge: 20px; --hdr: 65px; --sec-pad: 80px; } }
