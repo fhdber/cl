@@ -11,6 +11,13 @@
     "name": "Marke",
     "settings": [
       {
+        "type": "text",
+        "id": "site_title",
+        "label": "Seitentitel im Browser-Tab",
+        "default": "CONTRABEATZ Shop",
+        "info": "Startseite zeigt genau diesen Titel, Unterseiten z. B. „Drum Kits – CONTRABEATZ Shop“. Der Shop-Name für Mails und Checkout bleibt unverändert."
+      },
+      {
         "type": "image_picker",
         "id": "logo",
         "label": "Logo (optional)",

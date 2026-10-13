@@ -17,11 +17,22 @@
       <link rel="apple-touch-icon" sizes="180x180" href="{{ 'apple-touch-icon.png' | asset_url }}">
     {%- endif -%}
 
+    {%- liquid
+      assign brand = settings.site_title | default: shop.name
+      if request.page_type == 'index' or page_title == shop.name
+        assign doc_title = brand
+      elsif page_title contains brand
+        assign doc_title = page_title
+      elsif page_title contains shop.name
+        assign doc_title = page_title | replace: shop.name, brand
+      else
+        assign doc_title = page_title | append: ' – ' | append: brand
+      endif
+    -%}
     <title>
-      {{ page_title }}
-      {%- if current_tags %} &ndash; {{ current_tags | join: ', ' }}{% endif -%}
-      {%- if current_page != 1 %} &ndash; Seite {{ current_page }}{% endif -%}
-      {%- unless page_title contains shop.name %} &ndash; {{ shop.name }}{% endunless -%}
+      {{- doc_title -}}
+      {%- if current_tags %} – {{ current_tags | join: ', ' }}{% endif -%}
+      {%- if current_page > 1 %} – Seite {{ current_page }}{% endif -%}
     </title>
     {%- if page_description -%}
       <meta name="description" content="{{ page_description | escape }}">
