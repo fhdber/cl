@@ -20,7 +20,8 @@
         "limit": 3,
         "columns": 3,
         "link_label": "Alle ansehen ↳"
-      }
+      },
+      "disabled": true
     },
     "formats": {
       "type": "format-tiles",
@@ -105,7 +106,8 @@
         "heading": "",
         "link_label": "",
         "link": ""
-      }
+      },
+      "disabled": true
     },
     "beats": {
       "type": "featured-collection",
@@ -174,12 +176,13 @@
         "s3",
         "s4"
       ],
-      "settings": {}
+      "settings": {},
+      "disabled": true
     },
     "kits": {
       "type": "coverflow",
       "settings": {
-        "heading": "Kits durchblättern",
+        "heading": "Neue Kits",
         "collection": "sample-packs",
         "limit": 9,
         "start": "middle",
@@ -193,13 +196,13 @@
   },
   "order": [
     "hero",
-    "drops",
-    "formats",
     "kits",
+    "formats",
     "suite",
-    "editorial",
     "beats",
     "statement",
+    "drops",
+    "editorial",
     "service"
   ]
 }
