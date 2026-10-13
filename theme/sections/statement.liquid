@@ -2,7 +2,13 @@
   <div class="statement">
     {%- if section.settings.label != blank -%}<span class="label">{{ section.settings.label }}</span>{%- endif -%}
     <h2>{{ section.settings.heading }}</h2>
-    {%- if section.settings.link_label != blank -%}<a class="link" href="{{ section.settings.link }}">{{ section.settings.link_label }}</a>{%- endif -%}
+    {%- if section.settings.link_label != blank or section.settings.link2_label != blank or section.settings.link3_label != blank -%}
+      <div class="statement__links">
+        {%- if section.settings.link_label != blank -%}<a class="link" href="{{ section.settings.link }}">{{ section.settings.link_label }}</a>{%- endif -%}
+        {%- if section.settings.link2_label != blank -%}<a class="link" href="{{ section.settings.link2 }}" target="_blank" rel="noopener">{{ section.settings.link2_label }}</a>{%- endif -%}
+        {%- if section.settings.link3_label != blank -%}<a class="link" href="{{ section.settings.link3 }}" target="_blank" rel="noopener">{{ section.settings.link3_label }}</a>{%- endif -%}
+      </div>
+    {%- endif -%}
   </div>
 </section>
 {% schema %}
@@ -12,7 +18,11 @@
     { "type": "text", "id": "label", "label": "Label", "default": "Herkunft" },
     { "type": "textarea", "id": "heading", "label": "Statement", "default": "Aufgenommen und gemischt im LUX Studio in Berlin-Friedrichshain. Sounds aus echten Produktionen." },
     { "type": "text", "id": "link_label", "label": "Link-Text", "default": "contrabeatz.de ↳" },
-    { "type": "url", "id": "link", "label": "Link" }
+    { "type": "url", "id": "link", "label": "Link" },
+    { "type": "text", "id": "link2_label", "label": "Link 2 Text", "default": "LUX Studio ↳" },
+    { "type": "url", "id": "link2", "label": "Link 2" },
+    { "type": "text", "id": "link3_label", "label": "Link 3 Text", "default": "@luxstudio030 ↳" },
+    { "type": "url", "id": "link3", "label": "Link 3" }
   ],
   "presets": [ { "name": "Statement" } ]
 }

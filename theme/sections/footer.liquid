@@ -26,17 +26,28 @@
   {%- endif -%}
 
   <div class="footer__bar">
-    <nav aria-label="{{ 'general.legal' | t }}">
-      {%- for link in section.settings.legal_menu.links -%}<a href="{{ link.url }}">{{ link.title }}</a>{%- endfor -%}
-    </nav>
-    <nav aria-label="Social">
-      {%- if settings.social_tiktok != blank -%}<a href="{{ settings.social_tiktok }}" target="_blank" rel="noopener">TikTok</a>{%- endif -%}
-      {%- if settings.social_instagram != blank -%}<a href="{{ settings.social_instagram }}" target="_blank" rel="noopener">Instagram</a>{%- endif -%}
-      {%- if settings.social_youtube != blank -%}<a href="{{ settings.social_youtube }}" target="_blank" rel="noopener">YouTube</a>{%- endif -%}
-      {%- if settings.social_spotify != blank -%}<a href="{{ settings.social_spotify }}" target="_blank" rel="noopener">Spotify</a>{%- endif -%}
-    </nav>
-    {%- if section.settings.show_localization -%}{% render 'localization', style: 'full', form_id: 'loc-footer' %}{%- endif -%}
-    <span class="footer__copy">© {{ shop.name }} {{ 'now' | date: '%Y' }}</span>
+    <div class="footer__row">
+      <nav aria-label="{{ 'general.legal' | t }}">
+        {%- for link in section.settings.legal_menu.links -%}<a href="{{ link.url }}">{{ link.title }}</a>{%- endfor -%}
+      </nav>
+      {%- if section.settings.show_localization -%}{% render 'localization', style: 'full', form_id: 'loc-footer' %}{%- endif -%}
+    </div>
+    <div class="footer__row">
+      <nav aria-label="Social">
+        {%- if settings.social_instagram != blank -%}<a href="{{ settings.social_instagram }}" target="_blank" rel="noopener">Instagram</a>{%- endif -%}
+        {%- if settings.social_tiktok != blank -%}<a href="{{ settings.social_tiktok }}" target="_blank" rel="noopener">TikTok</a>{%- endif -%}
+        {%- if settings.social_youtube != blank -%}<a href="{{ settings.social_youtube }}" target="_blank" rel="noopener">YouTube</a>{%- endif -%}
+        {%- if settings.social_spotify != blank -%}<a href="{{ settings.social_spotify }}" target="_blank" rel="noopener">Spotify</a>{%- endif -%}
+      </nav>
+      {%- if section.settings.studio_name != blank -%}
+        <nav class="footer__studio" aria-label="{{ section.settings.studio_label | default: section.settings.studio_name | escape }}">
+          {%- if section.settings.studio_label != blank -%}<span class="footer__studio-label">{{ section.settings.studio_label }}</span>{%- endif -%}
+          <a href="{{ section.settings.studio_url }}" target="_blank" rel="noopener">{{ section.settings.studio_name }}</a>
+          {%- if section.settings.studio_instagram != blank -%}<a href="{{ section.settings.studio_instagram }}" target="_blank" rel="noopener">{{ section.settings.studio_instagram_label | default: 'Instagram' }}</a>{%- endif -%}
+        </nav>
+      {%- endif -%}
+      <span class="footer__copy">© {{ shop.name }} {{ 'now' | date: '%Y' }}</span>
+    </div>
   </div>
 </footer>
 
@@ -46,6 +57,12 @@
   "settings": [
     { "type": "checkbox", "id": "animate", "label": "CONTRA fährt beim Scrollen von oben ein", "default": true },
     { "type": "link_list", "id": "legal_menu", "label": "Links in der Fußleiste", "default": "footer" },
+    { "type": "header", "content": "Studio" },
+    { "type": "text", "id": "studio_label", "label": "Label", "default": "Studio" },
+    { "type": "text", "id": "studio_name", "label": "Name", "info": "Leer = ausblenden.", "default": "LUX Studio" },
+    { "type": "url", "id": "studio_url", "label": "Website" },
+    { "type": "url", "id": "studio_instagram", "label": "Instagram" },
+    { "type": "text", "id": "studio_instagram_label", "label": "Instagram-Text", "default": "@luxstudio030" },
     { "type": "checkbox", "id": "show_localization", "label": "Sprache und Land/Währung zeigen", "default": true },
     { "type": "checkbox", "id": "newsletter", "label": "Newsletter zeigen", "default": false },
     { "type": "text", "id": "nl_heading", "label": "Newsletter-Text", "default": "Neue Drops zuerst." }

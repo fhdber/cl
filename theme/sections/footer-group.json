@@ -2,7 +2,18 @@
   "type": "footer",
   "name": "Footer",
   "sections": {
-    "footer": { "type": "footer", "settings": { "animate": true, "legal_menu": "footer", "newsletter": false } }
+    "footer": {
+      "type": "footer",
+      "settings": {
+        "animate": true,
+        "legal_menu": "footer",
+        "newsletter": false,
+        "studio_url": "https://www.lux-studio.berlin",
+        "studio_instagram": "https://www.instagram.com/luxstudio030"
+      }
+    }
   },
-  "order": ["footer"]
+  "order": [
+    "footer"
+  ]
 }

@@ -123,7 +123,9 @@
       "settings": {
         "label": "Herkunft",
         "link_label": "contrabeatz.de ↳",
-        "link": "https://contrabeatz.de"
+        "link": "https://contrabeatz.de",
+        "link2": "https://www.lux-studio.berlin",
+        "link3": "https://www.instagram.com/luxstudio030"
       }
     },
     "service": {
