@@ -2,6 +2,19 @@
   {%- if section.settings.heading != blank -%}
     <div class="head"><span class="label">{{ section.settings.heading }}</span></div>
   {%- endif -%}
+  {%- if section.settings.style == 'rows' -%}
+  <nav class="frows" aria-label="{{ section.settings.heading | escape }}">
+    {%- for block in section.blocks -%}
+      {%- assign c = block.settings.collection -%}
+      <a class="frow" href="{{ block.settings.link | default: c.url | default: '#' }}" {{ block.shopify_attributes }}>
+        {%- if section.settings.numbers -%}<span class="frow__n">{{ forloop.index | prepend: '0' | slice: -2, 2 }}</span>{%- endif -%}
+        <span class="frow__name">{{ block.settings.title | default: c.title }}</span>
+        {%- if section.settings.counts and c != blank -%}<span class="frow__count">{{ c.products_count }}</span>{%- endif -%}
+        <span class="frow__arrow" aria-hidden="true">↳</span>
+      </a>
+    {%- endfor -%}
+  </nav>
+  {%- else -%}
   <div class="tiles" style="--cols: {{ section.settings.columns }}">
     {%- for block in section.blocks -%}
       {%- assign c = block.settings.collection -%}
@@ -16,6 +29,7 @@
       </a>
     {%- endfor -%}
   </div>
+  {%- endif -%}
 </section>
 
 {% schema %}
@@ -23,6 +37,10 @@
   "name": "Format-Kacheln",
   "settings": [
     { "type": "text", "id": "heading", "label": "Label", "default": "Nach Format shoppen" },
+    { "type": "select", "id": "style", "label": "Darstellung", "default": "tiles", "options": [
+      { "value": "tiles", "label": "Große Kacheln" },
+      { "value": "rows", "label": "Schlanke Zeilen" }
+    ] },
     { "type": "range", "id": "columns", "label": "Spalten Desktop", "min": 2, "max": 4, "step": 1, "default": 2 },
     { "type": "checkbox", "id": "numbers", "label": "Nummern 01, 02 …", "default": true },
     { "type": "checkbox", "id": "counts", "label": "Anzahl Produkte zeigen", "default": false }

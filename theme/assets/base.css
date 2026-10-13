@@ -638,3 +638,20 @@ body.has-player { padding-bottom: 68px; }
   .cf__item { border-radius: 10px; }
 }
 @media (prefers-reduced-motion: reduce) { .cf__item { transition: none; } }
+
+/* ---------- Formate als schlanke Zeilen ---------- */
+.frows { display: grid; border-top: 1px solid var(--line-strong); }
+.frow { display: grid; grid-template-columns: 56px 1fr auto auto; align-items: center; gap: 24px; padding: 22px 0; border-bottom: 1px solid var(--line); transition: color .25s; }
+.frow__n { font-size: 11px; letter-spacing: .15em; color: var(--mute); }
+.frow__name { font-size: calc(clamp(26px, 3vw, 44px) * var(--heading-scale)); font-weight: 700; letter-spacing: -.02em; text-transform: uppercase; line-height: 1; }
+.frow__count { font-size: 11px; letter-spacing: .15em; color: var(--mute); }
+.frow__arrow { font-size: 18px; transition: transform .3s var(--ease); }
+.frow:hover { color: var(--accent); }
+.frow:hover .frow__arrow { transform: translateX(6px); }
+@media (max-width: 768px) { .frow { grid-template-columns: 36px 1fr auto; gap: 14px; padding: 18px 0; } .frow__count { display: none; } }
+
+/* ---------- Coverflow: Hinweis (Free Pack) ---------- */
+.cf__note { margin-top: 56px; padding-top: 28px; border-top: 1px solid var(--line); width: min(560px, calc(100% - 2 * var(--edge))); margin-inline: auto; text-align: center; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
+.cf__note a { color: inherit; transition: color .2s; }
+.cf__note a:hover { color: var(--accent); }
+.cf__dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-right: 9px; vertical-align: 1px; }

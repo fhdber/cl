@@ -61,6 +61,13 @@
       </div>
     {%- endfor -%}
   </div>
+
+  {%- if section.settings.note != blank -%}
+    <p class="cf__note wrap">
+      {%- if section.settings.note_link != blank -%}<a href="{{ section.settings.note_link }}"><span class="cf__dot" aria-hidden="true"></span>{{ section.settings.note }}</a>
+      {%- else -%}<span class="cf__dot" aria-hidden="true"></span>{{ section.settings.note }}{%- endif -%}
+    </p>
+  {%- endif -%}
 </section>
 
 {% schema %}
@@ -82,6 +89,8 @@
     { "type": "range", "id": "angle", "label": "Neigung der Seiten-Cover", "min": 0, "max": 60, "step": 5, "unit": "°", "default": 35 },
     { "type": "checkbox", "id": "show_price", "label": "Preis zeigen", "default": true },
     { "type": "text", "id": "link_label", "label": "Link zur Kollektion", "default": "Alle ansehen ↳" },
+    { "type": "text", "id": "note", "label": "Hinweis unter dem Coverflow", "info": "Z. B. für das Free Pack. Leer = ausblenden.", "default": "Free Pack: 20 One Shots kostenlos ↳" },
+    { "type": "url", "id": "note_link", "label": "Link des Hinweises" },
     { "type": "text", "id": "cta_label", "label": "Link unter den Specs", "default": "Zum Produkt ↳" }
   ],
   "presets": [ { "name": "Coverflow" } ]

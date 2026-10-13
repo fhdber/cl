@@ -61,7 +61,8 @@
         "heading": "Nach Format shoppen",
         "columns": 2,
         "numbers": true,
-        "counts": false
+        "counts": true,
+        "style": "rows"
       }
     },
     "suite": {
@@ -190,7 +191,9 @@
         "angle": 35,
         "show_price": true,
         "link_label": "Alle Kits ↳",
-        "cta_label": "Zum Kit ↳"
+        "cta_label": "Zum Kit ↳",
+        "note": "Free Pack: 20 One Shots kostenlos ↳",
+        "note_link": "shopify://collections/free-pack"
       }
     }
   },
