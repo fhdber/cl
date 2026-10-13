@@ -252,8 +252,8 @@
       // SHOP-Tag: eigene Ebene, steigt schneller als CONTRA und dreht sich leicht
       if (stageEl && tagK) {
         const p = Math.min(window.scrollY / window.innerHeight, 1.4);
-        stageEl.style.setProperty('--tag-py', `${(-170 * p * tagK).toFixed(1)}px`);
-        stageEl.style.setProperty('--tag-rot', `${(-5 * p * tagK).toFixed(2)}deg`);
+        stageEl.style.setProperty('--tag-py', `${(-60 * p * tagK).toFixed(1)}px`);
+        stageEl.style.setProperty('--tag-rot', `${(-1.5 * p * tagK).toFixed(2)}deg`);
       }
     };
     window.addEventListener('scroll', () => { if (!tick) { requestAnimationFrame(upd); tick = true; } }, { passive: true });
