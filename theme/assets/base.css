@@ -504,3 +504,56 @@ body.has-player { padding-bottom: 68px; }
   .footer__row { flex-direction: column; align-items: flex-start; gap: 16px; }
   .footer__row .loc, .footer__copy { margin-left: 0; }
 }
+
+/* ---------- Rechtliches / FAQ / Lizenz: ein Layout, eine Typo ----------
+   Titel  = --legal-h1   (alle Seiten gleich)
+   Zwischen = --legal-h2 (h2/h3 im Text, FAQ-Fragen, Kurz-gesagt-Titel)
+   Text   = --legal-body (Fließtext, Listen, Antworten) */
+.legal { --legal-h1: calc(clamp(36px, 4.2vw, 60px) * var(--heading-scale)); --legal-h2: 19px; --legal-body: 16px; --legal-lh: 1.7;
+  display: grid; grid-template-columns: minmax(180px, 1fr) minmax(0, 3fr); gap: 40px var(--gap); align-items: start; }
+.legal__nav { position: sticky; top: calc(var(--hdr) + 32px); padding-top: 6px; }
+.legal__nav ul { display: grid; gap: 14px; }
+.legal__nav a { display: inline-flex; align-items: center; gap: 9px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); transition: color .2s; }
+.legal__nav a:hover { color: var(--ink); }
+.legal__nav a[aria-current="page"] { color: var(--ink); }
+.legal__nav a[aria-current="page"]::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.legal__body { grid-column: 2; max-width: 760px; display: grid; gap: 40px; }
+.legal__head { display: grid; gap: 18px; }
+.legal__title, .legal .shopify-policy__title h1 { font-size: var(--legal-h1); line-height: 1.04; letter-spacing: -.025em; font-weight: 600; margin: 0; }
+
+/* Fließtext überall identisch */
+.legal .legal__rte, .legal .shopify-policy__body .rte, .legal .shopify-policy__body { max-width: 68ch; font-size: var(--legal-body); line-height: var(--legal-lh); color: var(--ink); }
+.legal .legal__rte > * + *, .legal .shopify-policy__body .rte > * + * { margin-top: 1em; }
+.legal .legal__rte h2, .legal .legal__rte h3, .legal .legal__rte h4,
+.legal .shopify-policy__body h2, .legal .shopify-policy__body h3, .legal .shopify-policy__body h4,
+.legal__sub, .legal__q summary, .legal__fact h3 { font-size: var(--legal-h2); line-height: 1.35; letter-spacing: -.01em; font-weight: 600; }
+.legal .legal__rte h2, .legal .legal__rte h3, .legal .shopify-policy__body h2, .legal .shopify-policy__body h3 { margin-top: 2em; }
+.legal .legal__rte > :first-child, .legal .shopify-policy__body .rte > :first-child { margin-top: 0; }
+.legal .legal__rte strong, .legal .shopify-policy__body strong { font-weight: 600; }
+
+/* Blöcke: FAQ + Kurz gesagt */
+.legal__blocks { display: grid; border-top: 1px solid var(--line-strong); }
+.legal__q, .legal__fact { border-bottom: 1px solid var(--line); }
+.legal__q summary { list-style: none; display: flex; justify-content: space-between; gap: 24px; align-items: baseline; padding: 22px 0; cursor: pointer; }
+.legal__q summary::-webkit-details-marker { display: none; }
+.legal__q summary::after { content: "+"; font-weight: 300; font-size: 22px; line-height: 1; transition: transform .3s var(--ease); }
+.legal__q[open] summary::after { transform: rotate(45deg); }
+.legal__q .legal__rte { padding-bottom: 24px; }
+.legal__fact { padding: 22px 0; display: grid; gap: 8px; }
+.legal__sub { margin-bottom: -16px; }
+
+/* Shopify-Richtlinien (Datenschutz) in denselben Rahmen */
+.legal--policy .shopify-policy__container { max-width: none; margin: 0; padding: 0; display: grid; gap: 40px; }
+.legal--policy .shopify-policy__title { text-align: left; }
+
+/* Shopify verschachtelt den Richtlinientext: Abstände für alle Ebenen */
+.legal .shopify-policy__body :is(p, ul, ol, div) + :is(p, ul, ol, div) { margin-top: 1em; }
+.legal .shopify-policy__body :is(h2, h3) { margin-top: 2em; margin-bottom: .6em; }
+.legal .shopify-policy__body li + li, .legal .legal__rte li + li { margin-top: .5em; }
+@media (max-width: 820px) {
+  .legal { grid-template-columns: 1fr; gap: 32px; }
+  .legal__body { grid-column: 1; }
+  .legal__nav { position: static; padding: 0 0 18px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+  .legal__nav::-webkit-scrollbar { display: none; }
+  .legal__nav ul { display: flex; gap: 22px; white-space: nowrap; }
+}

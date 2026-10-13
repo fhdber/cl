@@ -1,0 +1,25 @@
+{%- comment -%}
+  Seitennavigation für Rechtliches, FAQ und Lizenz.
+  menu: link_list (Standard: Footer-Menü)
+{%- endcomment -%}
+{%- liquid
+  assign nav_menu = menu
+  if nav_menu.links == blank
+    assign nav_menu = linklists.footer
+  endif
+-%}
+{%- if nav_menu.links.size > 0 -%}
+  <nav class="legal__nav" aria-label="{{ 'general.legal' | t }}">
+    <ul>
+      {%- for link in nav_menu.links -%}
+        {%- liquid
+          assign is_current = false
+          if link.current or link.active or request.path == link.url
+            assign is_current = true
+          endif
+        -%}
+        <li><a href="{{ link.url }}"{% if is_current %} aria-current="page"{% endif %}>{{ link.title }}</a></li>
+      {%- endfor -%}
+    </ul>
+  </nav>
+{%- endif -%}

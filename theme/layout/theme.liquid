@@ -53,7 +53,17 @@
     {% sections 'header-group' %}
 
     <main id="main" class="main" role="main">
-      {{ content_for_layout }}
+      {%- if request.page_type == 'policy' -%}
+        <div class="wrap sec legal legal--policy">
+          {% render 'legal-nav' %}
+          <article class="legal__body">
+            <header class="legal__head"><span class="label">{{ 'general.legal' | t }}</span></header>
+            {{ content_for_layout }}
+          </article>
+        </div>
+      {%- else -%}
+        {{ content_for_layout }}
+      {%- endif -%}
     </main>
 
     {% sections 'footer-group' %}

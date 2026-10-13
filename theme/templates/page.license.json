@@ -1,11 +1,7 @@
 {
   "sections": {
     "main": {
-      "type": "main-page",
-      "settings": {}
-    },
-    "facts": {
-      "type": "facts",
+      "type": "main-legal",
       "blocks": {
         "a": {
           "type": "fact",
@@ -35,7 +31,8 @@
         "c"
       ],
       "settings": {
-        "heading": "Kurz gesagt"
+        "label": "Nutzung",
+        "blocks_heading": "Kurz gesagt"
       }
     },
     "beats": {
@@ -114,7 +111,6 @@
   },
   "order": [
     "main",
-    "facts",
     "beats"
   ]
 }

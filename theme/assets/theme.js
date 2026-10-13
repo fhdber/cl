@@ -335,6 +335,10 @@
     box.replaceChildren(f);
   }));
 
+  // Rechtliches mobil: aktive Seite in der Navigation sichtbar machen
+  const legalActive = $('.legal__nav [aria-current="page"]');
+  if (legalActive) { const nav = legalActive.closest('.legal__nav'); nav.scrollLeft = legalActive.offsetLeft - 20; }
+
   // Sprache / Land: Auswahl schickt das Formular sofort ab
   $$('[data-autosubmit]').forEach((sel) => sel.addEventListener('change', () => sel.form && sel.form.submit()));
 

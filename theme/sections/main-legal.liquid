@@ -1,0 +1,55 @@
+{%- comment -%}
+  Einheitliches Layout für Impressum, AGB, Widerruf, Lizenz, FAQ (und Datenschutz via Layout).
+  Links: Navigation aus dem Footer-Menü. Rechts: Label, Titel, Text, optionale Blöcke.
+{%- endcomment -%}
+<div class="wrap sec legal">
+  {% render 'legal-nav', menu: section.settings.menu %}
+  <article class="legal__body">
+    <header class="legal__head">
+      {%- if section.settings.label != blank -%}<span class="label">{{ section.settings.label }}</span>{%- endif -%}
+      <h1 class="legal__title">{{ page.title }}</h1>
+    </header>
+    {%- if page.content != blank -%}<div class="rte legal__rte">{{ page.content }}</div>{%- endif -%}
+
+    {%- if section.blocks.size > 0 -%}
+      {%- if section.settings.blocks_heading != blank -%}<h2 class="legal__sub">{{ section.settings.blocks_heading }}</h2>{%- endif -%}
+      <div class="legal__blocks">
+        {%- for block in section.blocks -%}
+          {%- case block.type -%}
+            {%- when 'question' -%}
+              <details class="legal__q" {{ block.shopify_attributes }}>
+                <summary>{{ block.settings.q }}</summary>
+                <div class="rte legal__rte">{{ block.settings.a }}</div>
+              </details>
+            {%- when 'fact' -%}
+              <div class="legal__fact" {{ block.shopify_attributes }}>
+                <h3>{{ block.settings.title }}</h3>
+                <div class="rte legal__rte"><p>{{ block.settings.text }}</p></div>
+              </div>
+          {%- endcase -%}
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+  </article>
+</div>
+
+{% schema %}
+{
+  "name": "Seite (Rechtliches)",
+  "settings": [
+    { "type": "text", "id": "label", "label": "Label", "default": "Rechtliches" },
+    { "type": "link_list", "id": "menu", "label": "Navigation links", "default": "footer" },
+    { "type": "text", "id": "blocks_heading", "label": "Überschrift über den Blöcken" }
+  ],
+  "blocks": [
+    { "type": "question", "name": "Frage", "settings": [
+      { "type": "text", "id": "q", "label": "Frage", "default": "Darf ich die Sounds kommerziell nutzen?" },
+      { "type": "richtext", "id": "a", "label": "Antwort", "default": "<p>Ja. Alle Sounds sind royalty-free.</p>" }
+    ] },
+    { "type": "fact", "name": "Kurz gesagt", "settings": [
+      { "type": "text", "id": "title", "label": "Titel", "default": "Erlaubt" },
+      { "type": "textarea", "id": "text", "label": "Text", "default": "Eigene Songs, Beats, Remixe, Werbung, Social." }
+    ] }
+  ]
+}
+{% endschema %}
