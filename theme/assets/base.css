@@ -368,17 +368,13 @@ body.has-player { padding-bottom: 68px; }
 .footer__nl { display: flex; justify-content: flex-end; padding: 0 var(--edge) 56px; }
 .footer__nl-inner { display: grid; gap: 16px; justify-items: end; text-align: right; }
 .footer__nl .big { font-size: clamp(22px, 2.4vw, 32px); font-weight: 600; letter-spacing: -.01em; }
-.footer__bar { border-top: 1px solid var(--line-strong); min-height: 80px; padding: 22px var(--edge); display: grid; gap: 18px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: color-mix(in srgb, var(--ink) 85%, transparent); }
-.footer__bar nav { display: flex; gap: 24px; flex-wrap: wrap; }
+.footer__bar { border-top: 1px solid var(--line-strong); padding: 48px var(--edge) 28px; display: grid; gap: 56px; }
 .footer__bar a { position: relative; }
 .footer__bar a::after { content: ""; position: absolute; left: 0; bottom: -4px; width: 100%; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: left center; transition: transform .3s var(--ease); }
 .footer__bar a:hover::after { transform: scaleX(1); }
-.footer__copy, .footer__row .loc { margin-left: auto; }
 @media (max-width: 820px) {
   .footer__mark { padding: 80px 0 64px; }
   .footer__nl { justify-content: flex-start; } .footer__nl-inner { justify-items: start; text-align: left; }
-  .footer__bar { gap: 24px; }
-  .footer__copy { margin-left: 0; }
 }
 
 /* ---------- Misc ---------- */
@@ -492,14 +488,6 @@ body.has-player { padding-bottom: 68px; }
 
 /* ---------- Statement-Links / Studio im Footer ---------- */
 .statement__links { display: flex; flex-wrap: wrap; gap: 12px 32px; justify-content: center; }
-.footer__row { display: flex; align-items: center; gap: 16px 40px; flex-wrap: wrap; }
-.footer__studio { display: flex; gap: 16px; align-items: center; }
-.footer__studio-label::after { content: " ·"; }
-.footer__studio-label { color: var(--mute); }
-@media (max-width: 820px) {
-  .footer__row { flex-direction: column; align-items: flex-start; gap: 16px; }
-  .footer__row .loc, .footer__copy { margin-left: 0; }
-}
 
 /* ---------- Rechtliches / FAQ / Lizenz: ein Layout, eine Typo ----------
    Titel  = --legal-h1   (alle Seiten gleich)
@@ -655,3 +643,16 @@ body.has-player { padding-bottom: 68px; }
 .cf__note a { color: inherit; transition: color .2s; }
 .cf__note a:hover { color: var(--accent); }
 .cf__dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-right: 9px; vertical-align: 1px; }
+
+/* ---------- Footer in Spalten ---------- */
+.footer__cols { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px var(--gap); max-width: 1100px; }
+.footer__label { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); margin-bottom: 18px; }
+.footer__col ul { display: grid; gap: 10px; }
+.footer__col a { font-size: 14px; line-height: 1.4; }
+.footer__base { display: flex; justify-content: space-between; align-items: center; gap: 16px 32px; flex-wrap: wrap; padding-top: 22px; border-top: 1px solid var(--line); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+.footer__base .loc { color: var(--ink); }
+@media (max-width: 820px) {
+  .footer__bar { padding-top: 40px; gap: 40px; }
+  .footer__cols { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px 24px; }
+  .footer__base { flex-direction: column-reverse; align-items: flex-start; }
+}

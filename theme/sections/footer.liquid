@@ -25,28 +25,36 @@
     </div>
   {%- endif -%}
 
+  {%- liquid
+    assign legal_keys = 'policies,impressum,datenschutz,agb,widerruf,legal' | split: ','
+  -%}
   <div class="footer__bar">
-    <div class="footer__row">
-      <nav aria-label="{{ 'general.legal' | t }}">
-        {%- for link in section.settings.legal_menu.links -%}<a href="{{ link.url }}">{{ link.title }}</a>{%- endfor -%}
-      </nav>
-      {%- if section.settings.show_localization -%}{% render 'localization', style: 'full', form_id: 'loc-footer' %}{%- endif -%}
-    </div>
-    <div class="footer__row">
-      <nav aria-label="Social">
-        {%- if settings.social_instagram != blank -%}<a href="{{ settings.social_instagram }}" target="_blank" rel="noopener">Instagram</a>{%- endif -%}
-        {%- if settings.social_tiktok != blank -%}<a href="{{ settings.social_tiktok }}" target="_blank" rel="noopener">TikTok</a>{%- endif -%}
-        {%- if settings.social_youtube != blank -%}<a href="{{ settings.social_youtube }}" target="_blank" rel="noopener">YouTube</a>{%- endif -%}
-        {%- if settings.social_spotify != blank -%}<a href="{{ settings.social_spotify }}" target="_blank" rel="noopener">Spotify</a>{%- endif -%}
-      </nav>
+    <div class="footer__cols">
+      {%- capture info_links -%}{%- for link in section.settings.legal_menu.links -%}{%- assign is_legal = false -%}{%- for k in legal_keys -%}{%- if link.url contains k -%}{%- assign is_legal = true -%}{%- endif -%}{%- endfor -%}{%- unless is_legal -%}<li><a href="{{ link.url }}">{{ link.title }}</a></li>{%- endunless -%}{%- endfor -%}{%- endcapture -%}
+      {%- capture legal_links -%}{%- for link in section.settings.legal_menu.links -%}{%- assign is_legal = false -%}{%- for k in legal_keys -%}{%- if link.url contains k -%}{%- assign is_legal = true -%}{%- endif -%}{%- endfor -%}{%- if is_legal -%}<li><a href="{{ link.url }}">{{ link.title }}</a></li>{%- endif -%}{%- endfor -%}{%- endcapture -%}
+      {%- capture social_links -%}
+        {%- if settings.social_instagram != blank -%}<li><a href="{{ settings.social_instagram }}" target="_blank" rel="noopener">Instagram</a></li>{%- endif -%}
+        {%- if settings.social_tiktok != blank -%}<li><a href="{{ settings.social_tiktok }}" target="_blank" rel="noopener">TikTok</a></li>{%- endif -%}
+        {%- if settings.social_youtube != blank -%}<li><a href="{{ settings.social_youtube }}" target="_blank" rel="noopener">YouTube</a></li>{%- endif -%}
+        {%- if settings.social_spotify != blank -%}<li><a href="{{ settings.social_spotify }}" target="_blank" rel="noopener">Spotify</a></li>{%- endif -%}
+      {%- endcapture -%}
+
+      {%- if info_links != blank -%}<nav class="footer__col" aria-label="{{ section.settings.col_info | escape }}"><p class="footer__label">{{ section.settings.col_info }}</p><ul>{{ info_links }}</ul></nav>{%- endif -%}
+      {%- if legal_links != blank -%}<nav class="footer__col" aria-label="{{ section.settings.col_legal | escape }}"><p class="footer__label">{{ section.settings.col_legal }}</p><ul>{{ legal_links }}</ul></nav>{%- endif -%}
+      {%- if social_links != blank -%}<nav class="footer__col" aria-label="{{ section.settings.col_social | escape }}"><p class="footer__label">{{ section.settings.col_social }}</p><ul>{{ social_links }}</ul></nav>{%- endif -%}
       {%- if section.settings.studio_name != blank -%}
-        <nav class="footer__studio" aria-label="{{ section.settings.studio_label | default: section.settings.studio_name | escape }}">
-          {%- if section.settings.studio_label != blank -%}<span class="footer__studio-label">{{ section.settings.studio_label }}</span>{%- endif -%}
-          <a href="{{ section.settings.studio_url }}" target="_blank" rel="noopener">{{ section.settings.studio_name }}</a>
-          {%- if section.settings.studio_instagram != blank -%}<a href="{{ section.settings.studio_instagram }}" target="_blank" rel="noopener">{{ section.settings.studio_instagram_label | default: 'Instagram' }}</a>{%- endif -%}
+        <nav class="footer__col" aria-label="{{ section.settings.studio_label | default: section.settings.studio_name | escape }}">
+          <p class="footer__label">{{ section.settings.studio_label }}</p>
+          <ul>
+            <li><a href="{{ section.settings.studio_url }}" target="_blank" rel="noopener">{{ section.settings.studio_name }}</a></li>
+            {%- if section.settings.studio_instagram != blank -%}<li><a href="{{ section.settings.studio_instagram }}" target="_blank" rel="noopener">{{ section.settings.studio_instagram_label | default: 'Instagram' }}</a></li>{%- endif -%}
+          </ul>
         </nav>
       {%- endif -%}
+    </div>
+    <div class="footer__base">
       <span class="footer__copy">© {{ shop.name }} {{ 'now' | date: '%Y' }}</span>
+      {%- if section.settings.show_localization -%}{% render 'localization', style: 'full', form_id: 'loc-footer' %}{%- endif -%}
     </div>
   </div>
 </footer>
@@ -57,6 +65,11 @@
   "settings": [
     { "type": "checkbox", "id": "animate", "label": "CONTRA fährt beim Scrollen von oben ein", "default": true },
     { "type": "link_list", "id": "legal_menu", "label": "Links in der Fußleiste", "default": "footer" },
+    { "type": "header", "content": "Spalten" },
+    { "type": "paragraph", "content": "Links aus dem Footer-Menü werden automatisch sortiert: Impressum, Datenschutz, AGB und Widerruf landen unter „Rechtliches“, alles andere unter „Info“." },
+    { "type": "text", "id": "col_info", "label": "Label Info", "default": "Info" },
+    { "type": "text", "id": "col_legal", "label": "Label Rechtliches", "default": "Rechtliches" },
+    { "type": "text", "id": "col_social", "label": "Label Social", "default": "Social" },
     { "type": "header", "content": "Studio" },
     { "type": "text", "id": "studio_label", "label": "Label", "default": "Studio" },
     { "type": "text", "id": "studio_name", "label": "Name", "info": "Leer = ausblenden.", "default": "LUX Studio" },
