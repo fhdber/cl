@@ -29,7 +29,8 @@
       {
         "type": "image_picker",
         "id": "favicon",
-        "label": "Favicon"
+        "label": "Favicon",
+        "info": "Leer = CB-Emblem (passt sich hellem und dunklem Browser-Modus an). Eigenes Bild: quadratisch, mind. 180 × 180 px."
       },
       {
         "type": "image_picker",
