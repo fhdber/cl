@@ -1,0 +1,89 @@
+{%- comment -%}
+  Coverflow: Produkt-Cover im 3D-Bogen. Mitte groß, darunter Titel, Typ und Specs.
+  Steuerung: Pfeile, Tastatur (←/→), Ziehen/Wischen, Klick auf ein Cover. Klick auf das mittlere Cover öffnet das Produkt.
+{%- endcomment -%}
+{%- liquid
+  assign coll = section.settings.collection
+  if coll == blank
+    assign coll = collections.all
+  endif
+  assign items = coll.products | slice: 0, section.settings.limit
+  assign start = 0
+  if section.settings.start == 'middle'
+    assign start = items.size | minus: 1 | divided_by: 2 | floor
+  endif
+-%}
+<section class="cf cf--{{ section.settings.scheme }}" id="{{ section.id }}" style="--cf-angle: {{ section.settings.angle }}deg" data-coverflow data-start="{{ start }}" aria-roledescription="carousel" aria-label="{{ section.settings.heading | default: coll.title | escape }}">
+  {%- if section.settings.heading != blank -%}
+    <div class="cf__head wrap">
+      <span class="label">{{ section.settings.heading }}</span>
+      {%- if section.settings.link_label != blank -%}<a class="link" href="{{ coll.url }}">{{ section.settings.link_label }}</a>{%- endif -%}
+    </div>
+  {%- endif -%}
+
+  <div class="cf__stage" data-cf-stage tabindex="0">
+    {%- for product in items -%}
+      <a class="cf__item" href="{{ product.url }}" data-cf-item data-index="{{ forloop.index0 }}" aria-label="{{ product.title | escape }}" draggable="false">
+        {%- if forloop.index0 < 5 -%}
+          {% render 'cover', product: product, sizes: '(min-width: 990px) 380px, 62vw', loading: 'eager' %}
+        {%- else -%}
+          {% render 'cover', product: product, sizes: '(min-width: 990px) 380px, 62vw' %}
+        {%- endif -%}
+      </a>
+    {%- endfor -%}
+  </div>
+
+  <div class="cf__nav wrap">
+    <button type="button" class="cf__btn" data-cf-prev aria-label="{{ 'coverflow.prev' | t }}">←</button>
+    <span class="cf__count mono" aria-live="polite"><span data-cf-current>{{ start | plus: 1 }}</span> / {{ items.size }}</span>
+    <button type="button" class="cf__btn" data-cf-next aria-label="{{ 'coverflow.next' | t }}">→</button>
+  </div>
+
+  <div class="cf__info wrap">
+    {%- for product in items -%}
+      {%- liquid
+        assign m = product.metafields.specs
+      -%}
+      <div class="cf__panel" data-cf-panel data-index="{{ forloop.index0 }}"{% unless forloop.index0 == start %} hidden{% endunless %}>
+        <h3 class="cf__title"><a href="{{ product.url }}">{{ product.title }}</a></h3>
+        <p class="cf__sub">{{ product.type }}{% if m.catalog_number.value %} · {{ m.catalog_number.value }}{% endif %}</p>
+        <dl class="cf__specs">
+          {%- if m.bpm.value -%}<div><dt>BPM</dt><dd>{{ m.bpm.value }}</dd></div>{%- endif -%}
+          {%- if m.key.value -%}<div><dt>Key</dt><dd>{{ m.key.value }}</dd></div>{%- endif -%}
+          {%- if m.sample_count.value -%}<div><dt>Samples</dt><dd>{{ m.sample_count.value }}</dd></div>{%- endif -%}
+          {%- if m.genre.value and m.bpm.value == blank -%}<div><dt>Genre</dt><dd>{{ m.genre.value | join: ', ' }}</dd></div>{%- endif -%}
+          {%- if section.settings.show_price -%}<div><dt>{{ 'coverflow.price' | t }}</dt><dd>{% render 'price', product: product %}</dd></div>{%- endif -%}
+        </dl>
+        <div class="cf__actions">
+          {% render 'play-button', product: product %}
+          <a class="link" href="{{ product.url }}">{{ section.settings.cta_label }}</a>
+        </div>
+      </div>
+    {%- endfor -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Coverflow",
+  "class": "section-coverflow",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Label", "default": "Neu im Shop" },
+    { "type": "collection", "id": "collection", "label": "Kollektion", "info": "Leer = alle Produkte." },
+    { "type": "range", "id": "limit", "label": "Anzahl Cover", "min": 3, "max": 20, "step": 1, "default": 9 },
+    { "type": "select", "id": "start", "label": "Start", "default": "middle", "options": [
+      { "value": "middle", "label": "Mittleres Cover" },
+      { "value": "first", "label": "Erstes Cover" }
+    ] },
+    { "type": "select", "id": "scheme", "label": "Farbe", "default": "dark", "options": [
+      { "value": "dark", "label": "Dunkel (Ink)" },
+      { "value": "light", "label": "Hell (Paper)" }
+    ] },
+    { "type": "range", "id": "angle", "label": "Neigung der Seiten-Cover", "min": 0, "max": 60, "step": 5, "unit": "°", "default": 35 },
+    { "type": "checkbox", "id": "show_price", "label": "Preis zeigen", "default": true },
+    { "type": "text", "id": "link_label", "label": "Link zur Kollektion", "default": "Alle ansehen ↳" },
+    { "type": "text", "id": "cta_label", "label": "Link unter den Specs", "default": "Zum Produkt ↳" }
+  ],
+  "presets": [ { "name": "Coverflow" } ]
+}
+{% endschema %}

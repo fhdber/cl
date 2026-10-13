@@ -94,5 +94,10 @@
   "license": {
     "compare": "Lizenzen im Vergleich",
     "exclusive": "Exklusiv anfragen"
+  },
+  "coverflow": {
+    "prev": "Vorheriges Cover",
+    "next": "Nächstes Cover",
+    "price": "Preis"
   }
 }

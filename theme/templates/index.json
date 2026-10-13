@@ -175,12 +175,27 @@
         "s4"
       ],
       "settings": {}
+    },
+    "kits": {
+      "type": "coverflow",
+      "settings": {
+        "heading": "Kits durchblättern",
+        "collection": "sample-packs",
+        "limit": 9,
+        "start": "middle",
+        "scheme": "dark",
+        "angle": 35,
+        "show_price": true,
+        "link_label": "Alle Kits ↳",
+        "cta_label": "Zum Kit ↳"
+      }
     }
   },
   "order": [
     "hero",
     "drops",
     "formats",
+    "kits",
     "suite",
     "editorial",
     "beats",

@@ -339,6 +339,71 @@
   const legalActive = $('.legal__nav [aria-current="page"]');
   if (legalActive) { const nav = legalActive.closest('.legal__nav'); nav.scrollLeft = legalActive.offsetLeft - 20; }
 
+  // Coverflow: Cover im 3D-Bogen
+  $$('[data-coverflow]').forEach((cf) => {
+    const stage = $('[data-cf-stage]', cf);
+    const items = $$('[data-cf-item]', cf);
+    const panels = $$('[data-cf-panel]', cf);
+    const counter = $('[data-cf-current]', cf);
+    if (!items.length) return;
+    let active = Math.min(Math.floor(Number(cf.dataset.start)) || 0, items.length - 1);
+    const render = () => {
+      const w = stage.clientWidth;
+      const size = items[0].offsetWidth || 300;
+      const gap = Math.max(size * .62, Math.min(w / 6, size * .82));
+      items.forEach((el, i) => {
+        const d = i - active, a = Math.abs(d);
+        const x = d === 0 ? 0 : Math.sign(d) * (size * .5 + gap * (a - .35));
+        el.style.setProperty('--x', `${x}px`);
+        el.style.setProperty('--z', `${-a * size * .32}px`);
+        el.style.setProperty('--r', d === 0 ? '0deg' : `calc(var(--cf-angle) * ${-Math.sign(d)})`);
+        el.style.setProperty('--s', d === 0 ? 1 : .86);
+        el.style.zIndex = String(100 - a);
+        el.style.opacity = a > 4 ? '0' : '1';
+        el.classList.toggle('is-active', d === 0);
+        el.tabIndex = d === 0 ? 0 : -1;
+        el.setAttribute('aria-current', d === 0 ? 'true' : 'false');
+      });
+      panels.forEach((p) => { p.hidden = Number(p.dataset.index) !== active; });
+      if (counter) counter.textContent = String(active + 1);
+    };
+    const go = (i) => { active = Math.max(0, Math.min(items.length - 1, i)); render(); };
+    $('[data-cf-prev]', cf)?.addEventListener('click', () => go(active - 1));
+    $('[data-cf-next]', cf)?.addEventListener('click', () => go(active + 1));
+    stage.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); go(active - 1); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); go(active + 1); }
+    });
+    // Ziehen / Wischen
+    let startX = null, moved = false;
+    stage.addEventListener('pointerdown', (e) => { startX = e.clientX; moved = false; });
+    stage.addEventListener('pointermove', (e) => {
+      if (startX === null) return;
+      const dx = e.clientX - startX, step = Math.max(60, stage.clientWidth / 10);
+      if (Math.abs(dx) > step) { go(active + (dx < 0 ? 1 : -1)); startX = e.clientX; moved = true; }
+    });
+    const end = () => { startX = null; };
+    stage.addEventListener('pointerup', end); stage.addEventListener('pointerleave', end); stage.addEventListener('pointercancel', end);
+    // Trackpad seitlich wischen oder Shift + Mausrad: durch die Kits scrollen
+    let acc = 0, lock = 0;
+    stage.addEventListener('wheel', (e) => {
+      const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : (e.shiftKey ? e.deltaY : 0);
+      if (!d) return;
+      e.preventDefault();
+      const now = Date.now();
+      if (now < lock) return;
+      acc += d;
+      if (Math.abs(acc) > 40) { go(active + Math.sign(acc)); acc = 0; lock = now + 220; }
+    }, { passive: false });
+    // Klick: Seiten-Cover holt sich in die Mitte, mittleres öffnet das Produkt
+    items.forEach((el, i) => el.addEventListener('click', (e) => {
+      if (moved || i !== active) { e.preventDefault(); if (!moved) go(i); }
+    }));
+    window.addEventListener('resize', render, { passive: true });
+    render();
+    cf.classList.add('is-ready');
+  });
+
   // Sprache / Land: Auswahl schickt das Formular sofort ab
   $$('[data-autosubmit]').forEach((sel) => sel.addEventListener('change', () => sel.form && sel.form.submit()));
 

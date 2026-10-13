@@ -94,5 +94,10 @@
   "license": {
     "compare": "Licenses compared",
     "exclusive": "Request exclusive"
+  },
+  "coverflow": {
+    "prev": "Previous cover",
+    "next": "Next cover",
+    "price": "Price"
   }
 }
