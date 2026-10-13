@@ -1,16 +1,16 @@
 {%- if settings.cart_type == 'drawer' -%}
 <div class="drawer" data-cart-drawer aria-hidden="true">
   <div class="drawer__overlay" data-drawer-close></div>
-  <div class="drawer__panel" role="dialog" aria-modal="true" aria-label="Warenkorb" data-cart-drawer-inner>
+  <div class="drawer__panel" role="dialog" aria-modal="true" aria-label="{{ 'cart.title' | t }}" data-cart-drawer-inner>
     <div class="drawer__head">
-      <p>Cart · <span data-drawer-count>{{ cart.item_count }}</span></p>
-      <button type="button" class="ul" data-drawer-close>Schließen</button>
+      <p>{{ 'cart.cart' | t }} · <span data-drawer-count>{{ cart.item_count }}</span></p>
+      <button type="button" class="ul" data-drawer-close>{{ 'general.close' | t }}</button>
     </div>
     <div class="drawer__body">
       {%- if cart.item_count == 0 -%}
         <div class="empty" style="padding-block:64px">
-          <p class="h3">Noch leer.</p>
-          <a class="link" href="{{ routes.all_products_collection_url }}">Kits ansehen</a>
+          <p class="h3">{{ 'cart.empty' | t }}</p>
+          <a class="link" href="{{ routes.all_products_collection_url }}">{{ 'general.view_kits' | t }}</a>
         </div>
       {%- else -%}
         {%- for item in cart.items -%}
@@ -20,12 +20,13 @@
     </div>
     {%- if cart.item_count > 0 -%}
       <div class="drawer__foot">
-        <div class="total"><span>Summe</span><span>{{ cart.total_price | money }}</span></div>
+        <div class="total"><span>{{ 'cart.total' | t }} <span class="meta">{{ 'cart.vat' | t }}</span></span><span>{{ cart.total_price | money }}</span></div>
         <p class="meta">{{ settings.cart_note_text }}</p>
-        <form action="{{ routes.cart_url }}" method="post">
-          <button class="btn btn--block" type="submit" name="checkout"><span class="btn__label">Zur Kasse</span></button>
+        <form action="{{ routes.cart_url }}" method="post" class="drawer__form">
+          {% render 'cart-consent' %}
+          <button class="btn btn--block" type="submit" name="checkout"><span class="btn__label">{{ 'cart.checkout' | t }}</span></button>
         </form>
-        <a class="link" href="{{ routes.cart_url }}" style="justify-self:center">Warenkorb ansehen</a>
+        <a class="link" href="{{ routes.cart_url }}" style="justify-self:center">{{ 'cart.view' | t }}</a>
       </div>
     {%- endif -%}
   </div>

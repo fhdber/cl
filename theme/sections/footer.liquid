@@ -13,20 +13,20 @@
   {%- if section.settings.newsletter -%}
     <div class="footer__nl">
       <div class="footer__nl-inner">
-        <span class="label">Newsletter</span>
+        <span class="label">{{ 'newsletter.label' | t }}</span>
         <p class="big">{{ section.settings.nl_heading }}</p>
         {%- form 'customer', class: 'line-input' -%}
           <input type="hidden" name="contact[tags]" value="newsletter">
-          <label class="visually-hidden" for="nl-email">E-Mail</label>
-          <input id="nl-email" type="email" name="contact[email]" placeholder="E-Mail-Adresse" required autocomplete="email">
-          <button type="submit" aria-label="Eintragen">↳</button>
+          <label class="visually-hidden" for="nl-email">{{ 'general.email' | t }}</label>
+          <input id="nl-email" type="email" name="contact[email]" placeholder="{{ 'general.email_address' | t }}" required autocomplete="email">
+          <button type="submit" aria-label="{{ 'newsletter.submit' | t }}">↳</button>
         {%- endform -%}
       </div>
     </div>
   {%- endif -%}
 
   <div class="footer__bar">
-    <nav aria-label="Rechtliches">
+    <nav aria-label="{{ 'general.legal' | t }}">
       {%- for link in section.settings.legal_menu.links -%}<a href="{{ link.url }}">{{ link.title }}</a>{%- endfor -%}
     </nav>
     <nav aria-label="Social">
@@ -35,6 +35,7 @@
       {%- if settings.social_youtube != blank -%}<a href="{{ settings.social_youtube }}" target="_blank" rel="noopener">YouTube</a>{%- endif -%}
       {%- if settings.social_spotify != blank -%}<a href="{{ settings.social_spotify }}" target="_blank" rel="noopener">Spotify</a>{%- endif -%}
     </nav>
+    {%- if section.settings.show_localization -%}{% render 'localization', style: 'full', form_id: 'loc-footer' %}{%- endif -%}
     <span class="footer__copy">© {{ shop.name }} {{ 'now' | date: '%Y' }}</span>
   </div>
 </footer>
@@ -45,6 +46,7 @@
   "settings": [
     { "type": "checkbox", "id": "animate", "label": "CONTRA fährt beim Scrollen von oben ein", "default": true },
     { "type": "link_list", "id": "legal_menu", "label": "Links in der Fußleiste", "default": "footer" },
+    { "type": "checkbox", "id": "show_localization", "label": "Sprache und Land/Währung zeigen", "default": true },
     { "type": "checkbox", "id": "newsletter", "label": "Newsletter zeigen", "default": false },
     { "type": "text", "id": "nl_heading", "label": "Newsletter-Text", "default": "Neue Drops zuerst." }
   ],

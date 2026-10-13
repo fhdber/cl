@@ -427,3 +427,68 @@ body.has-player { padding-bottom: 68px; }
 .service__card:hover .service__media img { transform: scale(1.03); }
 .service__media .story__emblem { display: block; z-index: 0; color: var(--ink); opacity: .85; width: 14%; }
 .service__text { font-size: 12px; color: var(--body-mute); padding-inline: 2px; }
+
+/* ---------- Sprache / Land ---------- */
+.lang { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.lang__btn { font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; opacity: .45; transition: opacity .2s; }
+.lang__btn:hover, .lang__btn[aria-current="true"] { opacity: 1; }
+.lang__sep { opacity: .3; }
+.header__right .lang { opacity: .85; }
+@media (max-width: 768px) { .header__right .lang { display: none; } }
+.mobile-menu__foot .lang { font-size: inherit; }
+.loc { display: flex; gap: 16px; flex-wrap: wrap; }
+.loc__select { font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; background: transparent; border: 0; border-bottom: 1px solid var(--line-strong); padding: 2px 18px 4px 0; cursor: pointer; appearance: none; -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 7px) 55%, calc(100% - 3px) 55%; background-size: 4px 4px; background-repeat: no-repeat; }
+.loc__select:focus-visible { outline: 1px solid var(--accent); outline-offset: 4px; }
+
+/* ---------- Preis-Hinweis ---------- */
+.product__vat, .total .meta { display: inline-flex; font-weight: 400; margin-left: 6px; vertical-align: middle; }
+.product__ex { margin-top: -4px; }
+.product__ex a { color: var(--ink); }
+
+/* ---------- Lizenz-Vergleich ---------- */
+.lic__head { display: grid; gap: 16px; max-width: 720px; margin-bottom: 48px; }
+.lic__intro { color: var(--body-mute); }
+.lic__scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border-top: 1px solid var(--line-strong); }
+.lic__table { width: 100%; min-width: 820px; border-collapse: collapse; table-layout: fixed; font-variant-numeric: tabular-nums; }
+.lic__table th, .lic__table td { text-align: left; padding: 16px 16px 16px 0; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 14px; }
+.lic__table tbody th { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); font-weight: 400; }
+.lic__table thead th:first-child { width: 16%; }
+@media (max-width: 768px) { .lic__table { min-width: 760px; } .lic__table thead th:first-child { width: 120px; } }
+.lic__table td { font-weight: 500; }
+.lic__tier { padding-top: 24px !important; padding-bottom: 24px !important; }
+.lic__tier > span { display: block; }
+.lic__name { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; font-weight: 500; }
+.lic__price { font-size: clamp(24px, 2.4vw, 34px); font-weight: 600; letter-spacing: -.02em; margin: 6px 0 14px; }
+.lic__pick { font: inherit; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; background: none; border: 0; padding: 0; color: inherit; cursor: pointer; }
+.lic__table .is-featured { position: relative; }
+.lic__tier.is-featured .lic__name::after { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-left: 9px; vertical-align: 1px; }
+.lic__tier--ex, .lic__ex { color: var(--mute); }
+.lic__tier--ex .lic__pick { color: var(--ink); }
+.lic__note { display: block; margin-top: 24px; max-width: 760px; text-transform: none; letter-spacing: 0; font-size: 13px; line-height: 1.6; }
+.lic__note a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 768px) {
+  .lic__table tbody th { position: sticky; left: 0; background: var(--bg); z-index: 1; }
+  .lic__table thead th:first-child { position: sticky; left: 0; background: var(--bg); z-index: 1; }
+}
+
+/* ---------- Zustimmung digitale Inhalte ---------- */
+.drawer__form { display: grid; gap: 16px; }
+.consent { display: grid; grid-template-columns: 16px 1fr; gap: 12px; align-items: start; font-size: 12px; line-height: 1.55; color: var(--body-mute); cursor: pointer; }
+.consent input { width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--ink); cursor: pointer; }
+.consent__text p { margin: 0; }
+.consent__text a { color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
+
+/* ---------- Häkchen-Liste ---------- */
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 14px; }
+.checks li { display: grid; grid-template-columns: 18px 1fr; gap: 10px; align-items: baseline; }
+.checks li::before { content: ""; width: 10px; height: 6px; border-left: 1.5px solid var(--accent); border-bottom: 1.5px solid var(--accent); transform: translateY(-3px) rotate(-45deg); }
+
+/* ---------- YouTube (Klick-zum-Laden) ---------- */
+.yt { display: grid; gap: 8px; }
+.yt__btn, .yt iframe { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; padding: 0; background: var(--cover-bg); position: relative; cursor: pointer; overflow: hidden; }
+.yt__btn img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1); transition: filter .3s; }
+.yt__btn:hover img { filter: none; }
+.yt__play { position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; background: var(--bg); color: var(--ink); display: grid; place-items: center; }
+.yt__play svg { width: 18px; height: 18px; }

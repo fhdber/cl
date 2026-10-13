@@ -1,7 +1,7 @@
 <header class="header">
-  <nav class="header__nav" aria-label="Hauptnavigation">
+  <nav class="header__nav" aria-label="{{ 'general.main_nav' | t }}">
     <div class="header__left">
-      <button type="button" class="menu-toggle" data-menu-open aria-expanded="false" aria-controls="mobile-menu">Menü</button>
+      <button type="button" class="menu-toggle" data-menu-open aria-expanded="false" aria-controls="mobile-menu">{{ 'general.menu' | t }}</button>
       {%- if section.settings.left_label != blank -%}
         <a class="ul hide-m" href="{{ section.settings.left_link | default: routes.all_products_collection_url }}">{{ section.settings.left_label }}</a>
       {%- endif -%}
@@ -19,7 +19,8 @@
       {%- for link in section.settings.menu.links -%}
         <a class="ul{% if forloop.index > section.settings.mobile_links %} hide-m{% endif %}" href="{{ link.url }}"{% if link.current %} aria-current="page"{% endif %}>{{ link.title }}</a>
       {%- endfor -%}
-      <a class="ul" href="{{ routes.cart_url }}" data-cart-open>Cart · <span data-cart-count>{{ cart.item_count }}</span></a>
+      {%- if section.settings.show_lang -%}{% render 'localization', style: 'lang', form_id: 'loc-header' %}{%- endif -%}
+      <a class="ul" href="{{ routes.cart_url }}" data-cart-open>{{ 'cart.cart' | t }} · <span data-cart-count>{{ cart.item_count }}</span></a>
     </div>
   </nav>
 </header>
@@ -27,7 +28,7 @@
 <div class="mobile-menu" id="mobile-menu" data-mobile-menu>
   <div class="mobile-menu__top">
     <span>{{ shop.name }}</span>
-    <button type="button" data-menu-close>Schließen</button>
+    <button type="button" data-menu-close>{{ 'general.close' | t }}</button>
   </div>
   <ul class="mobile-menu__list">
     {%- if section.settings.left_label != blank -%}<li><a href="{{ section.settings.left_link | default: routes.all_products_collection_url }}">{{ section.settings.left_label }}</a></li>{%- endif -%}
@@ -36,8 +37,9 @@
     {%- endfor -%}
   </ul>
   <div class="mobile-menu__foot">
-    <a href="{{ routes.search_url }}">Suche</a>
-    {%- if shop.customer_accounts_enabled -%}<a href="{{ routes.account_url }}">Konto</a>{%- endif -%}
+    <a href="{{ routes.search_url }}">{{ 'general.search' | t }}</a>
+    {%- if shop.customer_accounts_enabled -%}<a href="{{ routes.account_url }}">{{ 'general.account' | t }}</a>{%- endif -%}
+    {% render 'localization', style: 'lang', form_id: 'loc-mobile' %}
   </div>
 </div>
 
@@ -49,6 +51,7 @@
     { "type": "text", "id": "left_label", "label": "Label links", "default": "Shop" },
     { "type": "url", "id": "left_link", "label": "Link links" },
     { "type": "link_list", "id": "menu", "label": "Menü rechts", "default": "main-menu" },
+    { "type": "checkbox", "id": "show_lang", "label": "Sprachumschalter DE / EN zeigen", "info": "Erscheint erst, wenn unter Einstellungen → Sprachen eine zweite Sprache veröffentlicht ist.", "default": true },
     { "type": "range", "id": "mobile_links", "label": "Menüpunkte, die mobil sichtbar bleiben", "min": 0, "max": 5, "step": 1, "default": 0 }
   ]
 }

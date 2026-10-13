@@ -5,13 +5,13 @@
       {%- if page.content != blank -%}<div class="rte muted">{{ page.content }}</div>{%- endif -%}
     </div>
     {%- form 'contact', style: 'display:grid;gap:16px' -%}
-      {%- if form.posted_successfully? -%}<p class="form-msg" role="status">Danke. Ich melde mich zeitnah.</p>{%- endif -%}
+      {%- if form.posted_successfully? -%}<p class="form-msg" role="status">{{ 'contact.thanks' | t }}</p>{%- endif -%}
       {%- if form.errors -%}<div class="form-msg form-msg--error" role="alert">{{ form.errors | default_errors }}</div>{%- endif -%}
-      <div class="field"><label class="mono muted" for="c-name">Name</label><input class="input" id="c-name" name="contact[name]" autocomplete="name" value="{{ form.name }}"></div>
-      <div class="field"><label class="mono muted" for="c-email">E-Mail *</label><input class="input" id="c-email" type="email" name="contact[email]" autocomplete="email" required value="{{ form.email }}"></div>
-      <div class="field"><label class="mono muted" for="c-order">Bestellnummer (optional)</label><input class="input" id="c-order" name="contact[order]"></div>
-      <div class="field"><label class="mono muted" for="c-msg">Nachricht</label><textarea class="input" id="c-msg" name="contact[body]">{{ form.body }}</textarea></div>
-      <button class="btn" type="submit"><span class="btn__label">Senden</span></button>
+      <div class="field"><label class="mono muted" for="c-name">{{ 'contact.name' | t }}</label><input class="input" id="c-name" name="contact[name]" autocomplete="name" value="{{ form.name }}"></div>
+      <div class="field"><label class="mono muted" for="c-email">{{ 'contact.email' | t }}</label><input class="input" id="c-email" type="email" name="contact[email]" autocomplete="email" required value="{{ form.email }}"></div>
+      <div class="field"><label class="mono muted" for="c-order">{{ 'contact.order' | t }}</label><input class="input" id="c-order" name="contact[order]"></div>
+      <div class="field"><label class="mono muted" for="c-msg">{{ 'contact.message' | t }}</label><textarea class="input" id="c-msg" name="contact[body]">{{ form.body }}</textarea></div>
+      <button class="btn" type="submit"><span class="btn__label">{{ 'contact.send' | t }}</span></button>
     {%- endform -%}
   </div>
 </div>

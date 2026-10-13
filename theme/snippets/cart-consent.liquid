@@ -1,0 +1,11 @@
+{%- comment -%}
+  Pflicht-Zustimmung für digitale Inhalte (§ 356 Abs. 5 BGB).
+  Ohne Haken lässt der Browser den Checkout nicht abschicken.
+  Die Zustimmung wird als Warenkorb-Attribut in der Bestellung gespeichert.
+{%- endcomment -%}
+{%- if settings.cart_consent and settings.cart_consent_text != blank -%}
+  <label class="consent">
+    <input type="checkbox" name="attributes[Zustimmung digitale Inhalte]" value="Ja – {{ 'now' | date: '%d.%m.%Y %H:%M' }}" required>
+    <span class="consent__text">{{ settings.cart_consent_text }}</span>
+  </label>
+{%- endif -%}

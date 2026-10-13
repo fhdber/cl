@@ -1,5 +1,98 @@
 {
   "general": {
-    "password_page": { "login_form_heading": "Passwort eingeben" }
+    "password_page": {
+      "login_form_heading": "Passwort eingeben"
+    },
+    "skip": "Zum Inhalt springen",
+    "page": "Seite",
+    "close": "Schließen",
+    "search": "Suche",
+    "account": "Konto",
+    "menu": "Menü",
+    "main_nav": "Hauptnavigation",
+    "all_kits": "Alle Kits",
+    "all_kits_view": "Alle Kits ansehen",
+    "view_kits": "Kits ansehen",
+    "to_kits": "Zu den Kits",
+    "free": "Free",
+    "from": "ab",
+    "email": "E-Mail",
+    "email_address": "E-Mail-Adresse",
+    "language": "Sprache",
+    "country": "Land / Währung",
+    "legal": "Rechtliches"
+  },
+  "cart": {
+    "title": "Warenkorb",
+    "cart": "Cart",
+    "empty": "Noch leer.",
+    "total": "Summe",
+    "checkout": "Zur Kasse",
+    "view": "Warenkorb ansehen",
+    "continue": "Weiter stöbern",
+    "remove": "Entfernen",
+    "less": "Weniger",
+    "more": "Mehr",
+    "vat": "inkl. MwSt."
+  },
+  "product": {
+    "add": "In den Warenkorb",
+    "add_free": "Kostenlos laden",
+    "soldout": "Nicht verfügbar",
+    "contents": "Was drin ist",
+    "description": "Beschreibung",
+    "license": "Lizenz",
+    "download": "Download",
+    "size": "Größe",
+    "image": "Bild",
+    "royalty_free": "Royalty-free",
+    "vat_note": "inkl. MwSt. · digitaler Download",
+    "video_play": "Video abspielen",
+    "video_consent": "Beim Abspielen wird YouTube geladen."
+  },
+  "collection": {
+    "all": "Alle",
+    "categories": "Kategorien",
+    "sort": "Sortieren",
+    "soon": "Hier kommt bald was.",
+    "no_products": "Noch keine Produkte in dieser Kollektion.",
+    "pages": "Seiten"
+  },
+  "search": {
+    "term": "Suchbegriff",
+    "submit": "Suchen",
+    "none": "Nichts gefunden."
+  },
+  "contact": {
+    "thanks": "Danke. Ich melde mich zeitnah.",
+    "name": "Name",
+    "email": "E-Mail *",
+    "order": "Bestellnummer (optional)",
+    "message": "Nachricht",
+    "send": "Senden"
+  },
+  "newsletter": {
+    "label": "Newsletter",
+    "submit": "Eintragen",
+    "thanks": "Danke. Du hörst als Erstes davon."
+  },
+  "notfound": {
+    "title": "Kein Signal."
+  },
+  "password": {
+    "enter": "Passwort eingeben",
+    "password": "Passwort",
+    "open": "Öffnen",
+    "notify": "Benachrichtigen"
+  },
+  "player": {
+    "position": "Position",
+    "toggle": "Abspielen / Pause",
+    "close": "Player schließen",
+    "error": "Preview konnte nicht geladen werden"
+  },
+  "license": {
+    "compare": "Lizenzen im Vergleich",
+    "exclusive": "Exklusiv anfragen"
   }
 }

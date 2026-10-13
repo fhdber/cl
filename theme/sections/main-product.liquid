@@ -29,7 +29,7 @@
             <button type="button" data-gallery-thumb aria-current="{% if forloop.first %}true{% else %}false{% endif %}"
               data-src="{{ img | image_url: width: 1600 }}"
               data-srcset="{{ img | image_url: width: 720 }} 720w, {{ img | image_url: width: 1200 }} 1200w, {{ img | image_url: width: 1600 }} 1600w"
-              data-alt="{{ img.alt | escape }}" aria-label="Bild {{ forloop.index }}">
+              data-alt="{{ img.alt | escape }}" aria-label="{{ 'product.image' | t }} {{ forloop.index }}">
               {{ img | image_url: width: 200 | image_tag: loading: 'lazy', alt: '' }}
             </button>
           {%- endfor -%}
@@ -42,7 +42,7 @@
         <span class="label">{% if catalog %}{{ catalog }} · {% endif %}{{ product.type | default: 'Sample Pack' }}</span>
         <h1 class="product__title">{{ product.title }}</h1>
         {% render 'meta-line', product: product %}
-        <p class="product__price" data-price style="margin-top:8px">{% render 'price', product: product, variant: current %}</p>
+        <p class="product__price" style="margin-top:8px"><span data-price>{% render 'price', product: product, variant: current %}</span>{% if product.price_max > 0 %} <span class="meta product__vat">{{ 'cart.vat' | t }}</span>{% endif %}</p>
       </div>
 
       {%- if demo != blank -%}
@@ -72,17 +72,34 @@
         {%- endif -%}
         <input type="hidden" name="quantity" value="1">
         <button type="submit" class="btn btn--block" {% unless current.available %}disabled{% endunless %}>
-          <span class="btn__label" data-add="{% if product.price == 0 %}Kostenlos laden{% else %}In den Warenkorb{% endif %}" data-soldout="Nicht verfügbar">
-            {%- if current.available -%}{% if current.price == 0 %}Kostenlos laden{% else %}In den Warenkorb{% endif %}{%- else -%}Nicht verfügbar{%- endif -%}
+          <span class="btn__label" data-add="{% if product.price == 0 %}{{ 'product.add_free' | t }}{% else %}{{ 'product.add' | t }}{% endif %}" data-soldout="{{ 'product.soldout' | t }}">
+            {%- if current.available -%}{% if current.price == 0 %}{{ 'product.add_free' | t }}{% else %}{{ 'product.add' | t }}{% endif %}{%- else -%}{{ 'product.soldout' | t }}{%- endif -%}
           </span>
         </button>
         <p class="meta">{{ section.settings.delivery_note }}</p>
+        {%- if section.settings.show_exclusive -%}
+          {%- liquid
+            assign ex_subject = 'Exklusiv-Anfrage: ' | append: product.title | url_encode
+            assign ex_url = section.settings.exclusive_link
+            if ex_url == blank
+              assign ex_url = 'mailto:' | append: shop.email | append: '?subject=' | append: ex_subject
+            endif
+          -%}
+          <p class="meta product__ex">{{ section.settings.exclusive_text }} <a class="ul" href="{{ ex_url }}">{{ 'license.exclusive' | t }}</a> · <a class="ul" href="#lizenzen">{{ 'license.compare' | t }}</a></p>
+        {%- endif -%}
       {%- endform -%}
+
+      {%- if section.settings.highlights != blank -%}
+        {%- assign hl = section.settings.highlights | newline_to_br | split: '<br />' -%}
+        <ul class="checks">
+          {%- for h in hl -%}{%- assign h = h | strip -%}{%- if h != blank -%}<li>{{ h }}</li>{%- endif -%}{%- endfor -%}
+        </ul>
+      {%- endif -%}
 
       {%- if m.contents.value != blank -%}
         {%- assign lines = m.contents.value | newline_to_br | split: '<br />' -%}
         <div style="display:grid;gap:12px">
-          <h2 class="label">Was drin ist</h2>
+          <h2 class="label">{{ 'product.contents' | t }}</h2>
           <div class="contents">
             {%- for l in lines -%}
               {%- assign l = l | strip -%}
@@ -102,9 +119,35 @@
         {%- if m.key.value -%}<div><dt>Key</dt><dd>{{ m.key.value }}</dd></div>{%- endif -%}
         {%- if m.genre.value -%}<div><dt>Genre</dt><dd>{{ m.genre.value | join: ', ' }}</dd></div>{%- endif -%}
         {%- if m.daw.value -%}<div><dt>DAW</dt><dd>{{ m.daw.value }}</dd></div>{%- endif -%}
-        {%- if m.file_size.value -%}<div><dt>Größe</dt><dd>{{ m.file_size.value }}</dd></div>{%- endif -%}
-        <div><dt>Lizenz</dt><dd>Royalty-free</dd></div>
+        {%- if m.file_size.value -%}<div><dt>{{ 'product.size' | t }}</dt><dd>{{ m.file_size.value }}</dd></div>{%- endif -%}
+        <div><dt>{{ 'product.license' | t }}</dt><dd>{{ section.settings.license_spec | default: 'Royalty-free' }}</dd></div>
       </dl>
+
+      {%- liquid
+        assign yt = m.video.value | default: m.video
+        assign yt_id = ''
+        if yt != blank
+          assign yt_s = yt | append: ''
+          if yt_s contains 'youtu.be/'
+            assign yt_id = yt_s | split: 'youtu.be/' | last | split: '?' | first
+          elsif yt_s contains 'v='
+            assign yt_id = yt_s | split: 'v=' | last | split: '&' | first
+          elsif yt_s contains '/shorts/'
+            assign yt_id = yt_s | split: '/shorts/' | last | split: '?' | first
+          elsif yt_s contains '/embed/'
+            assign yt_id = yt_s | split: '/embed/' | last | split: '?' | first
+          endif
+        endif
+      -%}
+      {%- if yt_id != blank -%}
+        <div class="yt" data-yt="{{ yt_id | escape }}">
+          <button type="button" class="yt__btn" aria-label="{{ 'product.video_play' | t }}">
+            {%- if product.featured_media -%}{{ product.featured_media.preview_image | image_url: width: 960 | image_tag: loading: 'lazy', alt: '' }}{%- endif -%}
+            <span class="yt__play">{% render 'icon', icon: 'play' %}</span>
+          </button>
+          <p class="meta yt__note">{{ 'product.video_consent' | t }}</p>
+        </div>
+      {%- endif -%}
 
       {%- if previews != blank -%}
         <div style="display:grid;gap:12px">
@@ -135,16 +178,16 @@
       <div>
         {%- if product.description != blank -%}
           <details class="details" open>
-            <summary>Beschreibung</summary>
+            <summary>{{ 'product.description' | t }}</summary>
             <div class="details__body rte">{{ product.description }}</div>
           </details>
         {%- endif -%}
         <details class="details">
-          <summary>Lizenz</summary>
+          <summary>{{ 'product.license' | t }}</summary>
           <div class="details__body rte">{{ section.settings.license_text }}</div>
         </details>
         <details class="details">
-          <summary>Download</summary>
+          <summary>{{ 'product.download' | t }}</summary>
           <div class="details__body rte">{{ section.settings.download_text }}</div>
         </details>
       </div>
@@ -178,6 +221,11 @@
     { "type": "text", "id": "demo_label", "label": "Demo-Label", "default": "Demo anhören" },
     { "type": "text", "id": "demo_hint", "label": "Demo-Hinweis", "default": "Ausschnitt aus dem Kit, gemastert" },
     { "type": "text", "id": "delivery_note", "label": "Lieferhinweis", "default": "Sofort-Download nach dem Kauf · 24-bit WAV" },
+    { "type": "textarea", "id": "highlights", "label": "Häkchen-Liste", "info": "Eine Zeile pro Punkt. Leer = ausblenden.", "default": "WAV 24-bit / 44,1 kHz\nBPM und Key im Dateinamen\nLäuft in jeder DAW, MPC und SP-404\n100 % royalty-free" },
+    { "type": "text", "id": "license_spec", "label": "Lizenz in den Specs", "default": "Royalty-free" },
+    { "type": "checkbox", "id": "show_exclusive", "label": "Hinweis „Exklusiv anfragen“ zeigen", "info": "Für Beats. Im Beat-Template aktiv.", "default": false },
+    { "type": "text", "id": "exclusive_text", "label": "Text vor dem Link", "default": "Exklusivrechte?" },
+    { "type": "url", "id": "exclusive_link", "label": "Link „Exklusiv anfragen“", "info": "Leer = Mail an die Shop-Adresse mit Beat-Titel im Betreff." },
     { "type": "richtext", "id": "license_text", "label": "Lizenz kurz", "default": "<ul><li>100 % royalty-free für eigene Releases, Beats, Werbung und Social</li><li>Keine Weitergabe oder Weiterverkauf der Rohsamples</li><li>Credit optional, aber gern gesehen</li></ul><p><a href=\"/pages/lizenz\">Komplette Lizenz lesen</a></p>" },
     { "type": "richtext", "id": "download_text", "label": "Download", "default": "<p>Nach dem Kauf bekommst du sofort einen Download-Link per Mail und auf der Bestellbestätigung. Die Dateien kommen als ZIP, sauber benannt und nach Typ sortiert.</p>" }
   ]

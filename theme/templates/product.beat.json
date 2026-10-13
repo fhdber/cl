@@ -1,0 +1,95 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-product",
+      "settings": {
+        "demo_label": "Beat anhören",
+        "demo_hint": "Preview mit Voice-Tag",
+        "delivery_note": "Sofort-Download nach dem Kauf · Lizenzvertrag als PDF",
+        "license_spec": "Lease, nicht-exklusiv",
+        "show_exclusive": true,
+        "license_text": "<ul><li>Nicht-exklusive Lizenz, gültig ab Kauf</li><li>Credit: „prod. by CONTRABEATZ“</li><li>Keine Registrierung bei Content ID</li><li>Limits je Stufe: siehe Vergleich unten</li></ul><p><a href=\"/pages/lizenz\">Komplette Lizenzbedingungen</a></p>",
+        "download_text": "<p>Nach dem Kauf bekommst du sofort den Download-Link per Mail. Je nach Lizenz: MP3, WAV oder WAV + Stems als ZIP, dazu der Lizenzvertrag als PDF.</p>",
+        "highlights": "MP3, WAV oder Stems, je nach Lizenz\nLizenzvertrag als PDF\nDateien ohne Voice-Tag\nExklusivrechte auf Anfrage"
+      }
+    },
+    "licenses": {
+      "type": "license-table",
+      "blocks": {
+        "mp3": {
+          "type": "tier",
+          "settings": {
+            "name": "MP3 Lease",
+            "price": "29 €",
+            "files": "MP3 320 kbps",
+            "streams": "100.000",
+            "sales": "2.000",
+            "video": "1",
+            "performance": "Ja",
+            "radio": "–",
+            "term": "2 Jahre"
+          }
+        },
+        "wav": {
+          "type": "tier",
+          "settings": {
+            "name": "WAV Lease",
+            "price": "49 €",
+            "files": "WAV + MP3",
+            "streams": "250.000",
+            "sales": "5.000",
+            "video": "1",
+            "performance": "Ja",
+            "radio": "2 Sender",
+            "term": "3 Jahre"
+          }
+        },
+        "trk": {
+          "type": "tier",
+          "settings": {
+            "name": "Trackout Lease",
+            "price": "99 €",
+            "featured": true,
+            "files": "Stems + WAV + MP3",
+            "streams": "500.000",
+            "sales": "10.000",
+            "video": "3",
+            "performance": "Ja",
+            "radio": "Ja",
+            "term": "5 Jahre"
+          }
+        },
+        "unl": {
+          "type": "tier",
+          "settings": {
+            "name": "Unlimited",
+            "price": "199 €",
+            "files": "Stems + WAV + MP3",
+            "streams": "Unbegrenzt",
+            "sales": "Unbegrenzt",
+            "video": "Unbegrenzt",
+            "performance": "Ja",
+            "radio": "Ja",
+            "term": "Unbefristet"
+          }
+        }
+      },
+      "block_order": [
+        "mp3",
+        "wav",
+        "trk",
+        "unl"
+      ],
+      "settings": {}
+    },
+    "related": {
+      "type": "related-products",
+      "settings": {}
+    }
+  },
+  "order": [
+    "main",
+    "licenses",
+    "related"
+  ]
+}

@@ -9,15 +9,15 @@
   </header>
 
   <div class="toolbar">
-    <nav class="chips" aria-label="Kategorien">
-      <a class="ul{% if collection.handle == 'all' %} is-active{% endif %}" href="{{ routes.all_products_collection_url }}">Alle</a>
+    <nav class="chips" aria-label="{{ 'collection.categories' | t }}">
+      <a class="ul{% if collection.handle == 'all' %} is-active{% endif %}" href="{{ routes.all_products_collection_url }}">{{ 'collection.all' | t }}</a>
       {%- for link in section.settings.filter_menu.links -%}
         <a class="ul{% if link.active or link.url == collection.url %} is-active{% endif %}" href="{{ link.url }}">{{ link.title }}</a>
       {%- endfor -%}
     </nav>
     <label class="mono" style="display:flex;gap:10px;align-items:center">
-      <span class="muted">Sortieren</span>
-      <select class="select" data-sort aria-label="Sortieren">
+      <span class="muted">{{ 'collection.sort' | t }}</span>
+      <select class="select" data-sort aria-label="{{ 'collection.sort' | t }}">
         {%- assign sort_by = collection.sort_by | default: collection.default_sort_by -%}
         {%- for option in collection.sort_options -%}
           <option value="{{ option.value }}"{% if option.value == sort_by %} selected{% endif %}>{{ option.name }}</option>
@@ -34,13 +34,13 @@
     </div>
   {%- else -%}
     <div class="empty">
-      <p class="h3">Hier kommt bald was.</p>
-      <a class="link" href="{{ routes.all_products_collection_url }}">Alle Kits ansehen</a>
+      <p class="h3">{{ 'collection.soon' | t }}</p>
+      <a class="link" href="{{ routes.all_products_collection_url }}">{{ 'general.all_kits_view' | t }}</a>
     </div>
   {%- endif -%}
 
   {%- if paginate.pages > 1 -%}
-    <nav class="pagination" aria-label="Seiten">
+    <nav class="pagination" aria-label="{{ 'collection.pages' | t }}">
       {%- for part in paginate.parts -%}
         {%- if part.is_link -%}<a href="{{ part.url }}">{{ part.title }}</a>{%- elsif part.title == paginate.current_page -%}<span class="is-current" aria-current="page">{{ part.title }}</span>{%- else -%}<span>{{ part.title }}</span>{%- endif -%}
       {%- endfor -%}

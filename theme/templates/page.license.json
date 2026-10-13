@@ -37,10 +37,84 @@
       "settings": {
         "heading": "Kurz gesagt"
       }
+    },
+    "beats": {
+      "type": "license-table",
+      "blocks": {
+        "mp3": {
+          "type": "tier",
+          "settings": {
+            "name": "MP3 Lease",
+            "price": "29 €",
+            "files": "MP3 320 kbps",
+            "streams": "100.000",
+            "sales": "2.000",
+            "video": "1",
+            "performance": "Ja",
+            "radio": "–",
+            "term": "2 Jahre"
+          }
+        },
+        "wav": {
+          "type": "tier",
+          "settings": {
+            "name": "WAV Lease",
+            "price": "49 €",
+            "files": "WAV + MP3",
+            "streams": "250.000",
+            "sales": "5.000",
+            "video": "1",
+            "performance": "Ja",
+            "radio": "2 Sender",
+            "term": "3 Jahre"
+          }
+        },
+        "trk": {
+          "type": "tier",
+          "settings": {
+            "name": "Trackout Lease",
+            "price": "99 €",
+            "featured": true,
+            "files": "Stems + WAV + MP3",
+            "streams": "500.000",
+            "sales": "10.000",
+            "video": "3",
+            "performance": "Ja",
+            "radio": "Ja",
+            "term": "5 Jahre"
+          }
+        },
+        "unl": {
+          "type": "tier",
+          "settings": {
+            "name": "Unlimited",
+            "price": "199 €",
+            "files": "Stems + WAV + MP3",
+            "streams": "Unbegrenzt",
+            "sales": "Unbegrenzt",
+            "video": "Unbegrenzt",
+            "performance": "Ja",
+            "radio": "Ja",
+            "term": "Unbefristet"
+          }
+        }
+      },
+      "block_order": [
+        "mp3",
+        "wav",
+        "trk",
+        "unl"
+      ],
+      "settings": {
+        "label": "Beats",
+        "heading": "Beat-Lizenzen",
+        "intro": "<p>Für Beats gibt es vier nicht-exklusive Leases und die Exklusivrechte auf Anfrage. Sample Packs, Drum Kits und One Shots sind immer royalty-free, siehe oben.</p>"
+      }
     }
   },
   "order": [
     "main",
-    "facts"
+    "facts",
+    "beats"
   ]
 }

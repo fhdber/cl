@@ -1,5 +1,98 @@
 {
   "general": {
-    "password_page": { "login_form_heading": "Enter password" }
+    "password_page": {
+      "login_form_heading": "Enter password"
+    },
+    "skip": "Skip to content",
+    "page": "Page",
+    "close": "Close",
+    "search": "Search",
+    "account": "Account",
+    "menu": "Menu",
+    "main_nav": "Main navigation",
+    "all_kits": "All kits",
+    "all_kits_view": "View all kits",
+    "view_kits": "Browse kits",
+    "to_kits": "Go to kits",
+    "free": "Free",
+    "from": "from",
+    "email": "Email",
+    "email_address": "Email address",
+    "language": "Language",
+    "country": "Country / currency",
+    "legal": "Legal"
+  },
+  "cart": {
+    "title": "Cart",
+    "cart": "Cart",
+    "empty": "Still empty.",
+    "total": "Total",
+    "checkout": "Checkout",
+    "view": "View cart",
+    "continue": "Keep browsing",
+    "remove": "Remove",
+    "less": "Less",
+    "more": "More",
+    "vat": "incl. VAT"
+  },
+  "product": {
+    "add": "Add to cart",
+    "add_free": "Download free",
+    "soldout": "Unavailable",
+    "contents": "What’s inside",
+    "description": "Description",
+    "license": "License",
+    "download": "Download",
+    "size": "Size",
+    "image": "Image",
+    "royalty_free": "Royalty-free",
+    "vat_note": "incl. VAT · digital download",
+    "video_play": "Play video",
+    "video_consent": "Playing loads YouTube."
+  },
+  "collection": {
+    "all": "All",
+    "categories": "Categories",
+    "sort": "Sort",
+    "soon": "Something’s coming soon.",
+    "no_products": "No products in this collection yet.",
+    "pages": "Pages"
+  },
+  "search": {
+    "term": "Search term",
+    "submit": "Search",
+    "none": "Nothing found."
+  },
+  "contact": {
+    "thanks": "Thanks. I’ll get back to you soon.",
+    "name": "Name",
+    "email": "Email *",
+    "order": "Order number (optional)",
+    "message": "Message",
+    "send": "Send"
+  },
+  "newsletter": {
+    "label": "Newsletter",
+    "submit": "Subscribe",
+    "thanks": "Thanks. You’ll be the first to know."
+  },
+  "notfound": {
+    "title": "No signal."
+  },
+  "password": {
+    "enter": "Enter password",
+    "password": "Password",
+    "open": "Enter",
+    "notify": "Notify me"
+  },
+  "player": {
+    "position": "Position",
+    "toggle": "Play / pause",
+    "close": "Close player",
+    "error": "Preview could not be loaded"
+  },
+  "license": {
+    "compare": "Licenses compared",
+    "exclusive": "Request exclusive"
   }
 }

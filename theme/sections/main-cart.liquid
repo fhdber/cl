@@ -2,8 +2,8 @@
   <header class="coll-head"><span class="label">Cart</span><h1 class="h1">Warenkorb</h1></header>
   {%- if cart.item_count == 0 -%}
     <div class="empty">
-      <p class="h3">Noch leer.</p>
-      <a class="btn" href="{{ routes.all_products_collection_url }}"><span class="btn__label">Kits ansehen</span></a>
+      <p class="h3">{{ 'cart.empty' | t }}</p>
+      <a class="btn" href="{{ routes.all_products_collection_url }}"><span class="btn__label">{{ 'general.view_kits' | t }}</span></a>
     </div>
   {%- else -%}
     <div class="cart-page" style="padding-top:0">
@@ -13,10 +13,11 @@
         {%- endfor -%}
       </div>
       <form class="cart-page__aside" action="{{ routes.cart_url }}" method="post" style="display:grid;gap:16px">
-        <div class="total"><span>Summe</span><span>{{ cart.total_price | money }}</span></div>
+        <div class="total"><span>{{ 'cart.total' | t }} <span class="meta">{{ 'cart.vat' | t }}</span></span><span>{{ cart.total_price | money }}</span></div>
         <p class="meta">{{ settings.cart_note_text }}</p>
-        <button class="btn btn--block" type="submit" name="checkout"><span class="btn__label">Zur Kasse</span></button>
-        <a class="link" href="{{ routes.all_products_collection_url }}">Weiter stöbern</a>
+        {% render 'cart-consent' %}
+        <button class="btn btn--block" type="submit" name="checkout"><span class="btn__label">{{ 'cart.checkout' | t }}</span></button>
+        <a class="link" href="{{ routes.all_products_collection_url }}">{{ 'cart.continue' | t }}</a>
       </form>
     </div>
   {%- endif -%}

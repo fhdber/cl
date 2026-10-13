@@ -56,7 +56,7 @@
     $('[data-player-cover-link]', player).href = btn.dataset.url || '#';
     player.classList.add('is-active');
     document.body.classList.add('has-player');
-    audio.play().catch(() => toast('Preview konnte nicht geladen werden'));
+    audio.play().catch(() => toast((window.CB && CB.strings && CB.strings.playerError) || 'Preview error'));
   };
 
   if (audio) {
@@ -317,6 +317,27 @@
   }
 
   /* ---------- Sortierung ---------- */
+  // Lizenz-Tabelle: „Auswählen“ setzt die Variante im Kaufformular
+  $$('[data-pick-variant]').forEach((btn) => btn.addEventListener('click', () => {
+    const input = document.getElementById('v-' + btn.dataset.pickVariant);
+    if (!input) return;
+    input.checked = true;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    const form = input.closest('form');
+    if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }));
+
+  // YouTube erst nach Klick laden (kein Tracking vorab)
+  $$('[data-yt]').forEach((box) => box.querySelector('button').addEventListener('click', () => {
+    const f = document.createElement('iframe');
+    f.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(box.dataset.yt)}?autoplay=1&rel=0`;
+    f.allow = 'autoplay; encrypted-media; picture-in-picture'; f.allowFullscreen = true; f.title = 'YouTube';
+    box.replaceChildren(f);
+  }));
+
+  // Sprache / Land: Auswahl schickt das Formular sofort ab
+  $$('[data-autosubmit]').forEach((sel) => sel.addEventListener('change', () => sel.form && sel.form.submit()));
+
   $$('[data-sort]').forEach((sel) => sel.addEventListener('change', () => {
     const url = new URL(window.location.href);
     url.searchParams.set('sort_by', sel.value);

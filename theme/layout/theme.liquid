@@ -32,7 +32,7 @@
     <title>
       {{- doc_title -}}
       {%- if current_tags %} – {{ current_tags | join: ', ' }}{% endif -%}
-      {%- if current_page > 1 %} – Seite {{ current_page }}{% endif -%}
+      {%- if current_page > 1 %} – {{ 'general.page' | t }} {{ current_page }}{% endif -%}
     </title>
     {%- if page_description -%}
       <meta name="description" content="{{ page_description | escape }}">
@@ -48,7 +48,7 @@
   </head>
 
   <body class="template-{{ template.name | handle }}{% if settings.scroll_reveal %} reveal-on{% endif %}">
-    <a class="skip-link" href="#main">Zum Inhalt springen</a>
+    <a class="skip-link" href="#main">{{ 'general.skip' | t }}</a>
 
     {% sections 'header-group' %}
 
@@ -69,7 +69,8 @@
           cartChange: {{ routes.cart_change_url | json }},
           root: {{ routes.root_url | json }}
         },
-        cartType: {{ settings.cart_type | json }}
+        cartType: {{ settings.cart_type | json }},
+        strings: { playerError: {{ 'player.error' | t | json }} }
       };
     </script>
   </body>

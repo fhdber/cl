@@ -4,8 +4,8 @@
   assign cap = target.compare_at_price
 -%}
 {%- if p == 0 -%}
-  <span>Free</span>
+  <span>{{ 'general.free' | t }}</span>
 {%- else -%}
-  {%- if product.price_varies and variant == blank %}<span>ab {{ product.price_min | money }}</span>{% else %}<span>{{ p | money }}</span>{% endif -%}
+  {%- if product.price_varies and variant == blank %}<span>{{ 'general.from' | t }} {{ product.price_min | money }}</span>{% else %}<span>{{ p | money }}</span>{% endif -%}
   {%- if cap > p %}<s>{{ cap | money }}</s>{% endif -%}
 {%- endif -%}

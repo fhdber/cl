@@ -83,3 +83,28 @@ templates/   JSON-Templates; page.license, page.faq, page.contact für die Seite
 ```
 
 Lizenzstufen (z. B. Basic / Extended) als Produktvarianten anlegen. Die Produktseite zeigt sie automatisch als Auswahl.
+
+## Leasing, Sprache, Rechtliches (Stand Oktober 2026)
+
+**Beats / Leasing**
+- Jeder Beat hat die Option „Lizenz“ mit genau diesen Namen: `MP3 Lease` 29 €, `WAV Lease` 49 €, `Trackout Lease` 99 €, `Unlimited` 199 €. Exklusiv läuft nur über Anfrage (Mail mit Beat-Titel im Betreff).
+- Neue Beats: Template **product.beat** zuweisen. Dann erscheinen die Lizenz-Tabelle, „Exklusiv anfragen“ und die Beat-Häkchen-Liste.
+- Die Tabelle zieht die Preise automatisch aus den Varianten, wenn der Name exakt passt. Limits pro Stufe änderst du im Editor unter Produkt (Beat) → Lizenz-Vergleich.
+- Pro Variante eine eigene Datei samt Lizenz-PDF in der App „Digital Downloads“ hinterlegen.
+
+**Sprache DE / EN**
+- Englisch ist im Admin aktiviert, aber noch nicht veröffentlicht. Sobald die Inhalte übersetzt sind, unter Einstellungen → Sprachen → Englisch → Veröffentlichen. Danach erscheint der Umschalter „DE / EN“ automatisch im Header, im Mobilmenü und im Footer.
+- Theme-Texte (Buttons, Warenkorb usw.) sind schon zweisprachig. Produkte, Seiten und Editor-Texte übersetzt du mit der kostenlosen App „Translate & Adapt“ (Auto-Übersetzung, danach gegenlesen).
+- Land und Währung im Footer erscheinen, sobald unter Märkte mehr als ein Markt aktiv ist.
+
+**Rechtliches**
+- Die Seiten /pages/impressum, /pages/agb und /pages/widerruf sind angelegt und im Footer verlinkt. Datenschutz ist die von Shopify gepflegte Richtlinie.
+- Platzhalter `[VOR- UND NACHNAME]` und `[DE XXXXXXXXX]` ersetzen. Die Rohtexte liegen in `docs/rechtstexte/`.
+- Zusätzlich einmal Einstellungen → Richtlinien öffnen und dort Impressum, AGB und Widerruf einfügen, damit sie auch im Checkout verlinkt sind.
+- Im Warenkorb gibt es eine Pflicht-Checkbox für digitale Inhalte. Sie ist nötig, damit das Widerrufsrecht beim Download erlischt, und wird als Attribut in der Bestellung gespeichert.
+- In der Bestellbestätigungs-Mail einen Satz ergänzen: „Du hast zugestimmt, dass wir vor Ablauf der Widerrufsfrist mit der Bereitstellung beginnen, und bestätigt, dass dein Widerrufsrecht damit erlischt.“
+- Die Texte vor dem Livegang einmal prüfen lassen, z. B. durch IT-Recht Kanzlei oder Händlerbund (Abo inkl. Abmahnschutz).
+
+**Produkt-Extras**
+- Metafeld „YouTube-Video“ (specs.video): Link einfügen. Das Video wird erst nach Klick geladen, vorher geht keine Anfrage an YouTube.
+- Häkchen-Liste: im Editor unter Produkt → Häkchen-Liste, eine Zeile pro Punkt.

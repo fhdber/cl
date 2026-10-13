@@ -241,6 +241,19 @@
         "id": "cart_note_text",
         "label": "Hinweis im Warenkorb",
         "default": "Digitaler Download. Der Link kommt direkt nach dem Kauf per Mail."
+      },
+      {
+        "type": "checkbox",
+        "id": "cart_consent",
+        "label": "Zustimmung „digitale Inhalte“ vor dem Checkout verlangen",
+        "info": "Rechtlich nötig, damit das Widerrufsrecht beim Download erlischt (§ 356 Abs. 5 BGB).",
+        "default": true
+      },
+      {
+        "type": "richtext",
+        "id": "cart_consent_text",
+        "label": "Text der Zustimmung",
+        "default": "<p>Ich stimme ausdrücklich zu, dass CONTRABEATZ vor Ablauf der Widerrufsfrist mit der Bereitstellung der digitalen Inhalte beginnt. Mir ist bekannt, dass ich dadurch mein Widerrufsrecht verliere. Es gelten die <a href=\"/pages/agb\">AGB</a> und die <a href=\"/pages/lizenz\">Lizenzbedingungen</a>.</p>"
       }
     ]
   },

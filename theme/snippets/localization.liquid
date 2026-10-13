@@ -1,0 +1,47 @@
+{%- comment -%}
+  Sprach- und Länderwahl.
+  style: 'lang'   → kompakte Sprachumschaltung „DE / EN“ (Header)
+         'full'   → Sprache + Land/Währung als Auswahl (Footer)
+  Erscheint nur, wenn im Admin mehr als eine Sprache bzw. ein Markt aktiv ist.
+{%- endcomment -%}
+{%- liquid
+  assign style = style | default: 'lang'
+  assign langs = localization.available_languages.size
+  assign countries = localization.available_countries.size
+-%}
+{%- if style == 'lang' and langs > 1 -%}
+  {%- form 'localization', id: form_id, class: 'lang' -%}
+    {%- for language in localization.available_languages -%}
+      {%- unless forloop.first -%}<span class="lang__sep" aria-hidden="true">/</span>{%- endunless -%}
+      <button type="submit" name="language_code" value="{{ language.iso_code }}" lang="{{ language.iso_code }}"
+        class="lang__btn"{% if language.iso_code == localization.language.iso_code %} aria-current="true"{% endif %}
+        aria-label="{{ language.endonym_name | capitalize }}">{{ language.iso_code | upcase }}</button>
+    {%- endfor -%}
+  {%- endform -%}
+{%- elsif style == 'full' -%}
+  {%- if langs > 1 or countries > 1 -%}
+    {%- form 'localization', id: form_id, class: 'loc' -%}
+      {%- if langs > 1 -%}
+        <label class="loc__field">
+          <span class="visually-hidden">{{ 'general.language' | t }}</span>
+          <select name="language_code" class="loc__select" data-autosubmit>
+            {%- for language in localization.available_languages -%}
+              <option value="{{ language.iso_code }}" lang="{{ language.iso_code }}"{% if language.iso_code == localization.language.iso_code %} selected{% endif %}>{{ language.endonym_name | capitalize }}</option>
+            {%- endfor -%}
+          </select>
+        </label>
+      {%- endif -%}
+      {%- if countries > 1 -%}
+        <label class="loc__field">
+          <span class="visually-hidden">{{ 'general.country' | t }}</span>
+          <select name="country_code" class="loc__select" data-autosubmit>
+            {%- for country in localization.available_countries -%}
+              <option value="{{ country.iso_code }}"{% if country.iso_code == localization.country.iso_code %} selected{% endif %}>{{ country.name }} · {{ country.currency.iso_code }} {{ country.currency.symbol }}</option>
+            {%- endfor -%}
+          </select>
+        </label>
+      {%- endif -%}
+      <noscript><button type="submit" class="ul">OK</button></noscript>
+    {%- endform -%}
+  {%- endif -%}
+{%- endif -%}

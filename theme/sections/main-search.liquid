@@ -3,9 +3,9 @@
     <span class="label">Suche</span><h1 class="h1">Was suchst du?</h1>
     <form action="{{ routes.search_url }}" method="get" role="search" class="line-input" style="width:min(640px,100%)">
       <input type="hidden" name="type" value="product">
-      <label class="visually-hidden" for="q">Suchbegriff</label>
+      <label class="visually-hidden" for="q">{{ 'search.term' | t }}</label>
       <input id="q" type="search" name="q" value="{{ search.terms | escape }}" placeholder="Kick, Trap, 140 BPM …" autofocus>
-      <button type="submit" aria-label="Suchen">↳</button>
+      <button type="submit" aria-label="{{ 'search.submit' | t }}">↳</button>
     </form>
   </header>
   {%- if search.performed -%}
@@ -22,7 +22,7 @@
           {%- endfor -%}
         </div>
       {%- else -%}
-        <div class="empty"><p class="h3">Nichts gefunden.</p><a class="link" href="{{ routes.all_products_collection_url }}">Alle Kits</a></div>
+        <div class="empty"><p class="h3">{{ 'search.none' | t }}</p><a class="link" href="{{ routes.all_products_collection_url }}">{{ 'general.all_kits' | t }}</a></div>
       {%- endif -%}
     {%- endpaginate -%}
   {%- endif -%}
