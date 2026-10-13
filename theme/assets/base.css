@@ -6,12 +6,14 @@
 :root {
   --ease: cubic-bezier(.16, 1, .3, 1); --hdr: 79px;
   /* Gemeinsame Höhe der CONTRA-Wortmarke (viewBox 1340 × 585) für Hero und Outro */
-  /* Gemessen an contrabeatz.de: Wortmarke 75vw breit (Buchstaben ≈ 67vw). --contra-scale kommt aus den Theme-Einstellungen. */
-  --contra-h: calc(min(calc(75vw * .4366), 72vh, calc((100vw - 2 * var(--edge)) * .4366)) * var(--contra-scale, 1));
+  /* 1:1 von contrabeatz.de (#cb-contra-fixed): Breite der Buchstaben, ≤768px = 86vw.
+     Buchstaben-viewBox 1196 × 585 → Höhe = Breite × 585/1196. --contra-scale aus den Theme-Einstellungen. */
+  --contra-w: min(clamp(560px, 70vw, 1100px), 130vh, 92vw);
+  --contra-h: calc(var(--contra-w) * .48913 * var(--contra-scale, 1));
   --tag-x: 321px; --tag-y: 460px; --tag-s: 2.75;
 }
 @media (max-width: 900px) { :root { --edge: 20px; --hdr: 65px; --sec-pad: 80px; } }
-@media (max-width: 820px) { :root { --contra-h: calc((100vw - 2 * var(--edge)) * .4366 * var(--contra-scale, 1)); } }
+@media (max-width: 768px) { :root { --contra-w: 86vw; } }
 
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: var(--hdr); }
@@ -355,8 +357,8 @@ body.has-player { padding-bottom: 68px; }
 
 /* ---------- Footer ---------- */
 .footer { position: relative; z-index: 2; background: var(--bg); }
-.footer__mark { padding: 150px var(--edge) 130px; display: flex; justify-content: center; overflow: hidden; }
-.fmk-inner { position: relative; display: inline-block; max-width: 100%; }
+.footer__mark { padding: 150px 0 130px; display: flex; justify-content: center; overflow: hidden; }
+.fmk-inner { position: relative; display: inline-block; }
 .fmk-wrap { overflow: hidden; line-height: 0; display: block; }
 .fmk-word { height: var(--contra-h); width: auto; display: block; transform: translateY(-100%); will-change: transform; }
 .fmk-word .cb-contra { height: 100%; width: auto; opacity: 1; transform: none; }
@@ -372,7 +374,7 @@ body.has-player { padding-bottom: 68px; }
 .footer__bar a:hover::after { transform: scaleX(1); }
 .footer__copy { margin-left: auto; }
 @media (max-width: 820px) {
-  .footer__mark { padding: 80px var(--edge) 64px; }
+  .footer__mark { padding: 80px 0 64px; }
   .footer__nl { justify-content: flex-start; } .footer__nl-inner { justify-items: start; text-align: left; }
   .footer__bar { flex-direction: column; align-items: flex-start; gap: 16px; }
   .footer__copy { margin-left: 0; }
