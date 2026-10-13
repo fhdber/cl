@@ -118,7 +118,7 @@ p { text-wrap: pretty; }
 /* Hero und Outro teilen sich exakt eine Größe: --contra-h */
 .stage .cb-contra { height: var(--contra-h); width: auto; }
 .stage[data-tag="over"] [id^="cbTag"] { filter: none; }
-.cb-tag { transform: translate(var(--tag-x), var(--tag-y)) rotate(-7deg) scale(var(--tag-s)); }
+.cb-tag { transform: translate(var(--tag-x), calc(var(--tag-y) + var(--tag-py, 0px))) rotate(calc(-7deg + var(--tag-rot, 0deg))) scale(var(--tag-s)); }
 .stage[data-tag="bottom"] { --tag-x: 321px; --tag-y: 460px; --tag-s: calc(2.75 * var(--tag-size, 1)); }
 .stage[data-tag="bottom"] .stage__cue { display: none; }
 .stage[data-tag="bottom"] .cb-tag--out, .stage[data-tag="bottom"] .cb-tag--in, .cb-tag--solid { fill: var(--tag-color, var(--accent)); }

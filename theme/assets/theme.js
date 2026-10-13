@@ -244,9 +244,17 @@
   const mark = $('[data-stage-mark]');
   if (mark && !still) {
     let tick = false;
+    const stageEl = mark.closest('[data-stage]');
+    const tagK = stageEl ? Number(stageEl.dataset.tagParallax || 0) / 100 : 0;
     const upd = () => {
       tick = false;
       mark.style.transform = window.innerWidth <= 820 ? '' : `translate(-50%, calc(-50% + ${window.scrollY * -0.05}px))`;
+      // SHOP-Tag: eigene Ebene, steigt schneller als CONTRA und dreht sich leicht
+      if (stageEl && tagK) {
+        const p = Math.min(window.scrollY / window.innerHeight, 1.4);
+        stageEl.style.setProperty('--tag-py', `${(-170 * p * tagK).toFixed(1)}px`);
+        stageEl.style.setProperty('--tag-rot', `${(-5 * p * tagK).toFixed(2)}deg`);
+      }
     };
     window.addEventListener('scroll', () => { if (!tick) { requestAnimationFrame(upd); tick = true; } }, { passive: true });
     window.addEventListener('resize', upd);
