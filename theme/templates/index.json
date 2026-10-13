@@ -4,7 +4,6 @@
       "type": "contra-hero",
       "settings": {
         "tag": "bottom",
-        "scale": 100,
         "static": false,
         "cue": "Scroll",
         "link": "shopify://collections/all",

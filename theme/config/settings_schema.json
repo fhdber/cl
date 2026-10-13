@@ -119,6 +119,17 @@
     "settings": [
       {
         "type": "range",
+        "id": "contra_scale",
+        "label": "Größe CONTRA (Hero und Footer)",
+        "info": "100 % = wie auf contrabeatz.de. Gilt für beide Wortmarken gleichzeitig, sie bleiben immer identisch.",
+        "min": 70,
+        "max": 130,
+        "step": 1,
+        "unit": "%",
+        "default": 100
+      },
+      {
+        "type": "range",
         "id": "edge",
         "label": "Seitenrand Desktop",
         "min": 16,
