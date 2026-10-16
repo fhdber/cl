@@ -115,6 +115,8 @@ void Contra86Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mi
     auto settings = readSettings();
     settings.bpm = hostBpm();
     engine.process (buffer, midi, settings);
+    scope.push (buffer.getReadPointer (0), buffer.getNumChannels() > 1 ? buffer.getReadPointer (1) : nullptr,
+                buffer.getNumSamples());
     midi.clear();
 }
 

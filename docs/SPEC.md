@@ -14,7 +14,7 @@ sind bewusst klein gehalten (je 2–4 Regler).
 - **v0.1 (MVP, erledigt):** Juno-Kern, Chorus, 5 Presets, generisches UI
 - **v0.2 (dieser):** ENV 2, Unison/Stereo, Delay, Reverb, ~40 Presets in
   Kategorien, Preset-Browser im Plugin
-- **v0.3:** eigenes CONTRABEATZ-UI (Konzept vorab zur Freigabe)
+- **v0.2 UI:** eigenes CONTRABEATZ-UI (Konzept unten)
 
 ## Formate & Eckdaten
 - Instrument (AU `aumu`), VST3, Standalone. Hersteller-Code `Cntb`, Plugin-Code `Cb86`
@@ -129,11 +129,33 @@ Host-Programm (Name „Kategorie / Name“), damit es auch über das DAW-Menü l
 
 **Preset-Leiste (oben im Plugin):** Auswahlmenü mit Kategorie-Überschriften,
 ◀ ▶ zum Durchsteppen. Folgt auch Programmwechseln aus dem Host.
-Das komplette UI bleibt bis v0.3 generisch.
+Siehe UI-Konzept.
+
+## UI-Konzept (v0.2)
+Referenzen: Teenage-Engineering/Braun-Hardware – helles Alu-Gehäuse, schwarzes
+Glas-Display, ein einziger warmer Akzent.
+
+- **Gehäuse:** schwarzer, stark gerundeter Rahmen, darin Alu-Panel (kühles Hellgrau,
+  sanfter Verlauf). Feine dunkle Linien teilen das Panel in Sektionen wie bei Hardware.
+- **Display (oben, schwarz, Glanzkante):** links Kategorie + Preset-Name in Orange
+  (Klick = Preset-Menü, ◀ ▶ = blättern), rechts Oszilloskop des Ausgangs in Orange.
+  Beim Drehen/Hovern zeigt das Display Parametername + Wert (1,5 s), danach wieder
+  das Preset – das Display ist die einzige Stelle mit Zahlen, das Panel bleibt ruhig.
+- **Knobs:** heller Knopf, schwarzer Ring, roter Punkt als Zeiger, dünner oranger
+  Wertebogen. Ein Hero-Knob in Orange: Cutoff. Doppelklick = Default,
+  Shift/Cmd beim Ziehen = Feinjustierung (×0,15), Mausrad wird unterstützt.
+- **Umschalter:** Segment-Pillen (aktives Segment schwarz mit orangem LED-Punkt)
+  für Range, PWM, Unison, VCA, Chorus, Voice Mode.
+- **Raster:** Reihe 1 OSC · UNISON · Reihe 2 FILTER · LFO · VOICE ·
+  Reihe 3 ENV 1 · ENV 2 · FX. Fußzeile: Wortmarke „CONTRA-86“, Lautsprecher-
+  Punktraster, Volume-Knob.
+- **Typo:** Michroma (OFL) für Wortmarke, Sektionen, Labels und Display.
+- **Skalierung:** feste Designfläche 1040 × 820, frei skalierbar 50–150 % mit festem
+  Seitenverhältnis, vektorbasiert (HiDPI scharf).
 
 ## Nicht in v0.2 (bewusst)
 Arpeggiator, Modulationsmatrix, Effekt-Reihenfolge, eigene Presets speichern
-(Host-Speicherung funktioniert), MPE, eigenes UI.
+(Host-Speicherung funktioniert), MPE.
 
 ## Abnahme v0.2
 - Build ohne Warnungen (macOS Universal, Linux-CI-Check)

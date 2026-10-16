@@ -19,7 +19,8 @@ System: macOS
 - `Source/PluginProcessor.*` – DSP und Parameter
 - `Source/PluginEditor.*` – UI
 - `Source/DSP/` – eigene DSP-Klassen
-- `Source/UI/` – eigene Komponenten und LookAndFeel
+- `Source/UI/` – eigene Komponenten und LookAndFeel (Theme, Controls, Display)
+- `Resources/` – Font (Michroma, OFL) als Binary Data
 - `docs/SPEC.md` – Spezifikation des aktuellen Plugins (vor dem Coden lesen)
 
 ## Befehle
@@ -30,7 +31,10 @@ System: macOS
 - Render-Test (Presets, NaN, Pegel, Blockgrößen, WAVs):
   `cmake -B build -DCONTRA86_TOOLS=ON && cmake --build build --target CONTRA86_Render`,
   dann `./build/CONTRA86_Render_artefacts/Release/CONTRA86_Render renders`
-- CI: `.github/workflows/build.yml` baut macOS Universal, prüft auval + pluginval
+- UI-Screenshot (PNG, Preset-Index optional): `CONTRA86_Render --ui ui.png 1`
+  (Linux braucht einen X-Server, z. B. `xvfb-run`)
+- CI: `.github/workflows/build.yml` baut macOS Universal, prüft auval + pluginval,
+  rendert Presets und UI-Screenshot als Artifacts
 
 ## Arbeitsweise
 1. Vor neuem Feature: `docs/SPEC.md` prüfen. Fehlt Zweck, Signalfluss oder

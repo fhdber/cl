@@ -5,7 +5,7 @@ if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum macOS")
 endif()
 
-project(CONTRA86 VERSION 0.1.0 LANGUAGES C CXX)
+project(CONTRA86 VERSION 0.2.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -35,12 +35,19 @@ juce_add_plugin(CONTRA86
     AU_MAIN_TYPE                kAudioUnitType_MusicDevice
     COPY_PLUGIN_AFTER_BUILD     TRUE)
 
-target_sources(CONTRA86 PRIVATE
+juce_add_binary_data(CONTRA86_Assets SOURCES Resources/Fonts/Michroma-Regular.ttf)
+
+set(CONTRA86_SOURCES
     Source/PluginProcessor.cpp
     Source/PluginEditor.cpp
     Source/Parameters.cpp
     Source/Presets.cpp
-    Source/DSP/SynthEngine.cpp)
+    Source/DSP/SynthEngine.cpp
+    Source/UI/LookAndFeel.cpp
+    Source/UI/Controls.cpp
+    Source/UI/Display.cpp)
+
+target_sources(CONTRA86 PRIVATE ${CONTRA86_SOURCES})
 
 target_include_directories(CONTRA86 PRIVATE Source)
 
@@ -51,6 +58,7 @@ target_compile_definitions(CONTRA86 PUBLIC
 
 target_link_libraries(CONTRA86
     PRIVATE
+        CONTRA86_Assets
         juce::juce_audio_utils
         juce::juce_dsp
     PUBLIC
@@ -58,20 +66,15 @@ target_link_libraries(CONTRA86
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags)
 
-# Offline-Test: rendert alle Presets, prüft NaN/Pegel/Blockgrößen, schreibt WAVs.
+# Offline-Test: rendert alle Presets, prüft NaN/Pegel/Blockgrößen, schreibt WAVs;
+# mit --ui <datei.png> zusätzlich ein Screenshot des Editors.
 #   cmake -B build -DCONTRA86_TOOLS=ON && cmake --build build --target CONTRA86_Render
 option(CONTRA86_TOOLS "Build offline render test" OFF)
 
 if(CONTRA86_TOOLS)
     juce_add_console_app(CONTRA86_Render PRODUCT_NAME "CONTRA86_Render")
 
-    target_sources(CONTRA86_Render PRIVATE
-        Tools/RenderPresets.cpp
-        Source/PluginProcessor.cpp
-        Source/PluginEditor.cpp
-        Source/Parameters.cpp
-        Source/Presets.cpp
-        Source/DSP/SynthEngine.cpp)
+    target_sources(CONTRA86_Render PRIVATE Tools/RenderPresets.cpp ${CONTRA86_SOURCES})
 
     target_include_directories(CONTRA86_Render PRIVATE Source)
 
@@ -82,6 +85,7 @@ if(CONTRA86_TOOLS)
 
     target_link_libraries(CONTRA86_Render
         PRIVATE
+            CONTRA86_Assets
             juce::juce_audio_utils
             juce::juce_audio_formats
             juce::juce_dsp

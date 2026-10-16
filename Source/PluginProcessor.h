@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DSP/SynthEngine.h"
+#include "ScopeBuffer.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
@@ -36,6 +37,7 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     juce::AudioProcessorValueTreeState state;
+    ScopeBuffer scope;
 
 private:
     dsp86::Settings readSettings() const noexcept;

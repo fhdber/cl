@@ -189,11 +189,48 @@ void append (juce::AudioBuffer<float>& showcase, const juce::AudioBuffer<float>&
     for (int ch = 0; ch < 2; ++ch)
         showcase.copyFrom (ch, start, b, ch, 0, b.getNumSamples());
 }
+// Rendert den Editor mit laufendem Preset als PNG (für Doku und Sichtprüfung).
+int screenshot (const juce::File& file, int preset, float scale)
+{
+    Contra86Processor proc;
+    proc.setCurrentProgram (preset);
+    proc.setRateAndBufferSizeDetails (48000.0, 512);
+    proc.prepareToPlay (48000.0, 512);
+
+    juce::AudioBuffer<float> block (2, 512);
+    juce::MidiBuffer midi;
+    midi.addEvent (juce::MidiMessage::noteOn (1, 48, 0.9f), 0);
+    midi.addEvent (juce::MidiMessage::noteOn (1, 55, 0.9f), 0);
+    midi.addEvent (juce::MidiMessage::noteOn (1, 63, 0.9f), 0);
+    for (int i = 0; i < 120; ++i)
+    {
+        proc.processBlock (block, midi);
+        midi.clear();
+    }
+
+    std::unique_ptr<juce::AudioProcessorEditor> editor (proc.createEditorAndMakeActive());
+    editor->setSize (juce::roundToInt (1040 * scale), juce::roundToInt (820 * scale));
+    editor->setVisible (true);
+    juce::Timer::callAfterDelay (400, [] { juce::MessageManager::getInstance()->stopDispatchLoop(); });
+    juce::MessageManager::getInstance()->runDispatchLoop();
+
+    const auto image = editor->createComponentSnapshot (editor->getLocalBounds(), true, 2.0f);
+    file.deleteFile();
+    juce::FileOutputStream out (file);
+    juce::PNGImageFormat().writeImageToStream (image, out);
+    std::cout << "screenshot " << file.getFullPathName() << "\n";
+    editor.reset();
+    return 0;
+}
 }
 
 int main (int argc, char** argv)
 {
     juce::ScopedJuceInitialiser_GUI juce;
+
+    if (argc > 2 && juce::String (argv[1]) == "--ui")
+        return screenshot (juce::File::getCurrentWorkingDirectory().getChildFile (argv[2]),
+                           argc > 3 ? juce::String (argv[3]).getIntValue() : 1, 1.0f);
 
     const auto outDir = juce::File::getCurrentWorkingDirectory().getChildFile (argc > 1 ? argv[1] : "renders");
     outDir.createDirectory();
