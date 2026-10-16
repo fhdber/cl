@@ -10,30 +10,36 @@ void SynthEngine::prepare (double sampleRate, int maxBlockSize, const Settings& 
     maxBlock = std::max (1, maxBlockSize);
 
     oversampling = std::make_unique<juce::dsp::Oversampling<float>> (
-        1, 1, juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR, true, false);
+        2, 1, juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR, true, false);
     oversampling->initProcessing (static_cast<size_t> (maxBlock));
 
     // Die Stimmen werden direkt auf 2× Rate erzeugt, es läuft also nur der
     // Downsampling-Pfad. Dessen Verzögerung ist die halbe Gesamtlatenz.
     latencySamples = juce::roundToInt (oversampling->getLatencyInSamples() * 0.5f);
 
-    zeroBuffer.setSize (1, maxBlock);
+    zeroBuffer.setSize (2, maxBlock);
     zeroBuffer.clear();
-    monoBuffer.setSize (1, maxBlock);
-    rightBuffer.setSize (1, maxBlock);
+    stereoBuffer.setSize (2, maxBlock);
+    reverbBuffer.setSize (2, maxBlock);
 
     for (size_t i = 0; i < voices.size(); ++i)
         voices[i].prepare (osRate, 0x1234567u * static_cast<uint32_t> (i + 1));
 
     chorus.prepare (baseRate);
+    delay.prepare (baseRate);
+    reverb.setSampleRate (baseRate);
+
+    const auto g = std::tan (juce::MathConstants<double>::pi * 200.0 / baseRate);
+    reverbHpfG = static_cast<float> (g);
 
     cutoff.reset (osRate, 0.02);
     for (auto* s : { &resonance, &envAmount, &lfoFilter, &keyTrack, &pw, &saw, &pulse,
-                     &sub, &noise, &lfoPitch, &drift, &bend, &modWheel })
+                     &sub, &noise, &lfoPitch, &drift, &bend, &modWheel, &unisonDetune, &unisonWidth })
         s->reset (osRate, 0.02);
 
     hpfHz.reset (baseRate, 0.02);
     volume.reset (baseRate, 0.02);
+    reverbMix.reset (baseRate, 0.02);
 
     mods.gate = AdsrCoefs::make (0.001f, 0.001f, 1.0f, 0.005f, osRate);
 
@@ -50,7 +56,11 @@ void SynthEngine::reset()
 
     oversampling->reset();
     chorus.reset();
-    hpf.reset();
+    delay.reset();
+    reverb.reset();
+    reverbActive = false;
+    for (auto* f : { &hpfL, &hpfR, &reverbHpfL, &reverbHpfR })
+        f->reset();
 
     keyDown.fill (false);
     sustained.fill (false);
@@ -61,22 +71,13 @@ void SynthEngine::reset()
 
     applySettings (current);
 
-    cutoff.setCurrentAndTargetValue (current.cutoffHz);
-    resonance.setCurrentAndTargetValue (current.resonance);
-    envAmount.setCurrentAndTargetValue (current.envAmount);
-    lfoFilter.setCurrentAndTargetValue (current.lfoFilter);
-    keyTrack.setCurrentAndTargetValue (current.keyTrack);
-    pw.setCurrentAndTargetValue (current.pw);
-    saw.setCurrentAndTargetValue (current.saw);
-    pulse.setCurrentAndTargetValue (current.pulse);
-    sub.setCurrentAndTargetValue (current.sub);
-    noise.setCurrentAndTargetValue (current.noise);
-    lfoPitch.setCurrentAndTargetValue (current.lfoPitch);
-    drift.setCurrentAndTargetValue (current.drift);
+    cutoff.setCurrentAndTargetValue (cutoff.getTargetValue());
+    for (auto* s : { &resonance, &envAmount, &lfoFilter, &keyTrack, &pw, &saw, &pulse,
+                     &sub, &noise, &lfoPitch, &drift, &unisonDetune, &unisonWidth, &volume, &reverbMix })
+        s->setCurrentAndTargetValue (s->getTargetValue());
+    hpfHz.setCurrentAndTargetValue (hpfHz.getTargetValue());
     bend.setCurrentAndTargetValue (0.0f);
     modWheel.setCurrentAndTargetValue (0.0f);
-    hpfHz.setCurrentAndTargetValue (current.hpfHz);
-    volume.setCurrentAndTargetValue (juce::Decibels::decibelsToGain (current.volumeDb));
 }
 
 void SynthEngine::applySettings (const Settings& s) noexcept
@@ -96,12 +97,30 @@ void SynthEngine::applySettings (const Settings& s) noexcept
     pulse.setTargetValue (s.pulse);
     sub.setTargetValue (s.sub);
     noise.setTargetValue (s.noise);
-    lfoPitch.setTargetValue (s.lfoPitch * s.lfoPitch * 2.0f);
+    lfoPitch.setTargetValue (s.lfoPitch * s.lfoPitch * 12.0f);
     drift.setTargetValue (s.drift);
+    unisonDetune.setTargetValue (s.unisonDetune);
+    unisonWidth.setTargetValue (s.unisonWidth);
     hpfHz.setTargetValue (s.hpfHz);
     volume.setTargetValue (juce::Decibels::decibelsToGain (s.volumeDb, -48.0f));
+    reverbMix.setTargetValue (s.reverbMix);
 
     chorus.setMode (s.chorus);
+
+    const auto bpm = s.bpm > 20.0 && s.bpm < 999.0 ? s.bpm : 120.0;
+    delay.setParameters (static_cast<float> (s.delayBeats * 60.0 / bpm), s.delayFeedback, s.delayMix);
+
+    const auto roomSize = 0.55f + 0.43f * s.reverbSize;
+    if (std::abs (roomSize - reverbParams.roomSize) > 1.0e-4f)
+    {
+        reverbParams.roomSize   = roomSize;
+        reverbParams.damping    = 0.6f - 0.3f * s.reverbSize;
+        reverbParams.width      = 1.0f;
+        reverbParams.wetLevel   = 1.0f / 3.0f;
+        reverbParams.dryLevel   = 0.0f;
+        reverbParams.freezeMode = 0.0f;
+        reverb.setParameters (reverbParams);
+    }
 
     lfoInc = s.lfoRate / static_cast<float> (osRate);
     lfoDelayStep = s.lfoDelay > 0.0f ? 1.0f / (s.lfoDelay * static_cast<float> (osRate)) : 1.0f;
@@ -111,7 +130,41 @@ void SynthEngine::applySettings (const Settings& s) noexcept
                          ? std::exp (-4.6f / (s.glide * static_cast<float> (osRate))) : 0.0f;
     mods.pwmSource   = s.pwmSource;
     mods.vcaMode     = s.vcaMode;
+    mods.unison      = std::clamp (s.unison, 1, maxUnison);
     mods.env         = AdsrCoefs::make (s.attack, s.decay, s.sustain, s.release, osRate);
+    mods.amp         = AdsrCoefs::make (s.ampAttack, s.ampDecay, s.ampSustain, s.ampRelease, osRate);
+}
+
+// Mitte unverstimmt, Paare symmetrisch nach außen, Pegel ∝ 1/√n.
+void SynthEngine::updateUnison (float detune, float width) noexcept
+{
+    const auto n = mods.unison;
+    const auto norm = 1.0f / std::sqrt (static_cast<float> (n));
+    mods.stereo = n > 1 && width > 0.001f;
+
+    for (int u = 0; u < n; ++u)
+    {
+        const auto uz = static_cast<size_t> (u);
+        auto offset = 0.0f;
+        if (u > 0)
+        {
+            const auto pair = static_cast<float> ((u + 1) / 2);
+            offset = (u % 2 == 1 ? -1.0f : 1.0f) * pair / static_cast<float> ((n - 1) / 2);
+        }
+
+        mods.ratio[uz] = std::exp2 (offset * detune * 50.0f / 1200.0f);
+
+        if (mods.stereo)
+        {
+            const auto pan = offset * width;
+            mods.gainL[uz] = norm * std::sqrt (1.0f - pan);
+            mods.gainR[uz] = norm * std::sqrt (1.0f + pan);
+        }
+        else
+        {
+            mods.gainL[uz] = mods.gainR[uz] = norm;
+        }
+    }
 }
 
 void SynthEngine::process (juce::AudioBuffer<float>& out, const juce::MidiBuffer& midi, const Settings& settings) noexcept
@@ -126,10 +179,12 @@ void SynthEngine::process (juce::AudioBuffer<float>& out, const juce::MidiBuffer
     {
         const auto len = std::min (maxBlock, numSamples - chunkStart);
 
-        juce::dsp::AudioBlock<const float> zeros (zeroBuffer.getArrayOfReadPointers(), 1, static_cast<size_t> (len));
+        juce::dsp::AudioBlock<const float> zeros (zeroBuffer.getArrayOfReadPointers(), 2, static_cast<size_t> (len));
         auto up = oversampling->processSamplesUp (zeros);
-        auto* os = up.getChannelPointer (0);
-        juce::FloatVectorOperations::clear (os, len * factor);
+        auto* osL = up.getChannelPointer (0);
+        auto* osR = up.getChannelPointer (1);
+        juce::FloatVectorOperations::clear (osL, len * factor);
+        juce::FloatVectorOperations::clear (osR, len * factor);
 
         int pos = 0;
         for (; midiIt != midi.end(); ++midiIt)
@@ -141,25 +196,32 @@ void SynthEngine::process (juce::AudioBuffer<float>& out, const juce::MidiBuffer
 
             if (eventPos > pos)
             {
-                renderOversampled (os, pos * factor, eventPos * factor);
+                renderOversampled (osL, osR, pos * factor, eventPos * factor);
                 pos = eventPos;
             }
 
             handleMidi (meta.data, meta.numBytes);
         }
 
-        renderOversampled (os, pos * factor, len * factor);
+        renderOversampled (osL, osR, pos * factor, len * factor);
 
-        auto* left  = monoBuffer.getWritePointer (0);
-        auto* right = rightBuffer.getWritePointer (0);
-        juce::dsp::AudioBlock<float> monoBlock (monoBuffer.getArrayOfWritePointers(), 1, static_cast<size_t> (len));
-        oversampling->processSamplesDown (monoBlock);
+        juce::dsp::AudioBlock<float> stereoBlock (stereoBuffer.getArrayOfWritePointers(), 2, static_cast<size_t> (len));
+        oversampling->processSamplesDown (stereoBlock);
+
+        auto* left  = stereoBuffer.getWritePointer (0);
+        auto* right = stereoBuffer.getWritePointer (1);
 
         const auto piOverSr = juce::MathConstants<float>::pi / static_cast<float> (baseRate);
         for (int i = 0; i < len; ++i)
-            left[i] = hpf.process (left[i], std::tan (hpfHz.getNextValue() * piOverSr));
+        {
+            const auto g = std::tan (hpfHz.getNextValue() * piOverSr);
+            left[i]  = hpfL.process (left[i], g);
+            right[i] = hpfR.process (right[i], g);
+        }
 
-        chorus.process (left, left, right, len);
+        chorus.process (left, right, len);
+        delay.process (left, right, len);
+        processReverb (left, right, len);
 
         for (int i = 0; i < len; ++i)
         {
@@ -184,7 +246,41 @@ void SynthEngine::process (juce::AudioBuffer<float>& out, const juce::MidiBuffer
     }
 }
 
-void SynthEngine::renderOversampled (float* os, int start, int end) noexcept
+// Reverb als Send: Input mit 200-Hz-Hochpass, nur Wet wird addiert.
+void SynthEngine::processReverb (float* left, float* right, int numSamples) noexcept
+{
+    const auto silent = reverbMix.getTargetValue() < 1.0e-6f && ! reverbMix.isSmoothing();
+    if (silent)
+    {
+        if (reverbActive)
+        {
+            reverb.reset();
+            reverbActive = false;
+        }
+        return;
+    }
+
+    reverbActive = true;
+    auto* wetL = reverbBuffer.getWritePointer (0);
+    auto* wetR = reverbBuffer.getWritePointer (1);
+
+    for (int i = 0; i < numSamples; ++i)
+    {
+        wetL[i] = reverbHpfL.process (left[i], reverbHpfG);
+        wetR[i] = reverbHpfR.process (right[i], reverbHpfG);
+    }
+
+    reverb.processStereo (wetL, wetR, numSamples);
+
+    for (int i = 0; i < numSamples; ++i)
+    {
+        const auto mix = reverbMix.getNextValue();
+        left[i]  += mix * wetL[i];
+        right[i] += mix * wetR[i];
+    }
+}
+
+void SynthEngine::renderOversampled (float* osL, float* osR, int start, int end) noexcept
 {
     for (int p = start; p < end; p += modChunk)
     {
@@ -214,6 +310,7 @@ void SynthEngine::renderOversampled (float* os, int start, int end) noexcept
             keyBuf[i_]     = keyTrack.getNextValue();
         }
 
+        updateUnison (unisonDetune.skip (n), unisonWidth.skip (n));
         mods.drift = drift.skip (n);
         mods.pitchSemis = pitchBuf.data();
         mods.lfo        = lfoBuf.data();
@@ -229,7 +326,7 @@ void SynthEngine::renderOversampled (float* os, int start, int end) noexcept
         mods.keyTrack   = keyBuf.data();
 
         for (auto& v : voices)
-            v.render (os + p, n, mods);
+            v.render (osL + p, osR + p, n, mods);
     }
 }
 

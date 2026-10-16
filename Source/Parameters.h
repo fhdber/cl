@@ -7,6 +7,7 @@ namespace params
     // Version 1 aller IDs. Neue Parameter bekommen eine höhere Versionsnummer,
     // damit gespeicherte Sessions in allen Hosts stabil bleiben.
     inline constexpr int version = 1;
+    inline constexpr int version2 = 2;
 
     namespace id
     {
@@ -37,12 +38,21 @@ namespace params
         inline constexpr auto drift      = "drift";
         inline constexpr auto velocity   = "velocity";
         inline constexpr auto volume     = "volume";
-    }
 
-    enum class PwmSource { lfo, manual, env };
-    enum class VcaMode   { env, gate };
-    enum class Chorus    { off, one, two, both };
-    enum class VoiceMode { poly, mono };
+        // v2
+        inline constexpr auto unison        = "unison";
+        inline constexpr auto unisonDetune  = "unisonDetune";
+        inline constexpr auto unisonWidth   = "unisonWidth";
+        inline constexpr auto ampAttack     = "ampAttack";
+        inline constexpr auto ampDecay      = "ampDecay";
+        inline constexpr auto ampSustain    = "ampSustain";
+        inline constexpr auto ampRelease    = "ampRelease";
+        inline constexpr auto delayTime     = "delayTime";
+        inline constexpr auto delayFeedback = "delayFeedback";
+        inline constexpr auto delayMix      = "delayMix";
+        inline constexpr auto reverbSize    = "reverbSize";
+        inline constexpr auto reverbMix     = "reverbMix";
+    }
 
     juce::AudioProcessorValueTreeState::ParameterLayout createLayout();
 }

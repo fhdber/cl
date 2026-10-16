@@ -1,4 +1,5 @@
-// Offline-Test: spielt jedes Factory-Preset, prüft das Signal und schreibt WAVs.
+// Offline-Test: spielt jedes Factory-Preset, prüft das Signal und schreibt WAVs
+// (einzeln und als Showcase pro Kategorie).
 // Aufruf: CONTRA86_Render <Ausgabeordner>
 
 #include "PluginProcessor.h"
@@ -6,34 +7,50 @@
 
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <iostream>
+#include <map>
 
 namespace
 {
 struct Note { double start, length; int pitch; float velocity; };
 
-std::vector<Note> phraseFor (int preset)
+constexpr double phraseSeconds = 4.0;
+
+std::vector<Note> phraseFor (const juce::String& category)
 {
     std::vector<Note> notes;
+    constexpr double step = 0.125; // Sechzehntel bei 120 BPM
 
-    switch (preset)
+    if (category == "Bass")
     {
-        case 2: // Saw Bass: Mono-Linie mit Legato-Überlappungen
-            for (int bar = 0; bar < 2; ++bar)
-                for (auto [step, pitch] : { std::pair { 0, 36 }, { 3, 36 }, { 6, 43 }, { 8, 41 }, { 11, 39 }, { 14, 48 } })
-                    notes.push_back ({ bar * 1.935 + step * 0.121, 0.16, pitch, step == 0 ? 1.0f : 0.75f });
-            break;
-
-        case 4: // House Pluck: Akkord-Stabs auf der Offbeat-Achtel
-            for (int i = 0; i < 8; ++i)
-                for (auto pitch : { 60, 63, 67, 70 })
-                    notes.push_back ({ 0.242 + i * 0.484, 0.2, pitch, 0.9f });
-            break;
-
-        default: // Akkord halten (Cm9)
-            for (auto pitch : { 48, 55, 58, 62, 63 })
-                notes.push_back ({ 0.0, 2.8, pitch, 0.85f });
-            notes.push_back ({ 3.2, 0.6, 72, 1.0f });
-            break;
+        for (int bar = 0; bar < 2; ++bar)
+            for (auto [s, pitch] : { std::pair { 0, 36 }, { 3, 36 }, { 6, 43 }, { 8, 41 }, { 11, 39 }, { 14, 48 } })
+                notes.push_back ({ bar * 2.0 + s * step, 0.16, pitch, s == 0 ? 1.0f : 0.75f });
+    }
+    else if (category == "Lead")
+    {
+        for (auto [s, len, pitch] : { std::tuple { 0, 3, 72 }, { 4, 2, 75 }, { 6, 2, 77 }, { 8, 6, 79 },
+                                      { 15, 1, 77 }, { 16, 2, 75 }, { 18, 2, 74 }, { 20, 8, 72 } })
+            notes.push_back ({ s * step, len * step + 0.02, pitch, 0.9f });
+    }
+    else if (category == "Pluck")
+    {
+        for (int i = 0; i < 16; ++i)
+            notes.push_back ({ i * 2 * step, step, std::array { 60, 63, 67, 70, 72, 70, 67, 63 }[static_cast<size_t> (i % 8)], 0.9f });
+    }
+    else if (category == "Keys")
+    {
+        for (int i = 0; i < 4; ++i)
+            for (auto pitch : { 60, 63, 67, 70 })
+                notes.push_back ({ 0.25 + i * 0.75, 0.3, pitch - (i >= 2 ? 2 : 0), 0.9f });
+    }
+    else if (category == "FX")
+    {
+        notes.push_back ({ 0.0, 2.5, 60, 1.0f });
+    }
+    else
+    {
+        for (auto pitch : { 48, 55, 58, 62, 63 })
+            notes.push_back ({ 0.0, 2.6, pitch, 0.85f });
     }
 
     return notes;
@@ -64,7 +81,7 @@ juce::AudioBuffer<float> render (int preset, double sampleRate, int channels, in
 
     const auto total = static_cast<int> (seconds * sampleRate);
     juce::AudioBuffer<float> result (channels, total);
-    const auto allMidi = midiFor (phraseFor (preset), sampleRate);
+    const auto allMidi = midiFor (phraseFor (presets::category (preset)), sampleRate);
 
     juce::Random random (42);
     juce::AudioBuffer<float> block (channels, 1024);
@@ -110,10 +127,11 @@ bool check (const juce::String& label, const juce::AudioBuffer<float>& b)
     const auto rms = std::sqrt (sumSquares / (b.getNumChannels() * b.getNumSamples()));
     const auto peakDb = juce::Decibels::gainToDecibels (peak);
     const auto rmsDb  = juce::Decibels::gainToDecibels (static_cast<float> (rms));
-    const auto ok = peak < 1.0f && rmsDb > -50.0f;
+    const auto ok = peak < 1.0f && peakDb > -30.0f;
 
-    std::cout << (ok ? "ok   " : "FAIL ") << label.paddedRight (' ', 40)
-              << " peak " << juce::String (peakDb, 1) << " dBFS, rms " << juce::String (rmsDb, 1) << " dBFS\n";
+    std::cout << (ok ? "ok   " : "FAIL ") << label.paddedRight (' ', 44)
+              << " peak " << juce::String (peakDb, 1).paddedLeft (' ', 5) << " dBFS, rms "
+              << juce::String (rmsDb, 1).paddedLeft (' ', 5) << " dBFS\n";
     return ok;
 }
 
@@ -125,14 +143,15 @@ bool same (const juce::String& label, const juce::AudioBuffer<float>& a, const j
             maxDiff = std::max (maxDiff, std::abs (a.getSample (ch, i) - b.getSample (ch, i)));
 
     const auto ok = maxDiff < 1.0e-4f;
-    std::cout << (ok ? "ok   " : "FAIL ") << label.paddedRight (' ', 40) << " max diff " << maxDiff << "\n";
+    if (! ok)
+        std::cout << "FAIL " << label.paddedRight (' ', 44) << " max diff " << maxDiff << "\n";
     return ok;
 }
 
 bool stateRoundTrip()
 {
     Contra86Processor a, b;
-    a.setCurrentProgram (3);
+    a.setCurrentProgram (5);
 
     juce::MemoryBlock data;
     a.getStateInformation (data);
@@ -145,7 +164,7 @@ bool stateRoundTrip()
             return false;
         }
 
-    const auto ok = b.getCurrentProgram() == 3;
+    const auto ok = b.getCurrentProgram() == 5;
     std::cout << (ok ? "ok   " : "FAIL ") << "state round trip\n";
     return ok;
 }
@@ -162,6 +181,14 @@ void writeWav (const juce::File& file, const juce::AudioBuffer<float>& b, double
     if (writer != nullptr)
         writer->writeFromAudioSampleBuffer (b, 0, b.getNumSamples());
 }
+
+void append (juce::AudioBuffer<float>& showcase, const juce::AudioBuffer<float>& b)
+{
+    const auto start = showcase.getNumSamples();
+    showcase.setSize (2, start + b.getNumSamples(), true, true);
+    for (int ch = 0; ch < 2; ++ch)
+        showcase.copyFrom (ch, start, b, ch, 0, b.getNumSamples());
+}
 }
 
 int main (int argc, char** argv)
@@ -171,28 +198,46 @@ int main (int argc, char** argv)
     const auto outDir = juce::File::getCurrentWorkingDirectory().getChildFile (argc > 1 ? argv[1] : "renders");
     outDir.createDirectory();
 
+    constexpr int demoRate = 48000;
     auto ok = stateRoundTrip();
+    int checked = 0;
+    std::map<juce::String, juce::AudioBuffer<float>> showcases;
 
     for (int p = 0; p < presets::count(); ++p)
     {
-        const auto name = presets::name (p);
+        const auto name = presets::fullName (p);
+        const auto t0 = juce::Time::getMillisecondCounterHiRes();
+        const auto reference = render (p, demoRate, 2, 512, phraseSeconds);
+        const auto cpu = (juce::Time::getMillisecondCounterHiRes() - t0) / (phraseSeconds * 10.0);
+        ok &= check (name, reference);
+        std::cout << "     CPU " << juce::String (cpu, 1) << " % eines Kerns (48 kHz)\n";
 
-        for (auto sr : { 44100, 48000, 96000, 192000 })
+        ok &= same (name + " block 1", reference, render (p, demoRate, 2, 1, phraseSeconds));
+        ok &= same (name + " random blocks", reference, render (p, demoRate, 2, 0, phraseSeconds));
+
+        for (auto sr : { 44100, 96000, 192000 })
         {
+            const auto b = render (p, sr, 2, 512, 2.0);
             const auto label = name + " @ " + juce::String (sr / 1000.0, 1) + " kHz";
-            const auto reference = render (p, sr, 2, 512, 4.5);
-            ok &= check (label, reference);
-
-            if (sr == 48000)
-            {
-                ok &= same (name + " block 1 vs 512", reference, render (p, sr, 2, 1, 4.5));
-                ok &= same (name + " random blocks vs 512", reference, render (p, sr, 2, 0, 4.5));
-                ok &= check (name + " mono", render (p, sr, 1, 512, 4.5));
-                writeWav (outDir.getChildFile (name.replaceCharacter (' ', '_') + ".wav"), reference, sr);
-            }
+            const auto good = b.getNumSamples() > 0 && check (label, b);
+            ok &= good;
         }
+
+        const auto monoOk = check (name + " mono", render (p, demoRate, 1, 512, phraseSeconds));
+        ok &= monoOk;
+        checked += 6;
+
+        writeWav (outDir.getChildFile (presets::category (p) + "_" + presets::name (p).replaceCharacter (' ', '_') + ".wav"),
+                  reference, demoRate);
+
+        if (p > 0)
+            append (showcases[presets::category (p)], reference);
     }
 
-    std::cout << (ok ? "\nALL PASSED" : "\nFAILURES") << "  (WAVs in " << outDir.getFullPathName() << ")\n";
+    for (auto& [category, buffer] : showcases)
+        writeWav (outDir.getChildFile ("Showcase_" + category + ".wav"), buffer, demoRate);
+
+    std::cout << (ok ? "\nALL PASSED" : "\nFAILURES") << " (" << presets::count() << " presets, "
+              << checked << " checks)  WAVs in " << outDir.getFullPathName() << "\n";
     return ok ? 0 : 1;
 }

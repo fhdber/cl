@@ -6,7 +6,8 @@
 
 namespace dsp86
 {
-// Juno-Chorus: zwei gegenphasig modulierte Delays aus einem Mono-Signal.
+// Juno-Chorus: zwei gegenphasig modulierte Delays (L +LFO, R −LFO).
+// Bei Mono-Eingang (L = R) entspricht das dem Original.
 class Chorus
 {
 public:
@@ -21,7 +22,8 @@ public:
         while (size < maxDelaySamples)
             size <<= 1;
 
-        buffer.assign (static_cast<size_t> (size), 0.0f);
+        bufferL.assign (static_cast<size_t> (size), 0.0f);
+        bufferR.assign (static_cast<size_t> (size), 0.0f);
         mask = size - 1;
 
         for (auto* s : { &centreMs, &depthMs, &wet })
@@ -35,7 +37,8 @@ public:
 
     void reset() noexcept
     {
-        std::fill (buffer.begin(), buffer.end(), 0.0f);
+        std::fill (bufferL.begin(), bufferL.end(), 0.0f);
+        std::fill (bufferR.begin(), bufferR.end(), 0.0f);
         writePos = 0;
         lfoPhase = 0.0f;
         lpL = lpR = 0.0f;
@@ -57,15 +60,17 @@ public:
         wet.setTargetValue (1.0f);
     }
 
-    void process (const float* in, float* left, float* right, int numSamples) noexcept
+    // In-place: left/right sind Ein- und Ausgang.
+    void process (float* left, float* right, int numSamples) noexcept
     {
         const auto lfoInc = rateHz / static_cast<float> (sampleRate);
         const auto msToSamples = static_cast<float> (sampleRate) * 0.001f;
 
         for (int i = 0; i < numSamples; ++i)
         {
-            const auto dry = in[i];
-            buffer[static_cast<size_t> (writePos)] = dry;
+            const auto dryL = left[i], dryR = right[i];
+            bufferL[static_cast<size_t> (writePos)] = dryL;
+            bufferR[static_cast<size_t> (writePos)] = dryR;
 
             lfoPhase += lfoInc;
             if (lfoPhase >= 1.0f)
@@ -76,12 +81,12 @@ public:
             const auto depth  = depthMs.getNextValue() * msToSamples;
             const auto w      = wet.getNextValue();
 
-            lpL += (read (centre + depth * tri) - lpL) * lowpassG;
-            lpR += (read (centre - depth * tri) - lpR) * lowpassG;
+            lpL += (read (bufferL, centre + depth * tri) - lpL) * lowpassG;
+            lpR += (read (bufferR, centre - depth * tri) - lpR) * lowpassG;
 
             const auto norm = 1.0f / (1.0f + 0.4f * w);
-            left[i]  = (dry + w * lpL) * norm;
-            right[i] = (dry + w * lpR) * norm;
+            left[i]  = (dryL + w * lpL) * norm;
+            right[i] = (dryR + w * lpR) * norm;
 
             writePos = (writePos + 1) & mask;
         }
@@ -89,7 +94,7 @@ public:
 
 private:
     // Hermite-Interpolation, delaySamples >= 1
-    float read (float delaySamples) const noexcept
+    float read (const std::vector<float>& buffer, float delaySamples) const noexcept
     {
         const auto pos  = static_cast<float> (writePos) - delaySamples;
         const auto base = static_cast<int> (std::floor (pos));
@@ -107,7 +112,7 @@ private:
     }
 
     double sampleRate = 44100.0;
-    std::vector<float> buffer;
+    std::vector<float> bufferL, bufferR;
     int mask = 0, writePos = 0;
 
     float rateHz = 0.513f, lfoPhase = 0.0f;

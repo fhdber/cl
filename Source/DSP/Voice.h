@@ -4,13 +4,16 @@
 #include "LadderFilter.h"
 #include "Oscillator.h"
 
+#include <array>
 #include <cmath>
 #include <cstdint>
 
 namespace dsp86
 {
 enum class PwmSource { lfo, manual, env };
-enum class VcaMode   { env, gate };
+enum class VcaMode   { env1, gate, env2 };
+
+inline constexpr int maxUnison = 7;
 
 // Pro Sample geglättete Werte, die die Engine für einen Teilblock vorberechnet.
 struct VoiceMods
@@ -34,7 +37,15 @@ struct VoiceMods
     PwmSource pwmSource;
     VcaMode vcaMode;
     AdsrCoefs env;
+    AdsrCoefs amp;
     AdsrCoefs gate;
+
+    // Unison: Index 0 ist die unverstimmte Mitte (trägt den Sub).
+    int unison;
+    bool stereo;
+    std::array<float, maxUnison> ratio;
+    std::array<float, maxUnison> gainL;
+    std::array<float, maxUnison> gainR;
 };
 
 class Voice
@@ -55,8 +66,10 @@ public:
     void kill() noexcept
     {
         env.reset();
+        ampEnv.reset();
         gateEnv.reset();
-        filter.reset();
+        filterL.reset();
+        filterR.reset();
         note = -1;
         held = false;
         fading = false;
@@ -90,7 +103,7 @@ public:
         begin (midiNote, velocity, velocitySens, ! isActive());
     }
 
-    // Mono-Legato: Tonhöhe ändern, Hüllkurve läuft weiter.
+    // Mono-Legato: Tonhöhe ändern, Hüllkurven laufen weiter.
     void legatoTo (int midiNote, uint64_t order) noexcept
     {
         age = order;
@@ -111,10 +124,11 @@ public:
             return;
         }
         env.gateOff();
+        ampEnv.gateOff();
         gateEnv.gateOff();
     }
 
-    void render (float* out, int numSamples, const VoiceMods& m) noexcept
+    void render (float* outL, float* outR, int numSamples, const VoiceMods& m) noexcept
     {
         if (! isActive())
             return;
@@ -132,28 +146,47 @@ public:
 
             const auto semis = currentNote + m.octaveShift + m.pitchSemis[i]
                              + m.drift * (driftStatic * 0.08f + driftWalk * 0.03f);
-            const auto freq = 440.0f * std::exp2 ((semis - 69.0f) * (1.0f / 12.0f));
-            const auto inc  = std::min (freq / sampleRate, 0.45f);
+            const auto baseInc = 440.0f * std::exp2 ((semis - 69.0f) * (1.0f / 12.0f)) / sampleRate;
 
-            const auto e = env.next (m.env);
-            const auto g = gateEnv.next (m.gate);
+            const auto e  = env.next (m.env);
+            const auto a  = ampEnv.next (m.amp);
+            const auto gt = gateEnv.next (m.gate);
 
             auto pwAmount = m.pw[i];
             if (m.pwmSource == PwmSource::lfo)      pwAmount *= 0.5f + 0.5f * m.lfo[i];
             else if (m.pwmSource == PwmSource::env) pwAmount *= e;
+            const auto duty = 0.5f - 0.45f * pwAmount;
 
-            const auto osc = dco.next (inc, 0.5f - 0.45f * pwAmount);
-            const auto mix = 0.5f * (osc.saw * m.saw[i] + osc.pulse * m.pulse[i]
-                                     + osc.sub * m.sub[i] + noise.next() * m.noise[i]);
+            const auto sawLevel = m.saw[i], pulseLevel = m.pulse[i];
+            const auto common = 0.5f * (noise.next() * m.noise[i]);
+            auto mixL = common, mixR = common;
+
+            for (int u = 0; u < m.unison; ++u)
+            {
+                const auto uz  = static_cast<size_t> (u);
+                const auto osc = dcos[uz].next (std::min (baseInc * m.ratio[uz], 0.45f), duty);
+                auto s = osc.saw * sawLevel + osc.pulse * pulseLevel;
+                if (u == 0)
+                    s += osc.sub * m.sub[i];
+                s *= 0.5f;
+
+                mixL += s * m.gainL[uz];
+                mixR += s * m.gainR[uz];
+            }
 
             const auto octaves = m.envOctaves[i] * e + m.lfoOctaves[i]
                                + m.keyTrack[i] * (currentNote - 60.0f) * (1.0f / 12.0f)
                                + velocityOctaves + m.drift * driftCutoff * 0.15f;
             const auto fc = std::clamp (m.cutoffHz[i] * std::exp2 (octaves), 15.0f, maxCutoff);
-            const auto y  = filter.process (mix, std::tan (fc * piOverSr), m.resonance[i]);
+            const auto g  = std::tan (fc * piOverSr);
 
-            const auto amp = m.vcaMode == VcaMode::gate ? g : e;
-            out[i] += y * amp * velocityGain * fadeGain * 0.4f;
+            const auto yL = filterL.process (mixL, g, m.resonance[i]);
+            const auto yR = m.stereo ? filterR.process (mixR, g, m.resonance[i]) : yL;
+
+            const auto amp  = m.vcaMode == VcaMode::gate ? gt : (m.vcaMode == VcaMode::env1 ? e : a);
+            const auto gain = amp * velocityGain * fadeGain * 0.4f;
+            outL[i] += yL * gain;
+            outR[i] += yR * gain;
 
             if (fading)
             {
@@ -177,7 +210,8 @@ public:
                 }
             }
 
-            const auto ampActive = m.vcaMode == VcaMode::gate ? gateEnv.isActive() : env.isActive();
+            const auto ampActive = m.vcaMode == VcaMode::gate ? gateEnv.isActive()
+                                 : (m.vcaMode == VcaMode::env1 ? env.isActive() : ampEnv.isActive());
             if (! ampActive && ! fading)
             {
                 kill();
@@ -202,21 +236,25 @@ private:
         if (fromSilence)
         {
             env.reset();
+            ampEnv.reset();
             gateEnv.reset();
-            filter.reset();
-            dco.reset (0.5f + 0.5f * noise.next());
+            filterL.reset();
+            filterR.reset();
+            for (auto& d : dcos)
+                d.reset (0.5f + 0.5f * noise.next());
         }
 
         env.gateOn();
+        ampEnv.gateOn();
         gateEnv.gateOn();
     }
 
     float sampleRate = 44100.0f, piOverSr = 0.0f, maxCutoff = 20000.0f;
 
-    Dco dco;
+    std::array<Dco, maxUnison> dcos;
     Noise noise;
-    LadderFilter filter;
-    Envelope env, gateEnv;
+    LadderFilter filterL, filterR;
+    Envelope env, ampEnv, gateEnv;
 
     int note = -1, pendingNote = -1;
     bool held = false, fading = false;

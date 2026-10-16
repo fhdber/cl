@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Chorus.h"
+#include "Delay.h"
 #include "Voice.h"
 
 #include <juce_dsp/juce_dsp.h>
@@ -19,15 +20,23 @@ struct Settings
     float saw = 1.0f, pulse = 0.0f, sub = 0.0f, noise = 0.0f;
     float lfoPitch = 0.0f;
 
+    int   unison = 1;
+    float unisonDetune = 0.3f, unisonWidth = 0.7f;
+
     float hpfHz = 20.0f, cutoffHz = 8000.0f, resonance = 0.1f;
     float envAmount = 0.0f, lfoFilter = 0.0f, keyTrack = 0.5f;
 
     float attack = 0.005f, decay = 0.4f, sustain = 0.8f, release = 0.3f;
-    VcaMode vcaMode = VcaMode::env;
+    float ampAttack = 0.005f, ampDecay = 0.4f, ampSustain = 0.8f, ampRelease = 0.3f;
+    VcaMode vcaMode = VcaMode::env2;
 
     float lfoRate = 3.0f, lfoDelay = 0.0f;
 
     Chorus::Mode chorus = Chorus::Mode::one;
+    float delayBeats = 0.75f, delayFeedback = 0.35f, delayMix = 0.0f;
+    float reverbSize = 0.6f, reverbMix = 0.0f;
+    double bpm = 120.0;
+
     VoiceMode voiceMode = VoiceMode::poly;
     float glide = 0.0f, drift = 0.2f, velocity = 0.5f, volumeDb = -6.0f;
 };
@@ -49,31 +58,39 @@ private:
     static constexpr int factor = 2;
 
     void applySettings (const Settings& s) noexcept;
+    void updateUnison (float detune, float width) noexcept;
     void handleMidi (const juce::uint8* data, int numBytes) noexcept;
     void noteOn (int note, float velocity) noexcept;
     void noteOff (int note) noexcept;
     void releaseNote (int note) noexcept;
     void allNotesOff() noexcept;
-    void renderOversampled (float* os, int start, int end) noexcept;
+    void renderOversampled (float* osL, float* osR, int start, int end) noexcept;
+    void processReverb (float* left, float* right, int numSamples) noexcept;
     int  heldKeyCount() const noexcept;
 
     double baseRate = 44100.0, osRate = 88200.0;
     int maxBlock = 512, latencySamples = 0;
 
     std::unique_ptr<juce::dsp::Oversampling<float>> oversampling;
-    juce::AudioBuffer<float> zeroBuffer, monoBuffer, rightBuffer;
+    juce::AudioBuffer<float> zeroBuffer, stereoBuffer, reverbBuffer;
 
     std::array<Voice, numVoices> voices;
     Chorus chorus;
-    OnePoleHighpass hpf;
+    PingPongDelay delay;
+    juce::Reverb reverb;
+    juce::Reverb::Parameters reverbParams;
+    OnePoleHighpass hpfL, hpfR, reverbHpfL, reverbHpfR;
+    float reverbHpfG = 0.01f;
+    bool reverbActive = false;
 
     // Smoothing auf 2× Rate
     juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative> cutoff { 8000.0f };
     juce::SmoothedValue<float> resonance, envAmount, lfoFilter, keyTrack, pw,
-                               saw, pulse, sub, noise, lfoPitch, drift, bend, modWheel;
+                               saw, pulse, sub, noise, lfoPitch, drift, bend, modWheel,
+                               unisonDetune, unisonWidth;
     // Smoothing auf Basisrate
     juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative> hpfHz { 20.0f };
-    juce::SmoothedValue<float> volume;
+    juce::SmoothedValue<float> volume, reverbMix;
 
     std::array<float, modChunk> pitchBuf {}, lfoBuf {}, pwBuf {}, sawBuf {}, pulseBuf {}, subBuf {},
                                 noiseBuf {}, cutoffBuf {}, resoBuf {}, envBuf {}, lfoFiltBuf {}, keyBuf {};

@@ -24,7 +24,7 @@ public:
     bool acceptsMidi() const override  { return true; }
     bool producesMidi() const override { return false; }
     bool isMidiEffect() const override { return false; }
-    double getTailLengthSeconds() const override { return 0.0; }
+    double getTailLengthSeconds() const override { return 10.0; }
 
     int getNumPrograms() override;
     int getCurrentProgram() override { return currentProgram; }
@@ -39,6 +39,7 @@ public:
 
 private:
     dsp86::Settings readSettings() const noexcept;
+    double hostBpm() const noexcept;
 
     struct Raw
     {
@@ -50,6 +51,10 @@ private:
         std::atomic<float>* vcaMode; std::atomic<float>* lfoRate; std::atomic<float>* lfoDelay; std::atomic<float>* chorus;
         std::atomic<float>* voiceMode; std::atomic<float>* glide; std::atomic<float>* drift; std::atomic<float>* velocity;
         std::atomic<float>* volume;
+        std::atomic<float>* unison; std::atomic<float>* unisonDetune; std::atomic<float>* unisonWidth;
+        std::atomic<float>* ampAttack; std::atomic<float>* ampDecay; std::atomic<float>* ampSustain; std::atomic<float>* ampRelease;
+        std::atomic<float>* delayTime; std::atomic<float>* delayFeedback; std::atomic<float>* delayMix;
+        std::atomic<float>* reverbSize; std::atomic<float>* reverbMix;
     } raw;
 
     dsp86::SynthEngine engine;

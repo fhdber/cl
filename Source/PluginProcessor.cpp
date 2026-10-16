@@ -22,7 +22,11 @@ Contra86Processor::Contra86Processor()
             get (id::attack), get (id::decay), get (id::sustain), get (id::release),
             get (id::vcaMode), get (id::lfoRate), get (id::lfoDelay), get (id::chorus),
             get (id::voiceMode), get (id::glide), get (id::drift), get (id::velocity),
-            get (id::volume) };
+            get (id::volume),
+            get (id::unison), get (id::unisonDetune), get (id::unisonWidth),
+            get (id::ampAttack), get (id::ampDecay), get (id::ampSustain), get (id::ampRelease),
+            get (id::delayTime), get (id::delayFeedback), get (id::delayMix),
+            get (id::reverbSize), get (id::reverbMix) };
 }
 
 bool Contra86Processor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -76,13 +80,41 @@ dsp86::Settings Contra86Processor::readSettings() const noexcept
     s.drift      = value (raw.drift);
     s.velocity   = value (raw.velocity);
     s.volumeDb   = value (raw.volume);
+
+    constexpr int unisonVoices[] = { 1, 3, 5, 7 };
+    constexpr float delayBeats[] = { 0.25f, 1.0f / 3.0f, 0.5f, 0.75f, 2.0f / 3.0f, 1.0f, 1.5f, 2.0f };
+
+    s.unison        = unisonVoices[juce::jlimit (0, 3, index (raw.unison))];
+    s.unisonDetune  = value (raw.unisonDetune);
+    s.unisonWidth   = value (raw.unisonWidth);
+    s.ampAttack     = value (raw.ampAttack);
+    s.ampDecay      = value (raw.ampDecay);
+    s.ampSustain    = value (raw.ampSustain);
+    s.ampRelease    = value (raw.ampRelease);
+    s.delayBeats    = delayBeats[juce::jlimit (0, 7, index (raw.delayTime))];
+    s.delayFeedback = value (raw.delayFeedback);
+    s.delayMix      = value (raw.delayMix);
+    s.reverbSize    = value (raw.reverbSize);
+    s.reverbMix     = value (raw.reverbMix);
     return s;
+}
+
+double Contra86Processor::hostBpm() const noexcept
+{
+    if (auto* ph = getPlayHead())
+        if (const auto position = ph->getPosition())
+            if (const auto bpm = position->getBpm())
+                return *bpm;
+
+    return 120.0;
 }
 
 void Contra86Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
     juce::ScopedNoDenormals noDenormals;
-    engine.process (buffer, midi, readSettings());
+    auto settings = readSettings();
+    settings.bpm = hostBpm();
+    engine.process (buffer, midi, settings);
     midi.clear();
 }
 
@@ -107,7 +139,7 @@ void Contra86Processor::setCurrentProgram (int index)
 
 const juce::String Contra86Processor::getProgramName (int index)
 {
-    return presets::name (index);
+    return presets::fullName (index);
 }
 
 void Contra86Processor::getStateInformation (juce::MemoryBlock& destData)
