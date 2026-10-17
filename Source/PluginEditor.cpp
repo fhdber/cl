@@ -8,7 +8,8 @@ namespace
     const juce::Identifier uiScaleProperty { "uiScale" };
 
     constexpr int gridLeft = 40, gridRight = 1000;
-    constexpr int rowTop[] = { 254, 414, 574, 734 };
+    constexpr int rowTop[] = { 254, 414, 574, 734, 894 };
+    constexpr int footerTop = rowTop[4];
 }
 
 Contra86Panel::Contra86Panel (Contra86Processor& p)
@@ -38,7 +39,7 @@ Contra86Panel::Contra86Panel (Contra86Processor& p)
 
     sections.push_back ({ "VOICE", row (1, 760, 240),
                           { { &segment (id::voiceMode, { "POLY", "MONO" }), 120 } },
-                          { &knob (id::glide, "Glide"), &knob (id::drift, "Drift"), &knob (id::velocity, "Velo") } });
+                          { &knob (id::glide, "Glide"), &knob (id::velocity, "Velo") } });
 
     sections.push_back ({ "ENV 1  FILTER", row (2, gridLeft, 280), {},
                           { &knob (id::attack, "A"), &knob (id::decay, "D"), &knob (id::sustain, "S"), &knob (id::release, "R") } });
@@ -47,10 +48,17 @@ Contra86Panel::Contra86Panel (Contra86Processor& p)
                           { { &segment (id::vcaMode, { "ENV 1", "GATE", "ENV 2" }), 170 } },
                           { &knob (id::ampAttack, "A"), &knob (id::ampDecay, "D"), &knob (id::ampSustain, "S"), &knob (id::ampRelease, "R") } });
 
-    sections.push_back ({ "FX", row (2, 650, 350),
-                          { { &segment (id::chorus, { "OFF", "I", "II", "I+II" }), 180 } },
+    sections.push_back ({ "SPACE", row (2, 650, 350), {},
                           { &knob (id::delayTime, "Time"), &knob (id::delayFeedback, "Fdbk"), &knob (id::delayMix, "Delay"),
                             &knob (id::reverbSize, "Size"), &knob (id::reverbMix, "Verb") } });
+
+    sections.push_back ({ "CHARACTER", row (3, gridLeft, 520), {},
+                          { &knob (id::drive, "Drive"), &knob (id::tube, "Tube"), &knob (id::drift, "Drift") } });
+
+    sections.push_back ({ "MOD FX", row (3, 560, 440),
+                          { { &segment (id::phaser, { "OFF", "SLOW", "FAST" }), 150 },
+                            { &segment (id::chorus, { "OFF", "I", "II", "I+II" }), 160 } },
+                          { &knob (id::phaserMix, "Phase") } });
 
     volumeKnob = &knob (id::volume, "Volume", true);
 }
@@ -95,7 +103,7 @@ void Contra86Panel::resized()
     for (const auto& section : sections)
         layoutSection (section);
 
-    volumeKnob->setBounds (gridRight - 84, rowTop[3] + 2, 84, 70);
+    volumeKnob->setBounds (gridRight - 84, footerTop + 2, 84, 70);
 }
 
 void Contra86Panel::paint (juce::Graphics& g)
@@ -116,7 +124,7 @@ void Contra86Panel::paint (juce::Graphics& g)
 
     // Raster
     g.setColour (colour::line);
-    for (int r = 0; r < 4; ++r)
+    for (int r = 0; r < 5; ++r)
         g.fillRect (static_cast<float> (gridLeft), static_cast<float> (rowTop[r]), static_cast<float> (gridRight - gridLeft), 1.0f);
 
     for (const auto& section : sections)
@@ -134,7 +142,7 @@ void Contra86Panel::paint (juce::Graphics& g)
     }
 
     // Fußzeile: Wortmarke, Lautsprecher-Raster
-    const auto footer = juce::Rectangle<float> (static_cast<float> (gridLeft), static_cast<float> (rowTop[3]),
+    const auto footer = juce::Rectangle<float> (static_cast<float> (gridLeft), static_cast<float> (footerTop),
                                                 static_cast<float> (gridRight - gridLeft), 70.0f);
 
     g.setColour (colour::ink);
@@ -168,7 +176,7 @@ Contra86Editor::Contra86Editor (Contra86Processor& p)
     if (auto* c = getConstrainer())
         c->setFixedAspectRatio (w / h);
 
-    const auto scale = juce::jlimit (0.5, 1.5, static_cast<double> (contraProcessor.state.state.getProperty (uiScaleProperty, 0.85)));
+    const auto scale = juce::jlimit (0.5, 1.5, static_cast<double> (contraProcessor.state.state.getProperty (uiScaleProperty, 0.78)));
     setSize (juce::roundToInt (w * scale), juce::roundToInt (h * scale));
 }
 

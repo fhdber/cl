@@ -1,4 +1,4 @@
-# CONTRA-86 – Spezifikation (v0.2)
+# CONTRA-86 – Spezifikation (v0.3)
 
 Arbeitstitel. Polyphoner Retro-Synth mit Juno-60/106-Kern, erweitert um das,
 was 80s/90s-Produktionen fertig klingen lässt: Unison, zweite Hüllkurve,
@@ -15,6 +15,8 @@ sind bewusst klein gehalten (je 2–4 Regler).
 - **v0.2 (dieser):** ENV 2, Unison/Stereo, Delay, Reverb, ~40 Presets in
   Kategorien, Preset-Browser im Plugin
 - **v0.2 UI:** eigenes CONTRABEATZ-UI (Konzept unten)
+- **v0.3 (dieser):** CHARACTER – Drive, Tube, Voice-Cards (Drift), Phaser
+- **später (Etappe B):** Ensemble-Chorus, Lo-Fi Digital, Tape
 
 ## Formate & Eckdaten
 - Instrument (AU `aumu`), VST3, Standalone. Hersteller-Code `Cntb`, Plugin-Code `Cb86`
@@ -29,13 +31,15 @@ sind bewusst klein gehalten (je 2–4 Regler).
 ```
             ┌──────────────── pro Stimme (2× Rate) ─────────────────┐
 MIDI ─► DCO │ Unison 1/3/5/7 × (Saw + Pulse) + Sub + Noise ─► Mixer L/R │
-            │      ─► 24-dB-Ladder-LPF (tanh, L/R) ─► VCA              │
+            │      ─► Drive ─► 24-dB-Ladder-LPF (tanh, L/R) ─► VCA     │
             └───────────────────────────┬──────────────────────────────┘
                                          Σ  (stereo)
                                          ▼
+                             Tube (asymmetrisch, noch auf 2× Rate)
+                                         ▼
                              Downsampling (2× → 1×)
                                          ▼
-                             HPF (6 dB) ─► Chorus ─► Delay (Ping-Pong)
+                             HPF (6 dB) ─► Chorus ─► Phaser ─► Delay (Ping-Pong)
                                          ▼
                              Reverb ─► Volume ─► Out (L/R oder Mono)
 
@@ -43,7 +47,7 @@ Modulation: ENV 1 ─► Filter, PWM (Quelle Env), VCA (Mode Env 1)
             ENV 2 ─► VCA (Mode Env 2, Default)
             Gate  ─► VCA (Mode Gate)
             LFO (Dreieck, global, mit Delay) ─► Pitch, Filter, PWM
-            Drift (pro Stimme, zufällig) ─► Pitch, Filter
+            Drift (Voice-Card je Stimme + Wandern) ─► Pitch, Filter, Hüllkurven-Tempo, Pegel
 ```
 Ohne Unison-Breite läuft die Stimme mono (ein Filter), mit Breite stereo
 (zwei Filter, gemeinsamer Koeffizient).
@@ -91,7 +95,11 @@ Skalierung: *lin* = linear, *log* = logarithmisch (Skew um den Mittelpunkt),
 | FX | `reverbMix` | Reverb Level | 0–100 % (Send, Dry bleibt) | 0 % | lin |
 | Voice | `voiceMode` | Voice Mode | Poly / Mono (Legato) | Poly | Auswahl |
 | Voice | `glide` | Glide (nur Mono, legato) | 0–2 s | 0 s | log |
-| Voice | `drift` | Drift | 0–100 % | 20 % | lin |
+| Character | `drive` | Drive | 0–100 % (bis +16 dB vor dem Filter, pegelkompensiert) | 0 % | lin |
+| Character | `tube` | Tube | 0–100 % | 0 % | lin |
+| Character | `drift` | Drift | 0–100 % | 20 % | lin |
+| FX | `phaser` | Phaser | Off / Slow / Fast | Off | Auswahl |
+| FX | `phaserMix` | Phaser Depth | 0–100 % | 60 % | lin |
 | Voice | `velocity` | Velocity | 0–100 % (→ VCA + Filter) | 50 % | lin |
 | Out | `volume` | Volume | −48…+6 dB | −6 dB | lin (dB) |
 
@@ -115,8 +123,17 @@ Parameter springen; Chorus blendet (50 ms), Reverb glättet intern.
   gehalten ist; Tiefe blendet über die Delay-Zeit ein.
 - **Velocity:** bei 127 klingt der Patch exakt wie programmiert; leiser = leiser
   und bis zu 3 Okt dunkler.
-- **Drift:** pro Stimme fester Zufallsversatz (bis ±8 Cent) + langsame
-  Zufallsbewegung (bis ±3 Cent) + Cutoff-Versatz (bis ±0,15 Okt).
+- **Drift / Voice-Cards:** jede der 8 Stimmen hat eine feste „Persönlichkeit“
+  (wie Bauteiltoleranzen auf Voice-Cards): Stimmung bis ±6 Cent, Cutoff bis ±0,2 Okt,
+  Hüllkurven-Tempo bis ±15 %, Pegel bis ±0,8 dB. Dazu pro Note ±2 Cent und langsames
+  Wandern bis ±3 Cent. Alles skaliert mit Drift; 0 % = perfekt sauber.
+- **Drive:** weiche Sättigung des Mixers vor dem Filter (Moog/Juno-Mixer übersteuert),
+  pegelkompensiert, auf 2× Rate.
+- **Tube:** asymmetrische Kennlinie auf der Stereosumme (geradzahlige Obertöne),
+  bei kleinen Pegeln Verstärkung 1, DC-Blocker danach, auf 2× Rate.
+- **Phaser:** 6 Allpass-Stufen pro Kanal, Sweep 200 Hz – 3 kHz logarithmisch,
+  Feedback 0,5, L/R um 90° versetzt. Slow 0,15 Hz, Fast 0,9 Hz. Depth 100 % =
+  volle Kerben (Dry und Wet gleich laut).
 - **Chorus:** zwei gegenphasig modulierte Delays (L/R), Wet bandbegrenzt (BBD-Charakter).
   I: 0,513 Hz, 1,66–5,35 ms · II: 0,863 Hz, 1,66–5,35 ms · I+II: 9,75 Hz, 3,3–3,7 ms.
 - **Mono:** Notenstapel, letzte Note gewinnt, Legato ohne Retrigger, Rückfall auf
@@ -147,17 +164,18 @@ Glas-Display, ein einziger warmer Akzent.
 - **Umschalter:** Segment-Pillen (aktives Segment schwarz mit orangem LED-Punkt)
   für Range, PWM, Unison, VCA, Chorus, Voice Mode.
 - **Raster:** Reihe 1 OSC · UNISON · Reihe 2 FILTER · LFO · VOICE ·
-  Reihe 3 ENV 1 · ENV 2 · FX. Fußzeile: Wortmarke „CONTRA-86“, Lautsprecher-
+  Reihe 3 ENV 1 · ENV 2 · SPACE (Delay, Reverb) · Reihe 4 CHARACTER · MOD FX
+  (Chorus, Phaser). Fußzeile: Wortmarke „CONTRA-86“, Lautsprecher-
   Punktraster, Volume-Knob.
 - **Typo:** Michroma (OFL) für Wortmarke, Sektionen, Labels und Display.
-- **Skalierung:** feste Designfläche 1040 × 820, frei skalierbar 50–150 % mit festem
+- **Skalierung:** feste Designfläche 1040 × 990, frei skalierbar 50–150 % mit festem
   Seitenverhältnis, vektorbasiert (HiDPI scharf).
 
 ## Nicht in v0.2 (bewusst)
 Arpeggiator, Modulationsmatrix, Effekt-Reihenfolge, eigene Presets speichern
 (Host-Speicherung funktioniert), MPE.
 
-## Abnahme v0.2
+## Abnahme v0.3
 - Build ohne Warnungen (macOS Universal, Linux-CI-Check)
 - pluginval Level 5 (VST3), auval (AU), Render-Test aller Presets
 - State aus v0.1 lädt weiter (v1-IDs unverändert)

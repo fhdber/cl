@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Character.h"
 #include "Chorus.h"
 #include "Delay.h"
 #include "Voice.h"
@@ -35,6 +36,9 @@ struct Settings
     Chorus::Mode chorus = Chorus::Mode::one;
     float delayBeats = 0.75f, delayFeedback = 0.35f, delayMix = 0.0f;
     float reverbSize = 0.6f, reverbMix = 0.0f;
+    int   phaser = 0;
+    float phaserMix = 0.6f;
+    float drive = 0.0f, tube = 0.0f;
     double bpm = 120.0;
 
     VoiceMode voiceMode = VoiceMode::poly;
@@ -77,6 +81,8 @@ private:
     std::array<Voice, numVoices> voices;
     Chorus chorus;
     PingPongDelay delay;
+    Phaser phaser;
+    Tube tube;
     juce::Reverb reverb;
     juce::Reverb::Parameters reverbParams;
     OnePoleHighpass hpfL, hpfR, reverbHpfL, reverbHpfR;
@@ -87,13 +93,14 @@ private:
     juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative> cutoff { 8000.0f };
     juce::SmoothedValue<float> resonance, envAmount, lfoFilter, keyTrack, pw,
                                saw, pulse, sub, noise, lfoPitch, drift, bend, modWheel,
-                               unisonDetune, unisonWidth;
+                               unisonDetune, unisonWidth, drive;
     // Smoothing auf Basisrate
     juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative> hpfHz { 20.0f };
     juce::SmoothedValue<float> volume, reverbMix;
 
     std::array<float, modChunk> pitchBuf {}, lfoBuf {}, pwBuf {}, sawBuf {}, pulseBuf {}, subBuf {},
-                                noiseBuf {}, cutoffBuf {}, resoBuf {}, envBuf {}, lfoFiltBuf {}, keyBuf {};
+                                noiseBuf {}, cutoffBuf {}, resoBuf {}, envBuf {}, lfoFiltBuf {}, keyBuf {},
+                                driveBuf {};
 
     Settings current;
     VoiceMods mods {};

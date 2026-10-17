@@ -27,6 +27,8 @@ void SynthEngine::prepare (double sampleRate, int maxBlockSize, const Settings& 
 
     chorus.prepare (baseRate);
     delay.prepare (baseRate);
+    phaser.prepare (baseRate);
+    tube.prepare (osRate);
     reverb.setSampleRate (baseRate);
 
     const auto g = std::tan (juce::MathConstants<double>::pi * 200.0 / baseRate);
@@ -34,7 +36,7 @@ void SynthEngine::prepare (double sampleRate, int maxBlockSize, const Settings& 
 
     cutoff.reset (osRate, 0.02);
     for (auto* s : { &resonance, &envAmount, &lfoFilter, &keyTrack, &pw, &saw, &pulse,
-                     &sub, &noise, &lfoPitch, &drift, &bend, &modWheel, &unisonDetune, &unisonWidth })
+                     &sub, &noise, &lfoPitch, &drift, &bend, &modWheel, &unisonDetune, &unisonWidth, &drive })
         s->reset (osRate, 0.02);
 
     hpfHz.reset (baseRate, 0.02);
@@ -57,6 +59,8 @@ void SynthEngine::reset()
     oversampling->reset();
     chorus.reset();
     delay.reset();
+    phaser.reset();
+    tube.reset();
     reverb.reset();
     reverbActive = false;
     for (auto* f : { &hpfL, &hpfR, &reverbHpfL, &reverbHpfR })
@@ -73,7 +77,7 @@ void SynthEngine::reset()
 
     cutoff.setCurrentAndTargetValue (cutoff.getTargetValue());
     for (auto* s : { &resonance, &envAmount, &lfoFilter, &keyTrack, &pw, &saw, &pulse,
-                     &sub, &noise, &lfoPitch, &drift, &unisonDetune, &unisonWidth, &volume, &reverbMix })
+                     &sub, &noise, &lfoPitch, &drift, &unisonDetune, &unisonWidth, &drive, &volume, &reverbMix })
         s->setCurrentAndTargetValue (s->getTargetValue());
     hpfHz.setCurrentAndTargetValue (hpfHz.getTargetValue());
     bend.setCurrentAndTargetValue (0.0f);
@@ -101,6 +105,9 @@ void SynthEngine::applySettings (const Settings& s) noexcept
     drift.setTargetValue (s.drift);
     unisonDetune.setTargetValue (s.unisonDetune);
     unisonWidth.setTargetValue (s.unisonWidth);
+    drive.setTargetValue (s.drive);
+    tube.setAmount (s.tube);
+    phaser.setParameters (static_cast<Phaser::Mode> (s.phaser), s.phaserMix);
     hpfHz.setTargetValue (s.hpfHz);
     volume.setTargetValue (juce::Decibels::decibelsToGain (s.volumeDb, -48.0f));
     reverbMix.setTargetValue (s.reverbMix);
@@ -131,8 +138,11 @@ void SynthEngine::applySettings (const Settings& s) noexcept
     mods.pwmSource   = s.pwmSource;
     mods.vcaMode     = s.vcaMode;
     mods.unison      = std::clamp (s.unison, 1, maxUnison);
-    mods.env         = AdsrCoefs::make (s.attack, s.decay, s.sustain, s.release, osRate);
-    mods.amp         = AdsrCoefs::make (s.ampAttack, s.ampDecay, s.ampSustain, s.ampRelease, osRate);
+
+    const AdsrTimes env1 { s.attack, s.decay, s.sustain, s.release };
+    const AdsrTimes env2 { s.ampAttack, s.ampDecay, s.ampSustain, s.ampRelease };
+    for (auto& v : voices)
+        v.updateEnvelopes (env1, env2, s.drift, osRate);
 }
 
 // Mitte unverstimmt, Paare symmetrisch nach außen, Pegel ∝ 1/√n.
@@ -204,6 +214,7 @@ void SynthEngine::process (juce::AudioBuffer<float>& out, const juce::MidiBuffer
         }
 
         renderOversampled (osL, osR, pos * factor, len * factor);
+        tube.process (osL, osR, len * factor);
 
         juce::dsp::AudioBlock<float> stereoBlock (stereoBuffer.getArrayOfWritePointers(), 2, static_cast<size_t> (len));
         oversampling->processSamplesDown (stereoBlock);
@@ -220,6 +231,7 @@ void SynthEngine::process (juce::AudioBuffer<float>& out, const juce::MidiBuffer
         }
 
         chorus.process (left, right, len);
+        phaser.process (left, right, len);
         delay.process (left, right, len);
         processReverb (left, right, len);
 
@@ -308,6 +320,7 @@ void SynthEngine::renderOversampled (float* osL, float* osR, int start, int end)
             envBuf[i_]     = envAmount.getNextValue();
             lfoFiltBuf[i_] = lfo * lfoFilter.getNextValue();
             keyBuf[i_]     = keyTrack.getNextValue();
+            driveBuf[i_]   = drive.getNextValue();
         }
 
         updateUnison (unisonDetune.skip (n), unisonWidth.skip (n));
@@ -324,6 +337,7 @@ void SynthEngine::renderOversampled (float* osL, float* osR, int start, int end)
         mods.envOctaves = envBuf.data();
         mods.lfoOctaves = lfoFiltBuf.data();
         mods.keyTrack   = keyBuf.data();
+        mods.drive      = driveBuf.data();
 
         for (auto& v : voices)
             v.render (osL + p, osR + p, n, mods);

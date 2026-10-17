@@ -30,14 +30,13 @@ struct VoiceMods
     const float* envOctaves;
     const float* lfoOctaves;
     const float* keyTrack;
+    const float* drive;
 
     float drift;
     float octaveShift;
     float glideCoef;
     PwmSource pwmSource;
     VcaMode vcaMode;
-    AdsrCoefs env;
-    AdsrCoefs amp;
     AdsrCoefs gate;
 
     // Unison: Index 0 ist die unverstimmte Mitte (trägt den Sub).
@@ -60,7 +59,21 @@ public:
         driftCoef  = 1.0f - std::exp (-6.2831853f * 0.3f / sampleRate);
         driftHold  = static_cast<int> (sampleRate / 3.0f);
         noise      = Noise (seed);
+
+        // Voice-Card: feste Abweichungen dieser Stimme (wie Bauteiltoleranzen)
+        cardPitch  = noise.next();
+        cardCutoff = noise.next();
+        cardEnv    = noise.next();
+        cardLevel  = noise.next();
         kill();
+    }
+
+    // Hüllkurven dieser Stimme, Tempo um die Voice-Card versetzt (bis ±15 % bei Drift 100 %).
+    void updateEnvelopes (const AdsrTimes& env1, const AdsrTimes& env2, float drift, double rate) noexcept
+    {
+        const auto scale = 1.0f + 0.15f * drift * cardEnv;
+        envCoefs = AdsrCoefs::make (env1.attack * scale, env1.decay * scale, env1.sustain, env1.release * scale, rate);
+        ampCoefs = AdsrCoefs::make (env2.attack * scale, env2.decay * scale, env2.sustain, env2.release * scale, rate);
     }
 
     void kill() noexcept
@@ -145,11 +158,11 @@ public:
             currentNote = targetNote + (currentNote - targetNote) * m.glideCoef;
 
             const auto semis = currentNote + m.octaveShift + m.pitchSemis[i]
-                             + m.drift * (driftStatic * 0.08f + driftWalk * 0.03f);
+                             + m.drift * (cardPitch * 0.06f + driftStatic * 0.02f + driftWalk * 0.03f);
             const auto baseInc = 440.0f * std::exp2 ((semis - 69.0f) * (1.0f / 12.0f)) / sampleRate;
 
-            const auto e  = env.next (m.env);
-            const auto a  = ampEnv.next (m.amp);
+            const auto e  = env.next (envCoefs);
+            const auto a  = ampEnv.next (ampCoefs);
             const auto gt = gateEnv.next (m.gate);
 
             auto pwAmount = m.pw[i];
@@ -174,9 +187,18 @@ public:
                 mixR += s * m.gainR[uz];
             }
 
+            // Drive: Mixer übersteuern (bis +16 dB), pegelkompensiert
+            if (const auto d = m.drive[i]; d > 1.0e-4f)
+            {
+                const auto comp = 1.0f / (1.0f + 1.6f * d);
+                mixL = softClip (mixL * (1.0f + 5.3f * d)) * comp;
+                if (m.stereo)
+                    mixR = softClip (mixR * (1.0f + 5.3f * d)) * comp;
+            }
+
             const auto octaves = m.envOctaves[i] * e + m.lfoOctaves[i]
                                + m.keyTrack[i] * (currentNote - 60.0f) * (1.0f / 12.0f)
-                               + velocityOctaves + m.drift * driftCutoff * 0.15f;
+                               + velocityOctaves + m.drift * (cardCutoff * 0.2f + driftCutoff * 0.05f);
             const auto fc = std::clamp (m.cutoffHz[i] * std::exp2 (octaves), 15.0f, maxCutoff);
             const auto g  = std::tan (fc * piOverSr);
 
@@ -184,7 +206,7 @@ public:
             const auto yR = m.stereo ? filterR.process (mixR, g, m.resonance[i]) : yL;
 
             const auto amp  = m.vcaMode == VcaMode::gate ? gt : (m.vcaMode == VcaMode::env1 ? e : a);
-            const auto gain = amp * velocityGain * fadeGain * 0.4f;
+            const auto gain = amp * velocityGain * fadeGain * (0.4f + 0.04f * m.drift * cardLevel);
             outL[i] += yL * gain;
             outR[i] += yR * gain;
 
@@ -266,6 +288,8 @@ private:
     float velocityGain = 1.0f, velocityOctaves = 0.0f;
 
     float driftStatic = 0.0f, driftCutoff = 0.0f;
+    float cardPitch = 0.0f, cardCutoff = 0.0f, cardEnv = 0.0f, cardLevel = 0.0f;
+    AdsrCoefs envCoefs, ampCoefs;
     float driftWalk = 0.0f, driftTarget = 0.0f, driftCoef = 0.0f;
     int driftCounter = 0, driftHold = 1;
 };

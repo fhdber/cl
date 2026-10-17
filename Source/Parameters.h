@@ -8,6 +8,7 @@ namespace params
     // damit gespeicherte Sessions in allen Hosts stabil bleiben.
     inline constexpr int version = 1;
     inline constexpr int version2 = 2;
+    inline constexpr int version3 = 3;
 
     namespace id
     {
@@ -52,6 +53,12 @@ namespace params
         inline constexpr auto delayMix      = "delayMix";
         inline constexpr auto reverbSize    = "reverbSize";
         inline constexpr auto reverbMix     = "reverbMix";
+
+        // v3
+        inline constexpr auto drive         = "drive";
+        inline constexpr auto tube          = "tube";
+        inline constexpr auto phaser        = "phaser";
+        inline constexpr auto phaserMix     = "phaserMix";
     }
 
     juce::AudioProcessorValueTreeState::ParameterLayout createLayout();

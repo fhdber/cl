@@ -10,6 +10,7 @@ namespace
 
     juce::ParameterID pid (const char* name)  { return { name, version }; }
     juce::ParameterID pid2 (const char* name) { return { name, version2 }; }
+    juce::ParameterID pid3 (const char* name) { return { name, version3 }; }
 
     juce::String formatPercent (float v, int)   { return juce::String (juce::roundToInt (v * 100.0f)) + " %"; }
     float parsePercent (const juce::String& t)  { return t.getFloatValue() / 100.0f; }
@@ -112,18 +113,24 @@ juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
                   percent (pid2 (id::delayFeedback), "Delay Feedback", 0.35f, 0.0f, 0.9f),
                   percent (pid2 (id::delayMix), "Delay Level", 0.0f),
                   percent (pid2 (id::reverbSize), "Reverb Size", 0.6f),
-                  percent (pid2 (id::reverbMix), "Reverb Level", 0.0f));
+                  percent (pid2 (id::reverbMix), "Reverb Level", 0.0f),
+                  std::make_unique<Choice> (pid3 (id::phaser), "Phaser", juce::StringArray { "Off", "Slow", "Fast" }, 0),
+                  percent (pid3 (id::phaserMix), "Phaser Depth", 0.6f));
+
+    auto character = std::make_unique<juce::AudioProcessorParameterGroup> ("character", "CHARACTER", " | ");
+    character->addChild (percent (pid3 (id::drive), "Drive", 0.0f),
+                         percent (pid3 (id::tube), "Tube", 0.0f),
+                         percent (pid (id::drift), "Drift", 0.2f));
 
     auto global = std::make_unique<juce::AudioProcessorParameterGroup> ("global", "VOICE", " | ");
     global->addChild (std::make_unique<Choice> (pid (id::voiceMode), "Voice Mode", juce::StringArray { "Poly", "Mono" }, 0),
                       seconds (pid (id::glide), "Glide", 0.0f, 2.0f, 0.0f, 0.25f),
-                      percent (pid (id::drift), "Drift", 0.2f),
                       percent (pid (id::velocity), "Velocity", 0.5f),
                       std::make_unique<Float> (pid (id::volume), "Volume", juce::NormalisableRange<float> { -48.0f, 6.0f, 0.1f }, -6.0f,
                                                Attr().withLabel ("dB")));
 
     layout.add (std::move (dco), std::move (unison), std::move (vcf), std::move (env1), std::move (env2),
-                std::move (lfo), std::move (fx), std::move (global));
+                std::move (lfo), std::move (fx), std::move (character), std::move (global));
     return layout;
 }
 }

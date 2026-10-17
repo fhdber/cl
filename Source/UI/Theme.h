@@ -21,7 +21,7 @@ namespace colour
 
 // Designfläche, auf die das gesamte UI skaliert wird.
 inline constexpr int designWidth  = 1040;
-inline constexpr int designHeight = 820;
+inline constexpr int designHeight = 990;
 
 inline juce::Typeface::Ptr typeface()
 {

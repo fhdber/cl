@@ -4,6 +4,8 @@
 
 #include "PluginProcessor.h"
 #include "Presets.h"
+#include "Parameters.h"
+#include "UI/Theme.h"
 
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <iostream>
@@ -169,6 +171,103 @@ bool stateRoundTrip()
     return ok;
 }
 
+// Rendert eine gehaltene Note (Mono) mit frei gesetzten Parametern.
+juce::AudioBuffer<float> renderNote (const std::vector<std::pair<const char*, float>>& values, int note, double seconds)
+{
+    constexpr double sr = 48000.0;
+    Contra86Processor proc;
+    for (const auto& [paramId, v] : values)
+        if (auto* p = proc.state.getParameter (paramId))
+            p->setValueNotifyingHost (p->convertTo0to1 (v));
+
+    juce::AudioProcessor::BusesLayout layout;
+    layout.outputBuses.add (juce::AudioChannelSet::mono());
+    proc.setBusesLayout (layout);
+    proc.setRateAndBufferSizeDetails (sr, 512);
+    proc.prepareToPlay (sr, 512);
+
+    const auto total = static_cast<int> (seconds * sr);
+    juce::AudioBuffer<float> result (1, total);
+    juce::AudioBuffer<float> block (1, 512);
+    juce::MidiBuffer midi;
+    midi.addEvent (juce::MidiMessage::noteOn (1, note, 1.0f), 0);
+
+    for (int pos = 0; pos < total; pos += 512)
+    {
+        const auto n = std::min (512, total - pos);
+        block.setSize (1, n, false, false, true);
+        block.clear();
+        proc.processBlock (block, midi);
+        midi.clear();
+        result.copyFrom (0, pos, block, 0, 0, n);
+    }
+    return result;
+}
+
+// Betrag einer Frequenz (Goertzel) über die zweite Hälfte des Puffers.
+double magnitude (const juce::AudioBuffer<float>& b, double freq)
+{
+    const auto* x = b.getReadPointer (0);
+    const auto start = b.getNumSamples() / 2, n = b.getNumSamples() - start;
+    const auto w = juce::MathConstants<double>::twoPi * freq / 48000.0;
+    const auto coeff = 2.0 * std::cos (w);
+    double s1 = 0.0, s2 = 0.0;
+    for (int i = 0; i < n; ++i)
+    {
+        const auto s0 = x[start + i] + coeff * s1 - s2;
+        s2 = s1;
+        s1 = s0;
+    }
+    return std::sqrt (s1 * s1 + s2 * s2 - coeff * s1 * s2) / n;
+}
+
+bool characterChecks()
+{
+    namespace id = params::id;
+    const std::vector<std::pair<const char*, float>> square {
+        { id::sawLevel, 0.0f }, { id::pulseLevel, 1.0f }, { id::pw, 0.0f }, { id::chorus, 0.0f },
+        { id::cutoff, 160.0f }, { id::keyTrack, 0.0f }, { id::resonance, 0.0f }, { id::drift, 0.0f } };
+
+    auto withExtra = [&square] (std::pair<const char*, float> extra)
+    {
+        auto v = square;
+        v.push_back (extra);
+        return v;
+    };
+
+    // Note 45 = 110 Hz, Rechteck fast zum Sinus gefiltert (ein Rechteck selbst bleibt
+    // hinter einer statischen Kennlinie ein Rechteck): 2. zu 1. Harmonischer in dB
+    auto evenRatioDb = [] (const juce::AudioBuffer<float>& b)
+    {
+        return juce::Decibels::gainToDecibels (magnitude (b, 220.0) / magnitude (b, 110.0), -120.0);
+    };
+
+    const auto clean = evenRatioDb (renderNote (square, 45, 1.0));
+    const auto tubed = evenRatioDb (renderNote (withExtra ({ id::tube, 1.0f }), 45, 1.0));
+    const auto drive = evenRatioDb (renderNote (withExtra ({ id::drive, 1.0f }), 45, 1.0));
+
+    auto ok = tubed > clean + 20.0 && drive < clean + 10.0;
+    std::cout << (ok ? "ok   " : "FAIL ") << "tube/drive harmonics: 2nd/1st clean " << juce::String (clean, 1)
+              << " dB, tube " << juce::String (tubed, 1) << " dB, drive " << juce::String (drive, 1) << " dB\n";
+
+    auto bright = square;
+    bright.push_back ({ id::cutoff, 20000.0f });
+    const auto dry = renderNote (bright, 57, 2.0);
+    bright.push_back ({ id::phaser, 1.0f });
+    const auto phased = renderNote (bright, 57, 2.0);
+    double diff = 0.0, ref = 0.0;
+    for (int i = 0; i < dry.getNumSamples(); ++i)
+    {
+        diff += std::pow (dry.getSample (0, i) - phased.getSample (0, i), 2.0);
+        ref  += std::pow (dry.getSample (0, i), 2.0);
+    }
+    const auto phaserDb = 10.0 * std::log10 (diff / ref);
+    const auto phaserOk = phaserDb > -20.0;
+    std::cout << (phaserOk ? "ok   " : "FAIL ") << "phaser changes signal: difference " << juce::String (phaserDb, 1) << " dB\n";
+
+    return ok && phaserOk;
+}
+
 void writeWav (const juce::File& file, const juce::AudioBuffer<float>& b, double sampleRate)
 {
     file.deleteFile();
@@ -209,7 +308,7 @@ int screenshot (const juce::File& file, int preset, float scale)
     }
 
     std::unique_ptr<juce::AudioProcessorEditor> editor (proc.createEditorAndMakeActive());
-    editor->setSize (juce::roundToInt (1040 * scale), juce::roundToInt (820 * scale));
+    editor->setSize (juce::roundToInt (ui::designWidth * scale), juce::roundToInt (ui::designHeight * scale));
     editor->setVisible (true);
     juce::Timer::callAfterDelay (400, [] { juce::MessageManager::getInstance()->stopDispatchLoop(); });
     juce::MessageManager::getInstance()->runDispatchLoop();
@@ -237,6 +336,7 @@ int main (int argc, char** argv)
 
     constexpr int demoRate = 48000;
     auto ok = stateRoundTrip();
+    ok &= characterChecks();
     int checked = 0;
     std::map<juce::String, juce::AudioBuffer<float>> showcases;
 

@@ -4,6 +4,11 @@
 
 namespace dsp86
 {
+struct AdsrTimes
+{
+    float attack, decay, sustain, release;
+};
+
 struct AdsrCoefs
 {
     float attack = 1.0f, decay = 0.0f, sustain = 1.0f, release = 0.0f;

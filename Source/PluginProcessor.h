@@ -57,6 +57,7 @@ private:
         std::atomic<float>* ampAttack; std::atomic<float>* ampDecay; std::atomic<float>* ampSustain; std::atomic<float>* ampRelease;
         std::atomic<float>* delayTime; std::atomic<float>* delayFeedback; std::atomic<float>* delayMix;
         std::atomic<float>* reverbSize; std::atomic<float>* reverbMix;
+        std::atomic<float>* drive; std::atomic<float>* tube; std::atomic<float>* phaser; std::atomic<float>* phaserMix;
     } raw;
 
     dsp86::SynthEngine engine;
