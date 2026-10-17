@@ -79,6 +79,6 @@ void LookAndFeel::drawPopupMenuBackground (juce::Graphics& g, int width, int hei
 
 juce::Font LookAndFeel::getPopupMenuFont()
 {
-    return font (13.0f);
+    return font (15.0f);
 }
 }

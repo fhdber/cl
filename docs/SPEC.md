@@ -1,4 +1,4 @@
-# CONTRA-86 – Spezifikation (v0.3)
+# CONTRA-86 – Spezifikation (v0.4)
 
 Arbeitstitel. Polyphoner Retro-Synth mit Juno-60/106-Kern, erweitert um das,
 was 80s/90s-Produktionen fertig klingen lässt: Unison, zweite Hüllkurve,
@@ -15,7 +15,8 @@ sind bewusst klein gehalten (je 2–4 Regler).
 - **v0.2 (dieser):** ENV 2, Unison/Stereo, Delay, Reverb, ~40 Presets in
   Kategorien, Preset-Browser im Plugin
 - **v0.2 UI:** eigenes CONTRABEATZ-UI (Konzept unten)
-- **v0.3 (dieser):** CHARACTER – Drive, Tube, Voice-Cards (Drift), Phaser
+- **v0.3:** CHARACTER – Drive, Tube, Voice-Cards (Drift), Phaser
+- **v0.4 (dieser):** CONTRABEATZ-Signatur – DUST-Regler + Preset-Kategorie CONTRA
 - **später (Etappe B):** Ensemble-Chorus, Lo-Fi Digital, Tape
 
 ## Formate & Eckdaten
@@ -41,7 +42,7 @@ MIDI ─► DCO │ Unison 1/3/5/7 × (Saw + Pulse) + Sub + Noise ─► Mixer L
                                          ▼
                              HPF (6 dB) ─► Chorus ─► Phaser ─► Delay (Ping-Pong)
                                          ▼
-                             Reverb ─► Volume ─► Out (L/R oder Mono)
+                             Reverb ─► DUST (Resampling-Charakter) ─► Volume ─► Out
 
 Modulation: ENV 1 ─► Filter, PWM (Quelle Env), VCA (Mode Env 1)
             ENV 2 ─► VCA (Mode Env 2, Default)
@@ -98,6 +99,7 @@ Skalierung: *lin* = linear, *log* = logarithmisch (Skew um den Mittelpunkt),
 | Character | `drive` | Drive | 0–100 % (bis +16 dB vor dem Filter, pegelkompensiert) | 0 % | lin |
 | Character | `tube` | Tube | 0–100 % | 0 % | lin |
 | Character | `drift` | Drift | 0–100 % | 20 % | lin |
+| Character | `dust` | Dust | 0–100 % | 0 % | lin |
 | FX | `phaser` | Phaser | Off / Slow / Fast | Off | Auswahl |
 | FX | `phaserMix` | Phaser Depth | 0–100 % | 60 % | lin |
 | Voice | `velocity` | Velocity | 0–100 % (→ VCA + Filter) | 50 % | lin |
@@ -131,6 +133,15 @@ Parameter springen; Chorus blendet (50 ms), Reverb glättet intern.
   pegelkompensiert, auf 2× Rate.
 - **Tube:** asymmetrische Kennlinie auf der Stereosumme (geradzahlige Obertöne),
   bei kleinen Pegeln Verstärkung 1, DC-Blocker danach, auf 2× Rate.
+- **DUST (CONTRABEATZ-Signatur):** ein Regler vom sauberen Synth zum „resampelten“
+  Beat-Tape-Sound, wirkt auf die komplette Summe inkl. Effekte (wie in den Sampler
+  gesampelt). Mit wachsendem Wert gleichzeitig:
+  - Samplerate-Reduktion 44,1 → 20 kHz, ohne Anti-Alias-Filter davor (bewusstes
+    Aliasing wie SP-1200/MPC), Bit-Tiefe 16 → 10 Bit (12 Bit ≈ 67 %)
+  - warmer Ausgangstiefpass 20 → 7 kHz (12 dB)
+  - Tape: Wow 0,55 Hz und Flutter 6,5 Hz, zusammen höchstens ≈ ±4 Cent
+  - Vinyl/Tape-Rauschen und Knistern, folgen dem Signal (Gate) – bei Stille ist es still
+  Bei 0 % komplett umgangen (bitgenau unverändert).
 - **Phaser:** 6 Allpass-Stufen pro Kanal, Sweep 200 Hz – 3 kHz logarithmisch,
   Feedback 0,5, L/R um 90° versetzt. Slow 0,15 Hz, Fast 0,9 Hz. Depth 100 % =
   volle Kerben (Dry und Wet gleich laut).
@@ -140,7 +151,8 @@ Parameter springen; Chorus blendet (50 ms), Reverb glättet intern.
   gehaltene Note beim Loslassen.
 
 ## Preset-Library
-Rund 40 Factory-Presets in den Kategorien **Pad, Lead, Pluck, Bass, Keys, FX**,
+Factory-Presets in den Kategorien **CONTRA** (Signatur, nach den Titeln der Isso EP),
+**Pad, Lead, Pluck, Bass, Keys, FX**,
 Referenz: 80s Synthpop, 90s House/Trance, Retrowave. Jedes Preset ist zugleich
 Host-Programm (Name „Kategorie / Name“), damit es auch über das DAW-Menü läuft.
 
@@ -164,8 +176,8 @@ Glas-Display, ein einziger warmer Akzent.
 - **Umschalter:** Segment-Pillen (aktives Segment schwarz mit orangem LED-Punkt)
   für Range, PWM, Unison, VCA, Chorus, Voice Mode.
 - **Raster:** Reihe 1 OSC · UNISON · Reihe 2 FILTER · LFO · VOICE ·
-  Reihe 3 ENV 1 · ENV 2 · SPACE (Delay, Reverb) · Reihe 4 CHARACTER · MOD FX
-  (Chorus, Phaser). Fußzeile: Wortmarke „CONTRA-86“, Lautsprecher-
+  Reihe 3 ENV 1 · ENV 2 · SPACE (Delay, Reverb) · Reihe 4 CHARACTER (Drive, Tube,
+  Drift, DUST als oranger Hero-Knob) · MOD FX (Chorus, Phaser). Fußzeile: Wortmarke „CONTRA-86“, Lautsprecher-
   Punktraster, Volume-Knob.
 - **Typo:** Michroma (OFL) für Wortmarke, Sektionen, Labels und Display.
 - **Skalierung:** feste Designfläche 1040 × 990, frei skalierbar 50–150 % mit festem
@@ -175,7 +187,7 @@ Glas-Display, ein einziger warmer Akzent.
 Arpeggiator, Modulationsmatrix, Effekt-Reihenfolge, eigene Presets speichern
 (Host-Speicherung funktioniert), MPE.
 
-## Abnahme v0.3
+## Abnahme v0.4
 - Build ohne Warnungen (macOS Universal, Linux-CI-Check)
 - pluginval Level 5 (VST3), auval (AU), Render-Test aller Presets
 - State aus v0.1 lädt weiter (v1-IDs unverändert)

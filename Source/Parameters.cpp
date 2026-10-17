@@ -11,6 +11,7 @@ namespace
     juce::ParameterID pid (const char* name)  { return { name, version }; }
     juce::ParameterID pid2 (const char* name) { return { name, version2 }; }
     juce::ParameterID pid3 (const char* name) { return { name, version3 }; }
+    juce::ParameterID pid4 (const char* name) { return { name, version4 }; }
 
     juce::String formatPercent (float v, int)   { return juce::String (juce::roundToInt (v * 100.0f)) + " %"; }
     float parsePercent (const juce::String& t)  { return t.getFloatValue() / 100.0f; }
@@ -120,7 +121,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     auto character = std::make_unique<juce::AudioProcessorParameterGroup> ("character", "CHARACTER", " | ");
     character->addChild (percent (pid3 (id::drive), "Drive", 0.0f),
                          percent (pid3 (id::tube), "Tube", 0.0f),
-                         percent (pid (id::drift), "Drift", 0.2f));
+                         percent (pid (id::drift), "Drift", 0.2f),
+                         percent (pid4 (id::dust), "Dust", 0.0f));
 
     auto global = std::make_unique<juce::AudioProcessorParameterGroup> ("global", "VOICE", " | ");
     global->addChild (std::make_unique<Choice> (pid (id::voiceMode), "Voice Mode", juce::StringArray { "Poly", "Mono" }, 0),

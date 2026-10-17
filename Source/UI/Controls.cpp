@@ -58,13 +58,13 @@ void Knob::report()
 void Knob::resized()
 {
     auto area = getLocalBounds();
-    slider.setBounds (area.removeFromTop (area.getHeight() - 20));
+    slider.setBounds (area.removeFromTop (area.getHeight() - 22));
 }
 
 void Knob::paint (juce::Graphics& g)
 {
     g.setColour (colour::ink);
-    drawTracked (g, label.toUpperCase(), getLocalBounds().removeFromBottom (18).toFloat(), 9.0f,
+    drawTracked (g, label.toUpperCase(), getLocalBounds().removeFromBottom (20).toFloat(), 11.5f,
                  juce::Justification::centred);
 }
 
@@ -118,7 +118,7 @@ void SegmentedControl::paint (juce::Graphics& g)
         }
 
         g.setColour (active ? juce::Colours::white : colour::inkSoft);
-        drawTracked (g, labels[i], seg, 8.5f, juce::Justification::centred, 0.04f);
+        drawTracked (g, labels[i], seg, 10.5f, juce::Justification::centred, 0.02f);
     }
 }
 

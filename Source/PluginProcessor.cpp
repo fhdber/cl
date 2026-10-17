@@ -27,7 +27,8 @@ Contra86Processor::Contra86Processor()
             get (id::ampAttack), get (id::ampDecay), get (id::ampSustain), get (id::ampRelease),
             get (id::delayTime), get (id::delayFeedback), get (id::delayMix),
             get (id::reverbSize), get (id::reverbMix),
-            get (id::drive), get (id::tube), get (id::phaser), get (id::phaserMix) };
+            get (id::drive), get (id::tube), get (id::phaser), get (id::phaserMix),
+            get (id::dust) };
 }
 
 bool Contra86Processor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -101,6 +102,7 @@ dsp86::Settings Contra86Processor::readSettings() const noexcept
     s.tube          = value (raw.tube);
     s.phaser        = juce::jlimit (0, 2, index (raw.phaser));
     s.phaserMix     = value (raw.phaserMix);
+    s.dust          = value (raw.dust);
     return s;
 }
 

@@ -3,6 +3,7 @@
 #include "Character.h"
 #include "Chorus.h"
 #include "Delay.h"
+#include "Dust.h"
 #include "Voice.h"
 
 #include <juce_dsp/juce_dsp.h>
@@ -38,7 +39,7 @@ struct Settings
     float reverbSize = 0.6f, reverbMix = 0.0f;
     int   phaser = 0;
     float phaserMix = 0.6f;
-    float drive = 0.0f, tube = 0.0f;
+    float drive = 0.0f, tube = 0.0f, dust = 0.0f;
     double bpm = 120.0;
 
     VoiceMode voiceMode = VoiceMode::poly;
@@ -83,6 +84,7 @@ private:
     PingPongDelay delay;
     Phaser phaser;
     Tube tube;
+    Dust dust;
     juce::Reverb reverb;
     juce::Reverb::Parameters reverbParams;
     OnePoleHighpass hpfL, hpfR, reverbHpfL, reverbHpfR;

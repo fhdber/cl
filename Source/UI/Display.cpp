@@ -88,6 +88,9 @@ juce::String Display::statusText() const
     if (unison != "Off")
         text << "  /  UNISON " << unison;
     text << "  /  CHORUS " << chorus.toUpperCase();
+
+    if (const auto dust = state.getParameter (params::id::dust)->getValue(); dust > 0.005f)
+        text << "  /  DUST " << juce::roundToInt (dust * 100.0f) << "%";
     return text;
 }
 
@@ -123,16 +126,16 @@ void Display::paint (juce::Graphics& g)
     auto text = nameArea;
     g.setColour (colour::accent.withAlpha (0.75f));
     drawTracked (g, showingValue ? valueName.toUpperCase() : presets::category (shownProgram).toUpperCase(),
-                 text.removeFromTop (22.0f), 12.0f, juce::Justification::centredLeft, 0.12f);
+                 text.removeFromTop (24.0f), 14.0f, juce::Justification::centredLeft, 0.12f);
 
     g.setColour (colour::accent);
     auto title = text.removeFromTop (60.0f);
     const auto mainText = showingValue ? valueText : presets::name (shownProgram);
-    g.setFont (font (38.0f));
+    g.setFont (font (44.0f));
     g.drawFittedText (mainText, title.toNearestInt(), juce::Justification::centredLeft, 1, 0.7f);
 
     g.setColour (juce::Colours::white.withAlpha (0.35f));
-    drawTracked (g, statusText(), text.removeFromTop (22.0f), 9.0f, juce::Justification::centredLeft, 0.1f);
+    drawTracked (g, statusText(), text.removeFromTop (24.0f), 11.5f, juce::Justification::centredLeft, 0.08f);
 
     // Pfeile
     for (auto [area, left] : { std::pair { prevArea, true }, { nextArea, false } })

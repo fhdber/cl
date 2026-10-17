@@ -9,6 +9,7 @@ namespace params
     inline constexpr int version = 1;
     inline constexpr int version2 = 2;
     inline constexpr int version3 = 3;
+    inline constexpr int version4 = 4;
 
     namespace id
     {
@@ -59,6 +60,9 @@ namespace params
         inline constexpr auto tube          = "tube";
         inline constexpr auto phaser        = "phaser";
         inline constexpr auto phaserMix     = "phaserMix";
+
+        // v4
+        inline constexpr auto dust          = "dust";
     }
 
     juce::AudioProcessorValueTreeState::ParameterLayout createLayout();

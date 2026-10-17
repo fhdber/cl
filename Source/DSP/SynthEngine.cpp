@@ -29,6 +29,7 @@ void SynthEngine::prepare (double sampleRate, int maxBlockSize, const Settings& 
     delay.prepare (baseRate);
     phaser.prepare (baseRate);
     tube.prepare (osRate);
+    dust.prepare (baseRate);
     reverb.setSampleRate (baseRate);
 
     const auto g = std::tan (juce::MathConstants<double>::pi * 200.0 / baseRate);
@@ -61,6 +62,7 @@ void SynthEngine::reset()
     delay.reset();
     phaser.reset();
     tube.reset();
+    dust.reset();
     reverb.reset();
     reverbActive = false;
     for (auto* f : { &hpfL, &hpfR, &reverbHpfL, &reverbHpfR })
@@ -107,6 +109,7 @@ void SynthEngine::applySettings (const Settings& s) noexcept
     unisonWidth.setTargetValue (s.unisonWidth);
     drive.setTargetValue (s.drive);
     tube.setAmount (s.tube);
+    dust.setAmount (s.dust);
     phaser.setParameters (static_cast<Phaser::Mode> (s.phaser), s.phaserMix);
     hpfHz.setTargetValue (s.hpfHz);
     volume.setTargetValue (juce::Decibels::decibelsToGain (s.volumeDb, -48.0f));
@@ -234,6 +237,7 @@ void SynthEngine::process (juce::AudioBuffer<float>& out, const juce::MidiBuffer
         phaser.process (left, right, len);
         delay.process (left, right, len);
         processReverb (left, right, len);
+        dust.process (left, right, len);
 
         for (int i = 0; i < len; ++i)
         {

@@ -32,6 +32,50 @@ namespace
     {
         { "Init", "Init", {} },
 
+        // ── CONTRA: CONTRABEATZ-Signatur (Beat-Tape-Sound, nach den Titeln der Isso EP) ──
+        { "CONTRA", "Motown Keys", { { id::sawLevel, 0.2f }, { id::pulseLevel, 0.8f }, { id::pw, 0.1f },
+            { id::cutoff, 900 }, { id::resonance, 0.1f }, { id::envAmount, 0.35f }, { id::keyTrack, 0.8f },
+            { id::decay, 1.0f }, { id::sustain, 0.15f },
+            { id::ampAttack, 0.002f }, { id::ampDecay, 2.5f }, { id::ampSustain, 0.25f }, { id::ampRelease, 0.5f },
+            { id::velocity, 0.8f }, { id::chorus, chorus2 }, { id::tube, 0.3f }, { id::dust, 0.55f },
+            { id::reverbMix, 0.15f } } },
+
+        { "CONTRA", "Boogie Bass", { { id::voiceMode, mono }, { id::glide, 0.03f },
+            { id::sawLevel, 0.7f }, { id::pulseLevel, 0.5f }, { id::pw, 0.3f }, { id::subLevel, 0.6f },
+            { id::cutoff, 280 }, { id::resonance, 0.45f }, { id::envAmount, 0.5f }, { id::keyTrack, 0.3f },
+            { id::decay, 0.18f }, { id::sustain, 0.2f },
+            { id::ampSustain, 0.9f }, { id::ampRelease, 0.07f },
+            { id::drive, 0.4f }, { id::dust, 0.35f }, { id::chorus, chorusOff }, { id::volume, -3.0f } } },
+
+        { "CONTRA", "Scatty Stab", { { id::pulseLevel, 0.3f }, { id::pw, 0.4f },
+            { id::unison, uni3 }, { id::unisonDetune, 0.15f }, { id::unisonWidth, 0.5f },
+            { id::cutoff, 700 }, { id::resonance, 0.15f }, { id::envAmount, 0.45f },
+            { id::attack, 0.01f }, { id::decay, 0.25f }, { id::sustain, 0.2f },
+            { id::ampAttack, 0.005f }, { id::ampDecay, 0.45f }, { id::ampSustain, 0.2f }, { id::ampRelease, 0.2f },
+            { id::chorus, chorus2 }, { id::tube, 0.25f }, { id::dust, 0.6f }, { id::reverbMix, 0.2f }, { id::volume, -2.0f }} },
+
+        { "CONTRA", "Runner Arp", { { id::sawLevel, 0.3f }, { id::pulseLevel, 0.9f }, { id::pw, 0.3f },
+            { id::cutoff, 600 }, { id::resonance, 0.35f }, { id::envAmount, 0.5f },
+            { id::decay, 0.15f }, { id::sustain, 0.0f },
+            { id::ampDecay, 0.35f }, { id::ampSustain, 0.0f }, { id::ampRelease, 0.25f },
+            { id::chorus, chorus1 }, { id::delayMix, 0.3f }, { id::delayTime, d8d }, { id::delayFeedback, 0.4f },
+            { id::dust, 0.45f }, { id::volume, 1.0f }} },
+
+        { "CONTRA", "Thug 808", { { id::voiceMode, mono }, { id::glide, 0.06f },
+            { id::sawLevel, 0.0f }, { id::pulseLevel, 0.7f }, { id::subLevel, 0.5f },
+            { id::cutoff, 350 }, { id::resonance, 0.0f }, { id::keyTrack, 1.0f },
+            { id::ampAttack, 0.001f }, { id::ampDecay, 1.6f }, { id::ampSustain, 0.0f }, { id::ampRelease, 0.4f },
+            { id::drive, 0.55f }, { id::tube, 0.2f }, { id::dust, 0.25f },
+            { id::chorus, chorusOff }, { id::drift, 0.05f }, { id::volume, 6.0f } } },
+
+        { "CONTRA", "Defuse Pad", { { id::sawLevel, 0.6f }, { id::pulseLevel, 0.6f }, { id::pw, 0.5f },
+            { id::pwmSource, pwmLfo }, { id::lfoRate, 0.4f },
+            { id::cutoff, 1500 }, { id::resonance, 0.15f },
+            { id::ampAttack, 0.8f }, { id::ampDecay, 2.0f }, { id::ampSustain, 0.85f }, { id::ampRelease, 1.8f },
+            { id::chorus, chorus1 }, { id::phaser, phaserSlow }, { id::phaserMix, 0.4f },
+            { id::tube, 0.2f }, { id::dust, 0.7f }, { id::reverbMix, 0.3f }, { id::drift, 0.45f },
+            { id::velocity, 0.3f }, { id::volume, -2.0f } } },
+
         // ── Pads ──────────────────────────────────────────────────────────
         { "Pad", "Juno Pad", { { id::pulseLevel, 0.7f }, { id::pw, 0.6f }, { id::pwmSource, pwmLfo },
             { id::lfoRate, 0.5f }, { id::lfoFilter, 0.06f },

@@ -20,13 +20,13 @@ Contra86Panel::Contra86Panel (Contra86Processor& p)
     auto row = [] (int r, int x, int w) { return juce::Rectangle<int> (x, rowTop[r], w, rowTop[r + 1] - rowTop[r]); };
 
     sections.push_back ({ "OSC", row (0, gridLeft, 660),
-                          { { &segment (id::pwmSource, { "LFO", "MAN", "ENV" }), 150 },
-                            { &segment (id::range, { "16'", "8'", "4'" }), 132 } },
+                          { { &segment (id::pwmSource, { "LFO", "MAN", "ENV" }), 168 },
+                            { &segment (id::range, { "16'", "8'", "4'" }), 150 } },
                           { &knob (id::sawLevel, "Saw"), &knob (id::pulseLevel, "Pulse"), &knob (id::subLevel, "Sub"),
                             &knob (id::noiseLevel, "Noise"), &knob (id::pw, "PW") } });
 
     sections.push_back ({ "UNISON", row (0, 700, 300),
-                          { { &segment (id::unison, { "OFF", "3", "5", "7" }), 170 } },
+                          { { &segment (id::unison, { "OFF", "3", "5", "7" }), 180 } },
                           { &knob (id::unisonDetune, "Detune"), &knob (id::unisonWidth, "Width") } });
 
     sections.push_back ({ "FILTER", row (1, gridLeft, 450), {},
@@ -38,26 +38,27 @@ Contra86Panel::Contra86Panel (Contra86Processor& p)
                             &knob (id::lfoPitch, "Pitch"), &knob (id::lfoFilter, "Filter") } });
 
     sections.push_back ({ "VOICE", row (1, 760, 240),
-                          { { &segment (id::voiceMode, { "POLY", "MONO" }), 120 } },
+                          { { &segment (id::voiceMode, { "POLY", "MONO" }), 136 } },
                           { &knob (id::glide, "Glide"), &knob (id::velocity, "Velo") } });
 
-    sections.push_back ({ "ENV 1  FILTER", row (2, gridLeft, 280), {},
+    sections.push_back ({ "ENV 1 FILTER", row (2, gridLeft, 280), {},
                           { &knob (id::attack, "A"), &knob (id::decay, "D"), &knob (id::sustain, "S"), &knob (id::release, "R") } });
 
-    sections.push_back ({ "ENV 2  AMP", row (2, 320, 330),
-                          { { &segment (id::vcaMode, { "ENV 1", "GATE", "ENV 2" }), 170 } },
+    sections.push_back ({ "ENV 2 AMP", row (2, 320, 330),
+                          { { &segment (id::vcaMode, { "ENV 1", "GATE", "ENV 2" }), 190 } },
                           { &knob (id::ampAttack, "A"), &knob (id::ampDecay, "D"), &knob (id::ampSustain, "S"), &knob (id::ampRelease, "R") } });
 
     sections.push_back ({ "SPACE", row (2, 650, 350), {},
                           { &knob (id::delayTime, "Time"), &knob (id::delayFeedback, "Fdbk"), &knob (id::delayMix, "Delay"),
                             &knob (id::reverbSize, "Size"), &knob (id::reverbMix, "Verb") } });
 
-    sections.push_back ({ "CHARACTER", row (3, gridLeft, 520), {},
-                          { &knob (id::drive, "Drive"), &knob (id::tube, "Tube"), &knob (id::drift, "Drift") } });
+    sections.push_back ({ "CHARACTER", row (3, gridLeft, 480), {},
+                          { &knob (id::drive, "Drive"), &knob (id::tube, "Tube"), &knob (id::drift, "Drift"),
+                            &knob (id::dust, "Dust", true) } });
 
-    sections.push_back ({ "MOD FX", row (3, 560, 440),
-                          { { &segment (id::phaser, { "OFF", "SLOW", "FAST" }), 150 },
-                            { &segment (id::chorus, { "OFF", "I", "II", "I+II" }), 160 } },
+    sections.push_back ({ "MOD FX", row (3, 520, 480),
+                          { { &segment (id::phaser, { "OFF", "SLOW", "FAST" }), 170 },
+                            { &segment (id::chorus, { "OFF", "I", "II", "I+II" }), 178 } },
                           { &knob (id::phaserMix, "Phase") } });
 
     volumeKnob = &knob (id::volume, "Volume", true);
@@ -86,7 +87,7 @@ void Contra86Panel::layoutSection (const Section& section)
 
     for (const auto& [seg, width] : section.segments)
     {
-        seg->setBounds (header.removeFromRight (width).withSizeKeepingCentre (width, 22));
+        seg->setBounds (header.removeFromRight (width).withSizeKeepingCentre (width, 24));
         header.removeFromRight (8);
     }
 
@@ -138,7 +139,7 @@ void Contra86Panel::paint (juce::Graphics& g)
     {
         g.setColour (colour::inkSoft);
         drawTracked (g, section.title, section.area.toFloat().reduced (14.0f, 10.0f).removeFromTop (26.0f),
-                     10.0f, juce::Justification::centredLeft, 0.18f);
+                     12.0f, juce::Justification::centredLeft, 0.14f);
     }
 
     // Fußzeile: Wortmarke, Lautsprecher-Raster
@@ -151,9 +152,9 @@ void Contra86Panel::paint (juce::Graphics& g)
 
     g.setColour (colour::inkSoft);
     drawTracked (g, "RETRO POLY SYNTH", footer.withTrimmedLeft (462.0f).withWidth (200.0f).withTrimmedTop (18.0f).withHeight (16.0f),
-                 8.5f, juce::Justification::centredLeft, 0.2f);
+                 10.0f, juce::Justification::centredLeft, 0.2f);
     drawTracked (g, "CONTRABEATZ", footer.withTrimmedLeft (462.0f).withWidth (200.0f).withTrimmedTop (36.0f).withHeight (16.0f),
-                 8.5f, juce::Justification::centredLeft, 0.2f);
+                 10.0f, juce::Justification::centredLeft, 0.2f);
 
     g.setColour (colour::ink.withAlpha (0.55f));
     for (int r = 0; r < 6; ++r)
@@ -176,8 +177,13 @@ Contra86Editor::Contra86Editor (Contra86Processor& p)
     if (auto* c = getConstrainer())
         c->setFixedAspectRatio (w / h);
 
-    const auto scale = juce::jlimit (0.5, 1.5, static_cast<double> (contraProcessor.state.state.getProperty (uiScaleProperty, 0.78)));
-    setSize (juce::roundToInt (w * scale), juce::roundToInt (h * scale));
+    const auto scale = juce::jlimit (0.5, 1.5, static_cast<double> (contraProcessor.state.state.getProperty (uiScaleProperty, 1.0)));
+    // Nie größer als der Bildschirm (mit Platz für Host-Fensterleiste)
+    auto fitted = scale;
+    if (const auto* display = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay())
+        fitted = std::min (scale, (static_cast<double> (display->userBounds.getHeight()) - 120.0) / h);
+
+    setSize (juce::roundToInt (w * std::max (0.5, fitted)), juce::roundToInt (h * std::max (0.5, fitted)));
 }
 
 Contra86Editor::~Contra86Editor()
