@@ -1,4 +1,4 @@
-# CONTRA-86 – Spezifikation (v0.4)
+# CONTRA-86 – Spezifikation (v0.5)
 
 Arbeitstitel. Polyphoner Retro-Synth mit Juno-60/106-Kern, erweitert um das,
 was 80s/90s-Produktionen fertig klingen lässt: Unison, zweite Hüllkurve,
@@ -16,7 +16,9 @@ sind bewusst klein gehalten (je 2–4 Regler).
   Kategorien, Preset-Browser im Plugin
 - **v0.2 UI:** eigenes CONTRABEATZ-UI (Konzept unten)
 - **v0.3:** CHARACTER – Drive, Tube, Voice-Cards (Drift), Phaser
-- **v0.4 (dieser):** CONTRABEATZ-Signatur – DUST-Regler + Preset-Kategorie CONTRA
+- **v0.4:** CONTRABEATZ-Signatur – DUST-Regler + Preset-Kategorie CONTRA
+- **v0.5 (dieser):** Signature-Engine (Boom Trap) – Layer B + Blend, 808-Layer,
+  DUST-Details, Lead-Distortion + Throw, UI auf zwei Seiten (Figma-Vorlage)
 - **später (Etappe B):** Ensemble-Chorus, Lo-Fi Digital, Tape
 
 ## Formate & Eckdaten
@@ -104,6 +106,22 @@ Skalierung: *lin* = linear, *log* = logarithmisch (Skew um den Mittelpunkt),
 | FX | `phaserMix` | Phaser Depth | 0–100 % | 60 % | lin |
 | Voice | `velocity` | Velocity | 0–100 % (→ VCA + Filter) | 50 % | lin |
 | Out | `volume` | Volume | −48…+6 dB | −6 dB | lin (dB) |
+| OSC B | `oscBWave` | B Wave | Saw / Square / Pulse / Noise | Saw | Auswahl |
+| OSC B | `oscBOctave` | B Octave | −2…+2 | 0 | Stufen |
+| OSC B | `oscBSemi` | B Semi | −12…+12 HT | 0 | Stufen |
+| OSC B | `oscBFine` | B Fine | −50…+50 Cent | +7 | lin |
+| OSC B | `blend` | Blend A↔B | 0–100 % (Equal Power) | 0 % | lin |
+| 808 | `sub808Level` | 808 Level | 0–100 % | 0 % | lin |
+| 808 | `subDecay` | 808 Decay | 50 ms–4 s | 1,2 s | log |
+| 808 | `subDrop` | 808 Drop | 0–100 % (Pitch-Drop bis 12 HT, τ 40 ms) | 25 % | lin |
+| 808 | `subDrive` | 808 Drive | 0–100 % | 30 % | lin |
+| 808 | `subOctave` | 808 Octave | 0 / −1 | −1 | Auswahl |
+| DUST | `dustTape` | Dust Tape | 0–100 % (50 % = Standard) | 50 % | lin |
+| DUST | `dustCrush` | Dust Crush | 0–100 % | 50 % | lin |
+| DUST | `dustNoise` | Dust Noise | 0–100 % | 50 % | lin |
+| DUST | `dustTone` | Dust Tone | 0–100 % (mehr = dunkler) | 50 % | lin |
+| LEAD | `dist` | Distortion | 0–100 % (bass-erhaltend) | 0 % | lin |
+| LEAD | `throwFx` | Throw | Aus / An (momentan, Pad halten) | Aus | Schalter |
 
 Smoothing: alle kontinuierlichen Klangparameter pro Sample (20 ms, Cutoff/HPF
 multiplikativ), Delay-Zeit 200 ms (Tape-artiges Gleiten beim Umschalten).
@@ -142,6 +160,18 @@ Parameter springen; Chorus blendet (50 ms), Reverb glättet intern.
   - Tape: Wow 0,55 Hz und Flutter 6,5 Hz, zusammen höchstens ≈ ±4 Cent
   - Vinyl/Tape-Rauschen und Knistern, folgen dem Signal (Gate) – bei Stille ist es still
   Bei 0 % komplett umgangen (bitgenau unverändert).
+- **Layer B (Prince-Prinzip):** zweiter Oszillator pro Stimme (ohne Unison), eigene
+  Wellenform/Tonhöhe, wird vor dem Filter per Equal-Power-Crossfade mit Layer A gemischt.
+- **808-Layer (Boom-Trap-Kern):** Sinus pro Stimme, eigene Hüllkurve (Decay, 80 ms
+  Release beim Loslassen), Pitch-Drop beim Anschlag, Drive normiert auf gleichen Peak.
+  Läuft an Filter, HPF, Chorus, Effekten und DUST vorbei, mono in der Mitte – das
+  Fundament bleibt sauber, auch wenn oben alles staubt. Glide wirkt mit (Mono).
+- **DUST-Details:** Tape (Wow/Flutter-Tiefe), Crush (Bit/Rate), Noise (Knistern/Rauschen),
+  Tone (Tiefpass). 50 % = v0.4-Verhalten, 0 % = Anteil aus, 100 % = doppelt.
+- **Distortion (Lead):** Frequenzweiche bei 250 Hz, nur der Bereich darüber wird
+  verzerrt – der Bass bleibt erhalten. Auf 2× Rate.
+- **Throw:** solange gehalten, Delay-Send auf 100 % und Feedback mind. 72 %;
+  beim Loslassen klingen die Echos natürlich aus.
 - **Phaser:** 6 Allpass-Stufen pro Kanal, Sweep 200 Hz – 3 kHz logarithmisch,
   Feedback 0,5, L/R um 90° versetzt. Slow 0,15 Hz, Fast 0,9 Hz. Depth 100 % =
   volle Kerben (Dry und Wet gleich laut).
@@ -159,6 +189,15 @@ Host-Programm (Name „Kategorie / Name“), damit es auch über das DAW-Menü l
 **Preset-Leiste (oben im Plugin):** Auswahlmenü mit Kategorie-Überschriften,
 ◀ ▶ zum Durchsteppen. Folgt auch Programmwechseln aus dem Host.
 Siehe UI-Konzept.
+
+## UI v0.5 (Figma: https://www.figma.com/design/WcbU0mHUSr09HE6obaBNe8)
+Designfläche 1180 × 1136, zwei Seiten per Tab unter dem Display:
+- **SOUND:** OSC A · UNISON / OSC B · BLEND (Crossfader) · VOICE / FILTER · LFO /
+  ENV 1 · ENV 2
+- **CHARACTER:** DUST (Hero) · 808 / LEAD (Dist + THROW-Pad) · CHARACTER /
+  SPACE · MOD FX
+Mindestens 110 px pro Regler, Labels 13 px, Sektionstitel 13 px, Schalter 12 px.
+Die Figma-Datei ist die Vorlage für Optik und Abstände.
 
 ## UI-Konzept (v0.2)
 Referenzen: Teenage-Engineering/Braun-Hardware – helles Alu-Gehäuse, schwarzes

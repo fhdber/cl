@@ -59,6 +59,12 @@ private:
         std::atomic<float>* reverbSize; std::atomic<float>* reverbMix;
         std::atomic<float>* drive; std::atomic<float>* tube; std::atomic<float>* phaser; std::atomic<float>* phaserMix;
         std::atomic<float>* dust;
+        std::atomic<float>* dustTape; std::atomic<float>* dustCrush; std::atomic<float>* dustNoise; std::atomic<float>* dustTone;
+        std::atomic<float>* dist; std::atomic<float>* throwFx;
+        std::atomic<float>* oscBWave; std::atomic<float>* oscBOctave; std::atomic<float>* oscBSemi; std::atomic<float>* oscBFine;
+        std::atomic<float>* blend;
+        std::atomic<float>* sub808Level; std::atomic<float>* subDecay; std::atomic<float>* subDrop;
+        std::atomic<float>* subDrive; std::atomic<float>* subOctave;
     } raw;
 
     dsp86::SynthEngine engine;

@@ -28,7 +28,13 @@ Contra86Processor::Contra86Processor()
             get (id::delayTime), get (id::delayFeedback), get (id::delayMix),
             get (id::reverbSize), get (id::reverbMix),
             get (id::drive), get (id::tube), get (id::phaser), get (id::phaserMix),
-            get (id::dust) };
+            get (id::dust),
+            get (id::dustTape), get (id::dustCrush), get (id::dustNoise), get (id::dustTone),
+            get (id::dist), get (id::throwFx),
+            get (id::oscBWave), get (id::oscBOctave), get (id::oscBSemi), get (id::oscBFine),
+            get (id::blend),
+            get (id::sub808Level), get (id::subDecay), get (id::subDrop),
+            get (id::subDrive), get (id::subOctave) };
 }
 
 bool Contra86Processor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -103,6 +109,22 @@ dsp86::Settings Contra86Processor::readSettings() const noexcept
     s.phaser        = juce::jlimit (0, 2, index (raw.phaser));
     s.phaserMix     = value (raw.phaserMix);
     s.dust          = value (raw.dust);
+    s.dustTape      = value (raw.dustTape);
+    s.dustCrush     = value (raw.dustCrush);
+    s.dustNoise     = value (raw.dustNoise);
+    s.dustTone      = value (raw.dustTone);
+    s.dist          = value (raw.dist);
+    s.throwOn       = value (raw.throwFx) > 0.5f;
+    s.bWave         = juce::jlimit (0, 3, index (raw.oscBWave));
+    s.bOctave       = value (raw.oscBOctave);
+    s.bSemi         = value (raw.oscBSemi);
+    s.bFine         = value (raw.oscBFine);
+    s.blend         = value (raw.blend);
+    s.subLevel      = value (raw.sub808Level);
+    s.subDecay      = value (raw.subDecay);
+    s.subDrop       = value (raw.subDrop);
+    s.subDrive      = value (raw.subDrive);
+    s.subOctave     = -juce::jlimit (0, 1, index (raw.subOctave));
     return s;
 }
 

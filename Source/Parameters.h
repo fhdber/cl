@@ -10,6 +10,7 @@ namespace params
     inline constexpr int version2 = 2;
     inline constexpr int version3 = 3;
     inline constexpr int version4 = 4;
+    inline constexpr int version5 = 5;
 
     namespace id
     {
@@ -63,6 +64,24 @@ namespace params
 
         // v4
         inline constexpr auto dust          = "dust";
+
+        // v5
+        inline constexpr auto oscBWave      = "oscBWave";
+        inline constexpr auto oscBOctave    = "oscBOctave";
+        inline constexpr auto oscBSemi      = "oscBSemi";
+        inline constexpr auto oscBFine      = "oscBFine";
+        inline constexpr auto blend         = "blend";
+        inline constexpr auto sub808Level   = "sub808Level";
+        inline constexpr auto subDecay      = "subDecay";
+        inline constexpr auto subDrop       = "subDrop";
+        inline constexpr auto subDrive      = "subDrive";
+        inline constexpr auto subOctave     = "subOctave";
+        inline constexpr auto dustTape      = "dustTape";
+        inline constexpr auto dustCrush     = "dustCrush";
+        inline constexpr auto dustNoise     = "dustNoise";
+        inline constexpr auto dustTone      = "dustTone";
+        inline constexpr auto dist          = "dist";
+        inline constexpr auto throwFx       = "throwFx";
     }
 
     juce::AudioProcessorValueTreeState::ParameterLayout createLayout();

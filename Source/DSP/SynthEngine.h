@@ -40,6 +40,14 @@ struct Settings
     int   phaser = 0;
     float phaserMix = 0.6f;
     float drive = 0.0f, tube = 0.0f, dust = 0.0f;
+    float dustTape = 0.5f, dustCrush = 0.5f, dustNoise = 0.5f, dustTone = 0.5f;
+    float dist = 0.0f;
+    bool  throwOn = false;
+
+    int   bWave = 0;
+    float bOctave = 0.0f, bSemi = 0.0f, bFine = 7.0f, blend = 0.0f;
+    float subLevel = 0.0f, subDecay = 1.2f, subDrop = 0.25f, subDrive = 0.3f;
+    int   subOctave = -1;
     double bpm = 120.0;
 
     VoiceMode voiceMode = VoiceMode::poly;
@@ -69,7 +77,7 @@ private:
     void noteOff (int note) noexcept;
     void releaseNote (int note) noexcept;
     void allNotesOff() noexcept;
-    void renderOversampled (float* osL, float* osR, int start, int end) noexcept;
+    void renderOversampled (float* osL, float* osR, float* osSub, int start, int end) noexcept;
     void processReverb (float* left, float* right, int numSamples) noexcept;
     int  heldKeyCount() const noexcept;
 
@@ -85,6 +93,7 @@ private:
     Phaser phaser;
     Tube tube;
     Dust dust;
+    LeadDistortion leadDist;
     juce::Reverb reverb;
     juce::Reverb::Parameters reverbParams;
     OnePoleHighpass hpfL, hpfR, reverbHpfL, reverbHpfR;
@@ -95,14 +104,14 @@ private:
     juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative> cutoff { 8000.0f };
     juce::SmoothedValue<float> resonance, envAmount, lfoFilter, keyTrack, pw,
                                saw, pulse, sub, noise, lfoPitch, drift, bend, modWheel,
-                               unisonDetune, unisonWidth, drive;
+                               unisonDetune, unisonWidth, drive, blend, subLevel;
     // Smoothing auf Basisrate
     juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative> hpfHz { 20.0f };
     juce::SmoothedValue<float> volume, reverbMix;
 
     std::array<float, modChunk> pitchBuf {}, lfoBuf {}, pwBuf {}, sawBuf {}, pulseBuf {}, subBuf {},
                                 noiseBuf {}, cutoffBuf {}, resoBuf {}, envBuf {}, lfoFiltBuf {}, keyBuf {},
-                                driveBuf {};
+                                driveBuf {}, blendBuf {};
 
     Settings current;
     VoiceMods mods {};

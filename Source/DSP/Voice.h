@@ -31,6 +31,7 @@ struct VoiceMods
     const float* lfoOctaves;
     const float* keyTrack;
     const float* drive;
+    const float* blend;        // 0 = nur Layer A, 1 = nur Layer B
 
     float drift;
     float octaveShift;
@@ -45,6 +46,15 @@ struct VoiceMods
     std::array<float, maxUnison> ratio;
     std::array<float, maxUnison> gainL;
     std::array<float, maxUnison> gainR;
+
+    // Layer B
+    bool layerB;
+    int bWave;                 // 0 Saw, 1 Square, 2 Pulse, 3 Noise
+    float bRatio;
+
+    // 808-Layer (läuft am Filter vorbei)
+    float subLevel, subOctave, subDropSemis, subDrive;
+    float subDecayCoef, subReleaseCoef, subDropCoef;
 };
 
 class Voice
@@ -86,6 +96,7 @@ public:
         note = -1;
         held = false;
         fading = false;
+        subEnv = 0.0f;
         pendingNote = -1;
         fadeGain = 1.0f;
     }
@@ -139,9 +150,10 @@ public:
         env.gateOff();
         ampEnv.gateOff();
         gateEnv.gateOff();
+        subReleasing = true;
     }
 
-    void render (float* outL, float* outR, int numSamples, const VoiceMods& m) noexcept
+    void render (float* outL, float* outR, float* outSub, int numSamples, const VoiceMods& m) noexcept
     {
         if (! isActive())
             return;
@@ -187,6 +199,17 @@ public:
                 mixR += s * m.gainR[uz];
             }
 
+            // Layer B: zweiter Oszillator, Equal-Power-Crossfade vor dem Filter
+            if (m.layerB)
+            {
+                const auto oscB = dcoB.next (std::min (baseInc * m.bRatio, 0.45f), m.bWave == 2 ? 0.15f : 0.5f);
+                const auto b = 0.5f * (m.bWave == 0 ? oscB.saw : m.bWave == 3 ? noise.next() : oscB.pulse);
+                const auto angle = m.blend[i] * 1.5707963f;
+                const auto gA = std::cos (angle), gB = std::sin (angle);
+                mixL = mixL * gA + b * gB;
+                mixR = mixR * gA + b * gB;
+            }
+
             // Drive: Mixer übersteuern (bis +16 dB), pegelkompensiert
             if (const auto d = m.drive[i]; d > 1.0e-4f)
             {
@@ -209,6 +232,26 @@ public:
             const auto gain = amp * velocityGain * fadeGain * (0.4f + 0.04f * m.drift * cardLevel);
             outL[i] += yL * gain;
             outR[i] += yR * gain;
+
+            // 808: Sinus mit eigener Hüllkurve und Pitch-Drop, am Filter vorbei
+            if (m.subLevel > 0.0f && subEnv > 1.0e-4f)
+            {
+                const auto subSemis = currentNote + m.subOctave + m.pitchSemis[i] + m.subDropSemis * subDrop;
+                subPhase += std::min (440.0f * std::exp2 ((subSemis - 69.0f) * (1.0f / 12.0f)) / sampleRate, 0.45f);
+                if (subPhase >= 1.0f)
+                    subPhase -= 1.0f;
+
+                auto y = std::sin (6.2831853f * subPhase) * subEnv;
+                if (m.subDrive > 1.0e-3f)
+                {
+                    const auto sg = 1.0f + 6.0f * m.subDrive;
+                    y = softClip (y * sg) / softClip (sg);
+                }
+                outSub[i] += y * m.subLevel * velocityGain * fadeGain * 0.5f;
+
+                subEnv  *= subReleasing ? m.subReleaseCoef : m.subDecayCoef;
+                subDrop *= m.subDropCoef;
+            }
 
             if (fading)
             {
@@ -234,7 +277,8 @@ public:
 
             const auto ampActive = m.vcaMode == VcaMode::gate ? gateEnv.isActive()
                                  : (m.vcaMode == VcaMode::env1 ? env.isActive() : ampEnv.isActive());
-            if (! ampActive && ! fading)
+            const auto subActive = m.subLevel > 0.0f && subEnv > 1.0e-4f;
+            if (! ampActive && ! subActive && ! fading)
             {
                 kill();
                 return;
@@ -264,7 +308,13 @@ private:
             filterR.reset();
             for (auto& d : dcos)
                 d.reset (0.5f + 0.5f * noise.next());
+            dcoB.reset (0.5f + 0.5f * noise.next());
+            subPhase = 0.0f;
         }
+
+        subEnv = 1.0f;
+        subDrop = 1.0f;
+        subReleasing = false;
 
         env.gateOn();
         ampEnv.gateOn();
@@ -274,6 +324,9 @@ private:
     float sampleRate = 44100.0f, piOverSr = 0.0f, maxCutoff = 20000.0f;
 
     std::array<Dco, maxUnison> dcos;
+    Dco dcoB;
+    float subPhase = 0.0f, subEnv = 0.0f, subDrop = 0.0f;
+    bool subReleasing = false;
     Noise noise;
     LadderFilter filterL, filterR;
     Envelope env, ampEnv, gateEnv;

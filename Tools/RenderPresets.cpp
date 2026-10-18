@@ -85,11 +85,12 @@ juce::AudioBuffer<float> render (int preset, double sampleRate, int channels, in
     juce::AudioBuffer<float> result (channels, total);
     // CONTRA-Presets bekommen die Phrase ihrer Klangrolle
     auto role = presets::category (preset);
-    if (role == "CONTRA")
+    if (role == "CONTRA" || role == "BOOM")
     {
         const auto n = presets::name (preset);
         role = n.contains ("Bass") || n.contains ("808") ? "Bass"
-             : n.contains ("Arp") ? "Pluck"
+             : n.contains ("Lead") ? "Lead"
+             : n.contains ("Arp") || n.contains ("Bell") ? "Pluck"
              : n.contains ("Keys") || n.contains ("Stab") ? "Keys" : "Pad";
     }
     const auto allMidi = midiFor (phraseFor (role), sampleRate);
@@ -293,7 +294,72 @@ bool characterChecks()
     const auto dustOk = hfDrop > 15.0;
     std::cout << (dustOk ? "ok   " : "FAIL ") << "dust darkens like a sampler: 14.7 kHz down " << juce::String (hfDrop, 1) << " dB\n";
 
-    return ok && phaserOk && dustOk;
+    // 808: Sinus auf dem Grundton, Oktave -1 eine Oktave tiefer, am DUST vorbei
+    const std::vector<std::pair<const char*, float>> sub808 {
+        { id::sawLevel, 0.0f }, { id::pulseLevel, 0.0f }, { id::chorus, 0.0f }, { id::drift, 0.0f },
+        { id::sub808Level, 1.0f }, { id::subDecay, 4.0f }, { id::subDrop, 0.0f }, { id::subDrive, 0.0f },
+        { id::subOctave, 0.0f } };
+    const auto sub0 = renderNote (sub808, 45, 1.0);
+    auto subDown = sub808;
+    subDown.push_back ({ id::subOctave, 1.0f });
+    const auto subLow = renderNote (subDown, 45, 1.0);
+    auto subDusty = sub808;
+    subDusty.push_back ({ id::dust, 1.0f });
+    const auto subDust = renderNote (subDusty, 45, 1.0);
+
+    const auto subFund  = magnitude (sub0, 110.0);
+    const auto octaveDb = juce::Decibels::gainToDecibels (magnitude (subLow, 55.0) / magnitude (subLow, 110.0), -120.0);
+    const auto dustDb   = juce::Decibels::gainToDecibels (magnitude (subDust, 110.0) / subFund, -120.0);
+    const auto subOk = subFund > 0.02 && octaveDb > 30.0 && std::abs (dustDb) < 1.0;
+    std::cout << (subOk ? "ok   " : "FAIL ") << "808 layer: 110 Hz " << juce::String (juce::Decibels::gainToDecibels (subFund), 1)
+              << " dB, octave -1 " << juce::String (octaveDb, 1) << " dB over 110 Hz, dust changes it "
+              << juce::String (dustDb, 2) << " dB\n";
+
+    // Blend: ganz auf B (Rechteck +1 Oktave) muss der Grundton von A verschwinden
+    std::vector<std::pair<const char*, float>> layer {
+        { id::sawLevel, 1.0f }, { id::pulseLevel, 0.0f }, { id::chorus, 0.0f }, { id::drift, 0.0f },
+        { id::cutoff, 20000.0f }, { id::oscBWave, 1.0f }, { id::oscBOctave, 1.0f }, { id::oscBFine, 0.0f } };
+    const auto onlyA = renderNote (layer, 45, 1.0);
+    layer.push_back ({ id::blend, 1.0f });
+    const auto onlyB = renderNote (layer, 45, 1.0);
+    const auto blendDb = juce::Decibels::gainToDecibels (magnitude (onlyA, 110.0) / magnitude (onlyB, 110.0), -120.0);
+    const auto blendOk = blendDb > 30.0 && magnitude (onlyB, 220.0) > 0.01;
+    std::cout << (blendOk ? "ok   " : "FAIL ") << "blend A-B: 110 Hz down " << juce::String (blendDb, 1) << " dB on layer B\n";
+
+    // Distortion: Grundton unter 250 Hz bleibt stehen (Intermodulation der verzerrten
+    // Obertöne erzeugt etwas 110 Hz mit eigener Phase, daher 3 dB Toleranz), Mitten bekommen Obertöne
+    auto thirdDb = [] (const juce::AudioBuffer<float>& b, double f)
+    {
+        return juce::Decibels::gainToDecibels (magnitude (b, 3.0 * f) / magnitude (b, f), -120.0);
+    };
+    const auto bassClean = renderNote (square, 45, 1.0);
+    const auto bassDist  = renderNote (withExtra ({ id::dist, 1.0f }), 45, 1.0);
+    const auto fundDb = juce::Decibels::gainToDecibels (magnitude (bassDist, 110.0) / magnitude (bassClean, 110.0), -120.0);
+    auto mid = square;
+    mid.push_back ({ id::cutoff, 700.0f });
+    const auto midClean = thirdDb (renderNote (mid, 69, 1.0), 440.0);
+    mid.push_back ({ id::dist, 1.0f });
+    const auto midDist  = thirdDb (renderNote (mid, 69, 1.0), 440.0);
+    const auto distOk = std::abs (fundDb) < 3.0 && midDist > midClean + 15.0;
+    std::cout << (distOk ? "ok   " : "FAIL ") << "distortion keeps bass: 110 Hz fundamental " << juce::String (fundDb, 2)
+              << " dB, 3rd/1st at 440 Hz " << juce::String (midClean, 1) << " -> " << juce::String (midDist, 1) << " dB\n";
+
+    // Throw: Delay voll auf, auch wenn Delay Mix auf 0 steht
+    const auto dryNote = renderNote (bright, 57, 1.5);
+    auto thrown = bright;
+    thrown.push_back ({ id::throwFx, 1.0f });
+    const auto wetNote = renderNote (thrown, 57, 1.5);
+    double throwDiff = 0.0, throwRef = 0.0;
+    for (int i = 0; i < dryNote.getNumSamples(); ++i)
+    {
+        throwDiff += std::pow (dryNote.getSample (0, i) - wetNote.getSample (0, i), 2.0);
+        throwRef  += std::pow (dryNote.getSample (0, i), 2.0);
+    }
+    const auto throwDb = 10.0 * std::log10 (throwDiff / throwRef);
+    const auto throwOk = throwDb > -20.0;
+    std::cout << (throwOk ? "ok   " : "FAIL ") << "throw opens the delay: difference " << juce::String (throwDb, 1) << " dB\n";
+
+    return ok && phaserOk && dustOk && subOk && blendOk && distOk && throwOk;
 }
 
 void writeWav (const juce::File& file, const juce::AudioBuffer<float>& b, double sampleRate)

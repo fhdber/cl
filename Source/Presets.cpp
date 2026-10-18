@@ -16,6 +16,7 @@ namespace
     constexpr float d16 = 0, d8 = 2, d8d = 3, d4 = 5, d4d = 6;
     constexpr float mono = 1;
     constexpr float phaserSlow = 1, phaserFast = 2;
+    constexpr float bSaw = 0, bSquare = 1, bPulse = 2, bNoise = 3;
 
     struct Value { const char* id; float value; };
 
@@ -66,7 +67,8 @@ namespace
             { id::cutoff, 350 }, { id::resonance, 0.0f }, { id::keyTrack, 1.0f },
             { id::ampAttack, 0.001f }, { id::ampDecay, 1.6f }, { id::ampSustain, 0.0f }, { id::ampRelease, 0.4f },
             { id::drive, 0.55f }, { id::tube, 0.2f }, { id::dust, 0.25f },
-            { id::chorus, chorusOff }, { id::drift, 0.05f }, { id::volume, 6.0f } } },
+            { id::chorus, chorusOff }, { id::drift, 0.05f }, { id::volume, -3.0f },
+            { id::sub808Level, 0.6f }, { id::subDecay, 1.6f }, { id::subDrop, 0.2f }, { id::subDrive, 0.4f } } },
 
         { "CONTRA", "Defuse Pad", { { id::sawLevel, 0.6f }, { id::pulseLevel, 0.6f }, { id::pw, 0.5f },
             { id::pwmSource, pwmLfo }, { id::lfoRate, 0.4f },
@@ -75,6 +77,62 @@ namespace
             { id::chorus, chorus1 }, { id::phaser, phaserSlow }, { id::phaserMix, 0.4f },
             { id::tube, 0.2f }, { id::dust, 0.7f }, { id::reverbMix, 0.3f }, { id::drift, 0.45f },
             { id::velocity, 0.3f }, { id::volume, -2.0f } } },
+
+        // ── BOOM: Boom-Trap-Signatur (Sample-Ästhetik, 808, Lead-Throws) ──
+        { "BOOM", "Boom 808", { { id::voiceMode, mono }, { id::glide, 0.05f },
+            { id::sawLevel, 0.0f }, { id::pulseLevel, 0.35f }, { id::pw, 0.3f },
+            { id::cutoff, 600 }, { id::envAmount, 0.4f }, { id::decay, 0.05f }, { id::sustain, 0.0f },
+            { id::ampAttack, 0.001f }, { id::ampDecay, 0.12f }, { id::ampSustain, 0.0f }, { id::ampRelease, 0.1f },
+            { id::sub808Level, 0.9f }, { id::subDecay, 1.8f }, { id::subDrop, 0.35f }, { id::subDrive, 0.5f },
+            { id::chorus, chorusOff }, { id::drift, 0.05f }, { id::dust, 0.3f } } },
+
+        { "BOOM", "Throw Lead", { { id::voiceMode, mono }, { id::glide, 0.07f },
+            { id::sawLevel, 1.0f }, { id::oscBWave, bSquare }, { id::oscBOctave, 1 }, { id::oscBFine, 9 }, { id::blend, 0.35f },
+            { id::cutoff, 2200 }, { id::resonance, 0.25f }, { id::envAmount, 0.3f }, { id::decay, 0.6f }, { id::sustain, 0.6f },
+            { id::ampAttack, 0.004f }, { id::ampSustain, 0.9f }, { id::ampRelease, 0.25f },
+            { id::lfoRate, 5.0f }, { id::lfoDelay, 0.6f }, { id::lfoPitch, 0.06f },
+            { id::dist, 0.55f }, { id::tube, 0.3f }, { id::dust, 0.2f },
+            { id::delayTime, d8d }, { id::delayFeedback, 0.4f }, { id::delayMix, 0.18f },
+            { id::reverbMix, 0.15f }, { id::chorus, chorusOff }, { id::volume, -6.0f } } },
+
+        { "BOOM", "Library Keys", { { id::sawLevel, 0.0f }, { id::pulseLevel, 0.9f }, { id::pw, 0.15f },
+            { id::oscBWave, bSquare }, { id::oscBOctave, 1 }, { id::oscBFine, -6 }, { id::blend, 0.2f },
+            { id::cutoff, 1100 }, { id::envAmount, 0.3f }, { id::keyTrack, 0.8f }, { id::decay, 0.8f }, { id::sustain, 0.2f },
+            { id::ampAttack, 0.002f }, { id::ampDecay, 2.2f }, { id::ampSustain, 0.2f }, { id::ampRelease, 0.6f },
+            { id::velocity, 0.7f }, { id::chorus, chorus2 }, { id::tube, 0.35f },
+            { id::dust, 0.75f }, { id::dustTape, 0.85f }, { id::dustCrush, 0.3f }, { id::dustTone, 0.7f },
+            { id::reverbMix, 0.2f } } },
+
+        { "BOOM", "Tape Strings", { { id::sawLevel, 0.8f }, { id::oscBWave, bSaw }, { id::oscBOctave, 1 },
+            { id::oscBFine, 12 }, { id::blend, 0.4f },
+            { id::unison, uni3 }, { id::unisonDetune, 0.2f }, { id::unisonWidth, 0.8f },
+            { id::cutoff, 1800 }, { id::resonance, 0.1f }, { id::keyTrack, 0.6f },
+            { id::ampAttack, 0.5f }, { id::ampDecay, 2.0f }, { id::ampSustain, 0.9f }, { id::ampRelease, 1.4f },
+            { id::chorus, chorus1 }, { id::tube, 0.2f },
+            { id::dust, 0.65f }, { id::dustTape, 0.95f }, { id::dustCrush, 0.2f }, { id::dustNoise, 0.35f },
+            { id::reverbMix, 0.3f }, { id::reverbSize, 0.75f }, { id::drift, 0.4f }, { id::velocity, 0.3f }, { id::volume, -6.0f } } },
+
+        { "BOOM", "Soul Chop Pad", { { id::pulseLevel, 0.7f }, { id::pw, 0.45f }, { id::pwmSource, pwmLfo }, { id::lfoRate, 0.6f },
+            { id::oscBWave, bPulse }, { id::oscBSemi, 7 }, { id::oscBFine, 4 }, { id::blend, 0.3f },
+            { id::hpf, 250 }, { id::cutoff, 2000 }, { id::resonance, 0.2f },
+            { id::ampAttack, 0.15f }, { id::ampDecay, 1.5f }, { id::ampSustain, 0.8f }, { id::ampRelease, 0.9f },
+            { id::chorus, chorus2 }, { id::phaser, phaserSlow }, { id::phaserMix, 0.45f },
+            { id::dust, 0.7f }, { id::dustCrush, 0.85f }, { id::dustTape, 0.5f }, { id::dustTone, 0.6f },
+            { id::reverbMix, 0.25f }, { id::velocity, 0.3f }, { id::volume, -3.0f } } },
+
+        { "BOOM", "Night Bell", { { id::range, range4 }, { id::sawLevel, 0.0f }, { id::pulseLevel, 0.8f }, { id::pw, 0.5f },
+            { id::oscBWave, bSquare }, { id::oscBOctave, 1 }, { id::oscBSemi, 7 }, { id::oscBFine, 0 }, { id::blend, 0.3f },
+            { id::cutoff, 2600 }, { id::resonance, 0.35f }, { id::envAmount, 0.35f }, { id::decay, 0.3f }, { id::sustain, 0.0f },
+            { id::ampAttack, 0.001f }, { id::ampDecay, 1.6f }, { id::ampSustain, 0.0f }, { id::ampRelease, 1.2f },
+            { id::chorus, chorus1 }, { id::delayTime, d4d }, { id::delayFeedback, 0.45f }, { id::delayMix, 0.25f },
+            { id::dust, 0.45f }, { id::dustNoise, 0.25f }, { id::reverbMix, 0.35f }, { id::reverbSize, 0.8f } } },
+
+        { "BOOM", "Ghost Choir", { { id::sawLevel, 0.5f }, { id::pulseLevel, 0.4f }, { id::pw, 0.5f },
+            { id::oscBWave, bNoise }, { id::blend, 0.15f },
+            { id::hpf, 180 }, { id::cutoff, 1300 }, { id::resonance, 0.55f }, { id::lfoFilter, 0.08f }, { id::lfoRate, 0.3f },
+            { id::ampAttack, 1.0f }, { id::ampDecay, 2.0f }, { id::ampSustain, 0.9f }, { id::ampRelease, 2.0f },
+            { id::chorus, chorus12 }, { id::dust, 0.6f }, { id::dustTape, 0.8f }, { id::dustTone, 0.8f },
+            { id::reverbMix, 0.45f }, { id::reverbSize, 0.9f }, { id::drift, 0.5f }, { id::velocity, 0.2f } } },
 
         // ── Pads ──────────────────────────────────────────────────────────
         { "Pad", "Juno Pad", { { id::pulseLevel, 0.7f }, { id::pw, 0.6f }, { id::pwmSource, pwmLfo },

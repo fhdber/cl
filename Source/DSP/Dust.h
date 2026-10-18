@@ -27,7 +27,8 @@ public:
         bufferR.assign (static_cast<size_t> (size), 0.0f);
         mask = size - 1;
 
-        amount.reset (newSampleRate, 0.05);
+        for (auto* v : { &amount, &tape, &crush, &noiseAmt, &tone })
+            v->reset (newSampleRate, 0.05);
         envRelease = std::exp (-1.0f / (0.3f * sampleRate));
         clickDecay = std::exp (-1.0f / (0.0004f * sampleRate));
         reset();
@@ -43,10 +44,19 @@ public:
         lp1L = lp2L = lp1R = lp2R = 0.0f;
         envelope = click = 0.0f;
         noise = Noise (0x5eedu);
-        amount.setCurrentAndTargetValue (amount.getTargetValue());
+        for (auto* v : { &amount, &tape, &crush, &noiseAmt, &tone })
+            v->setCurrentAndTargetValue (v->getTargetValue());
     }
 
-    void setAmount (float a) noexcept { amount.setTargetValue (a); }
+    // Details: 0,5 = Standard, 0 = Anteil aus, 1 = doppelt
+    void setAmount (float a, float tapeDetail = 0.5f, float crushDetail = 0.5f, float noiseDetail = 0.5f, float toneDetail = 0.5f) noexcept
+    {
+        amount.setTargetValue (a);
+        tape.setTargetValue (2.0f * tapeDetail);
+        crush.setTargetValue (2.0f * crushDetail);
+        noiseAmt.setTargetValue (2.0f * noiseDetail);
+        tone.setTargetValue (2.0f * toneDetail);
+    }
 
     void process (float* left, float* right, int numSamples) noexcept
     {
@@ -58,7 +68,11 @@ public:
 
         for (int i = 0; i < numSamples; ++i)
         {
-            const auto a = amount.getNextValue();
+            const auto a  = amount.getNextValue();
+            const auto ta = a * tape.getNextValue();
+            const auto ca = std::min (1.0f, a * crush.getNextValue());
+            const auto na = a * noiseAmt.getNextValue();
+            const auto la = std::min (1.5f, a * tone.getNextValue());
 
             // 1. Tape: Wow (0,55 Hz) und Flutter (6,5 Hz) über eine kurze modulierte Verzögerung
             bufferL[static_cast<size_t> (writePos)] = left[i];
@@ -69,19 +83,19 @@ public:
             if (wowPhase >= 1.0f)     wowPhase -= 1.0f;
             if (flutterPhase >= 1.0f) flutterPhase -= 1.0f;
 
-            const auto delayMs = a * (2.0f + 0.35f * std::sin (twoPi * wowPhase) + 0.03f * std::sin (twoPi * flutterPhase));
+            const auto delayMs = 2.0f * a + ta * (0.35f * std::sin (twoPi * wowPhase) + 0.03f * std::sin (twoPi * flutterPhase));
             const auto d = std::max (1.0f, delayMs * msToSamples);
             auto l = read (bufferL, d);
             auto r = read (bufferR, d);
             writePos = (writePos + 1) & mask;
 
             // 2. Sampler: Sample & Hold ohne Anti-Alias-Filter, dann Quantisierung
-            const auto targetRate = 44100.0f - 24000.0f * a;
+            const auto targetRate = 44100.0f - 24000.0f * ca;
             holdPhase += targetRate / sampleRate;
             if (holdPhase >= 1.0f)
             {
                 holdPhase -= std::floor (holdPhase);
-                const auto step = std::exp2 (-(15.0f - 6.0f * a));
+                const auto step = std::exp2 (-(15.0f - 6.0f * ca));
                 holdL = std::round (l / step) * step;
                 holdR = std::round (r / step) * step;
             }
@@ -89,7 +103,7 @@ public:
             r = holdR;
 
             // 3. Warmer Ausgangstiefpass, 12 dB, 20 kHz → 7 kHz
-            const auto fc = std::min (20000.0f * std::exp2 (-1.515f * a), 0.45f * sampleRate);
+            const auto fc = std::min (20000.0f * std::exp2 (-1.515f * la), 0.45f * sampleRate);
             const auto t = std::tan (juce::MathConstants<float>::pi * fc / sampleRate);
             const auto g = t / (1.0f + t);
             lp1L += (l - lp1L) * g;  lp2L += (lp1L - lp2L) * g;
@@ -102,12 +116,12 @@ public:
             envelope = level > envelope ? level : envelope * envRelease;
             const auto gate = std::min (1.0f, envelope * 8.0f);
 
-            if (noise.next() > 1.0f - 2.0f * (a * 5.0f / sampleRate))
+            if (noise.next() > 1.0f - 2.0f * (na * 5.0f / sampleRate))
                 click = (0.5f + 0.5f * std::abs (noise.next())) * 0.12f;
             click *= clickDecay;
 
             const auto hiss = 0.0025f * noise.next();
-            const auto grain = a * gate * (hiss + click * (noise.next() > 0.0f ? 1.0f : -1.0f));
+            const auto grain = na * gate * (hiss + click * (noise.next() > 0.0f ? 1.0f : -1.0f));
             left[i]  = l + grain;
             right[i] = r + grain * 0.8f;
         }
@@ -134,6 +148,6 @@ private:
     float envelope = 0.0f, envRelease = 0.999f, click = 0.0f, clickDecay = 0.9f;
 
     Noise noise { 0x5eedu };
-    juce::SmoothedValue<float> amount;
+    juce::SmoothedValue<float> amount, tape { 1.0f }, crush { 1.0f }, noiseAmt { 1.0f }, tone { 1.0f };
 };
 }

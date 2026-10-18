@@ -61,6 +61,66 @@ private:
     juce::SmoothedValue<float> amount;
 };
 
+// Lead-Distortion, bass-erhaltend: Frequenzweiche bei 250 Hz, nur der Bereich
+// darüber wird verzerrt. Läuft auf 2× Rate.
+class LeadDistortion
+{
+public:
+    void prepare (double sampleRate)
+    {
+        const auto t = static_cast<float> (std::tan (juce::MathConstants<double>::pi * 250.0 / sampleRate));
+        splitG = t / (1.0f + t);
+        amount.reset (sampleRate, 0.02);
+        reset();
+    }
+
+    void reset() noexcept
+    {
+        left = right = {};
+        amount.setCurrentAndTargetValue (amount.getTargetValue());
+    }
+
+    void setAmount (float a) noexcept { amount.setTargetValue (a); }
+
+    void process (float* l, float* r, int numSamples) noexcept
+    {
+        if (amount.getTargetValue() < 1.0e-4f && ! amount.isSmoothing())
+            return;
+
+        for (int i = 0; i < numSamples; ++i)
+        {
+            const auto a = amount.getNextValue();
+            l[i] = shape (l[i], left, a);
+            r[i] = shape (r[i], right, a);
+        }
+    }
+
+private:
+    struct Split { float s1 = 0.0f, s2 = 0.0f; };
+
+    // Hochpass 12 dB/Okt. (zwei TPT-Stufen), Bass = Rest: Summe bleibt exakt das Eingangssignal
+    float highPass (float x, float& s) const noexcept
+    {
+        const auto v = (x - s) * splitG;
+        const auto lp = v + s;
+        s = lp + v;
+        return x - lp;
+    }
+
+    float shape (float x, Split& st, float a) const noexcept
+    {
+        const auto high = highPass (highPass (x, st.s1), st.s2);
+        // bis +36 dB in den Clipper, Pegelausgleich für typische Synth-Pegel (−20 dBFS)
+        const auto g = 1.0f + 63.0f * a;
+        const auto dist = softClip (high * g) / std::sqrt (g);
+        return x + a * (dist - high);
+    }
+
+    float splitG = 0.01f;
+    Split left, right;
+    juce::SmoothedValue<float> amount;
+};
+
 // 6-stufiger Phaser pro Kanal, L/R um 90° versetzt.
 class Phaser
 {

@@ -10,16 +10,16 @@ void SynthEngine::prepare (double sampleRate, int maxBlockSize, const Settings& 
     maxBlock = std::max (1, maxBlockSize);
 
     oversampling = std::make_unique<juce::dsp::Oversampling<float>> (
-        2, 1, juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR, true, false);
+        3, 1, juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR, true, false);
     oversampling->initProcessing (static_cast<size_t> (maxBlock));
 
     // Die Stimmen werden direkt auf 2× Rate erzeugt, es läuft also nur der
     // Downsampling-Pfad. Dessen Verzögerung ist die halbe Gesamtlatenz.
     latencySamples = juce::roundToInt (oversampling->getLatencyInSamples() * 0.5f);
 
-    zeroBuffer.setSize (2, maxBlock);
+    zeroBuffer.setSize (3, maxBlock);
     zeroBuffer.clear();
-    stereoBuffer.setSize (2, maxBlock);
+    stereoBuffer.setSize (3, maxBlock);
     reverbBuffer.setSize (2, maxBlock);
 
     for (size_t i = 0; i < voices.size(); ++i)
@@ -29,6 +29,7 @@ void SynthEngine::prepare (double sampleRate, int maxBlockSize, const Settings& 
     delay.prepare (baseRate);
     phaser.prepare (baseRate);
     tube.prepare (osRate);
+    leadDist.prepare (osRate);
     dust.prepare (baseRate);
     reverb.setSampleRate (baseRate);
 
@@ -37,7 +38,7 @@ void SynthEngine::prepare (double sampleRate, int maxBlockSize, const Settings& 
 
     cutoff.reset (osRate, 0.02);
     for (auto* s : { &resonance, &envAmount, &lfoFilter, &keyTrack, &pw, &saw, &pulse,
-                     &sub, &noise, &lfoPitch, &drift, &bend, &modWheel, &unisonDetune, &unisonWidth, &drive })
+                     &sub, &noise, &lfoPitch, &drift, &bend, &modWheel, &unisonDetune, &unisonWidth, &drive, &blend, &subLevel })
         s->reset (osRate, 0.02);
 
     hpfHz.reset (baseRate, 0.02);
@@ -63,6 +64,7 @@ void SynthEngine::reset()
     phaser.reset();
     tube.reset();
     dust.reset();
+    leadDist.reset();
     reverb.reset();
     reverbActive = false;
     for (auto* f : { &hpfL, &hpfR, &reverbHpfL, &reverbHpfR })
@@ -79,7 +81,7 @@ void SynthEngine::reset()
 
     cutoff.setCurrentAndTargetValue (cutoff.getTargetValue());
     for (auto* s : { &resonance, &envAmount, &lfoFilter, &keyTrack, &pw, &saw, &pulse,
-                     &sub, &noise, &lfoPitch, &drift, &unisonDetune, &unisonWidth, &drive, &volume, &reverbMix })
+                     &sub, &noise, &lfoPitch, &drift, &unisonDetune, &unisonWidth, &drive, &blend, &subLevel, &volume, &reverbMix })
         s->setCurrentAndTargetValue (s->getTargetValue());
     hpfHz.setCurrentAndTargetValue (hpfHz.getTargetValue());
     bend.setCurrentAndTargetValue (0.0f);
@@ -109,7 +111,19 @@ void SynthEngine::applySettings (const Settings& s) noexcept
     unisonWidth.setTargetValue (s.unisonWidth);
     drive.setTargetValue (s.drive);
     tube.setAmount (s.tube);
-    dust.setAmount (s.dust);
+    dust.setAmount (s.dust, s.dustTape, s.dustCrush, s.dustNoise, s.dustTone);
+    leadDist.setAmount (s.dist);
+    blend.setTargetValue (s.blend);
+    subLevel.setTargetValue (s.subLevel);
+
+    mods.bWave        = s.bWave;
+    mods.bRatio       = std::exp2 (s.bOctave + s.bSemi / 12.0f + s.bFine / 1200.0f);
+    mods.subOctave    = static_cast<float> (s.subOctave * 12);
+    mods.subDropSemis = s.subDrop * 12.0f;
+    mods.subDrive     = s.subDrive;
+    mods.subDecayCoef   = std::exp (-6.9f / (std::max (0.05f, s.subDecay) * static_cast<float> (osRate)));
+    mods.subReleaseCoef = std::exp (-6.9f / (0.08f * static_cast<float> (osRate)));
+    mods.subDropCoef    = std::exp (-1.0f / (0.04f * static_cast<float> (osRate)));
     phaser.setParameters (static_cast<Phaser::Mode> (s.phaser), s.phaserMix);
     hpfHz.setTargetValue (s.hpfHz);
     volume.setTargetValue (juce::Decibels::decibelsToGain (s.volumeDb, -48.0f));
@@ -118,7 +132,10 @@ void SynthEngine::applySettings (const Settings& s) noexcept
     chorus.setMode (s.chorus);
 
     const auto bpm = s.bpm > 20.0 && s.bpm < 999.0 ? s.bpm : 120.0;
-    delay.setParameters (static_cast<float> (s.delayBeats * 60.0 / bpm), s.delayFeedback, s.delayMix);
+    // Throw: solange gehalten, Delay voll aufreißen (Feedback mindestens 72 %)
+    delay.setParameters (static_cast<float> (s.delayBeats * 60.0 / bpm),
+                         s.throwOn ? std::max (s.delayFeedback, 0.72f) : s.delayFeedback,
+                         s.throwOn ? 1.0f : s.delayMix);
 
     const auto roomSize = 0.55f + 0.43f * s.reverbSize;
     if (std::abs (roomSize - reverbParams.roomSize) > 1.0e-4f)
@@ -192,12 +209,14 @@ void SynthEngine::process (juce::AudioBuffer<float>& out, const juce::MidiBuffer
     {
         const auto len = std::min (maxBlock, numSamples - chunkStart);
 
-        juce::dsp::AudioBlock<const float> zeros (zeroBuffer.getArrayOfReadPointers(), 2, static_cast<size_t> (len));
+        juce::dsp::AudioBlock<const float> zeros (zeroBuffer.getArrayOfReadPointers(), 3, static_cast<size_t> (len));
         auto up = oversampling->processSamplesUp (zeros);
         auto* osL = up.getChannelPointer (0);
         auto* osR = up.getChannelPointer (1);
+        auto* osSub = up.getChannelPointer (2);
         juce::FloatVectorOperations::clear (osL, len * factor);
         juce::FloatVectorOperations::clear (osR, len * factor);
+        juce::FloatVectorOperations::clear (osSub, len * factor);
 
         int pos = 0;
         for (; midiIt != midi.end(); ++midiIt)
@@ -209,17 +228,18 @@ void SynthEngine::process (juce::AudioBuffer<float>& out, const juce::MidiBuffer
 
             if (eventPos > pos)
             {
-                renderOversampled (osL, osR, pos * factor, eventPos * factor);
+                renderOversampled (osL, osR, osSub, pos * factor, eventPos * factor);
                 pos = eventPos;
             }
 
             handleMidi (meta.data, meta.numBytes);
         }
 
-        renderOversampled (osL, osR, pos * factor, len * factor);
+        renderOversampled (osL, osR, osSub, pos * factor, len * factor);
         tube.process (osL, osR, len * factor);
+        leadDist.process (osL, osR, len * factor);
 
-        juce::dsp::AudioBlock<float> stereoBlock (stereoBuffer.getArrayOfWritePointers(), 2, static_cast<size_t> (len));
+        juce::dsp::AudioBlock<float> stereoBlock (stereoBuffer.getArrayOfWritePointers(), 3, static_cast<size_t> (len));
         oversampling->processSamplesDown (stereoBlock);
 
         auto* left  = stereoBuffer.getWritePointer (0);
@@ -238,6 +258,14 @@ void SynthEngine::process (juce::AudioBuffer<float>& out, const juce::MidiBuffer
         delay.process (left, right, len);
         processReverb (left, right, len);
         dust.process (left, right, len);
+
+        // 808-Bus kommt erst hier dazu: sauber, mono, an allen Effekten vorbei
+        const auto* subOut = stereoBuffer.getReadPointer (2);
+        for (int i = 0; i < len; ++i)
+        {
+            left[i]  += subOut[i];
+            right[i] += subOut[i];
+        }
 
         for (int i = 0; i < len; ++i)
         {
@@ -296,7 +324,7 @@ void SynthEngine::processReverb (float* left, float* right, int numSamples) noex
     }
 }
 
-void SynthEngine::renderOversampled (float* osL, float* osR, int start, int end) noexcept
+void SynthEngine::renderOversampled (float* osL, float* osR, float* osSub, int start, int end) noexcept
 {
     for (int p = start; p < end; p += modChunk)
     {
@@ -325,6 +353,7 @@ void SynthEngine::renderOversampled (float* osL, float* osR, int start, int end)
             lfoFiltBuf[i_] = lfo * lfoFilter.getNextValue();
             keyBuf[i_]     = keyTrack.getNextValue();
             driveBuf[i_]   = drive.getNextValue();
+            blendBuf[i_]   = blend.getNextValue();
         }
 
         updateUnison (unisonDetune.skip (n), unisonWidth.skip (n));
@@ -342,9 +371,12 @@ void SynthEngine::renderOversampled (float* osL, float* osR, int start, int end)
         mods.lfoOctaves = lfoFiltBuf.data();
         mods.keyTrack   = keyBuf.data();
         mods.drive      = driveBuf.data();
+        mods.blend      = blendBuf.data();
+        mods.layerB     = blend.getTargetValue() > 1.0e-4f || blend.isSmoothing() || blendBuf[0] > 1.0e-4f;
+        mods.subLevel   = subLevel.skip (n);
 
         for (auto& v : voices)
-            v.render (osL + p, osR + p, n, mods);
+            v.render (osL + p, osR + p, osSub + p, n, mods);
     }
 }
 

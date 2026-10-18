@@ -12,6 +12,14 @@ namespace
     juce::ParameterID pid2 (const char* name) { return { name, version2 }; }
     juce::ParameterID pid3 (const char* name) { return { name, version3 }; }
     juce::ParameterID pid4 (const char* name) { return { name, version4 }; }
+    juce::ParameterID pid5 (const char* name) { return { name, version5 }; }
+
+    std::unique_ptr<Float> stepped (const juce::ParameterID& id, const char* name, float min, float max, float def, const char* unit)
+    {
+        return std::make_unique<Float> (id, name, juce::NormalisableRange<float> { min, max, 1.0f }, def,
+                                        Attr().withStringFromValueFunction ([unit] (float v, int)
+                                                                            { return (v > 0.0f ? "+" : "") + juce::String (juce::roundToInt (v)) + unit; }));
+    }
 
     juce::String formatPercent (float v, int)   { return juce::String (juce::roundToInt (v * 100.0f)) + " %"; }
     float parsePercent (const juce::String& t)  { return t.getFloatValue() / 100.0f; }
@@ -131,8 +139,33 @@ juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
                       std::make_unique<Float> (pid (id::volume), "Volume", juce::NormalisableRange<float> { -48.0f, 6.0f, 0.1f }, -6.0f,
                                                Attr().withLabel ("dB")));
 
+    auto oscB = std::make_unique<juce::AudioProcessorParameterGroup> ("oscB", "OSC B", " | ");
+    oscB->addChild (std::make_unique<Choice> (pid5 (id::oscBWave), "B Wave", juce::StringArray { "Saw", "Square", "Pulse", "Noise" }, 0),
+                    stepped (pid5 (id::oscBOctave), "B Octave", -2.0f, 2.0f, 0.0f, " oct"),
+                    stepped (pid5 (id::oscBSemi), "B Semi", -12.0f, 12.0f, 0.0f, " st"),
+                    stepped (pid5 (id::oscBFine), "B Fine", -50.0f, 50.0f, 7.0f, " ct"),
+                    percent (pid5 (id::blend), "Blend A-B", 0.0f));
+
+    auto sub808 = std::make_unique<juce::AudioProcessorParameterGroup> ("sub808", "808", " | ");
+    sub808->addChild (percent (pid5 (id::sub808Level), "808 Level", 0.0f),
+                      seconds (pid5 (id::subDecay), "808 Decay", 0.05f, 4.0f, 1.2f, 0.8f),
+                      percent (pid5 (id::subDrop), "808 Drop", 0.25f),
+                      percent (pid5 (id::subDrive), "808 Drive", 0.3f),
+                      std::make_unique<Choice> (pid5 (id::subOctave), "808 Octave", juce::StringArray { "0", "-1" }, 1));
+
+    auto dustDetail = std::make_unique<juce::AudioProcessorParameterGroup> ("dustDetail", "DUST", " | ");
+    dustDetail->addChild (percent (pid5 (id::dustTape), "Dust Tape", 0.5f),
+                          percent (pid5 (id::dustCrush), "Dust Crush", 0.5f),
+                          percent (pid5 (id::dustNoise), "Dust Noise", 0.5f),
+                          percent (pid5 (id::dustTone), "Dust Tone", 0.5f));
+
+    auto lead = std::make_unique<juce::AudioProcessorParameterGroup> ("lead", "LEAD", " | ");
+    lead->addChild (percent (pid5 (id::dist), "Distortion", 0.0f),
+                    std::make_unique<juce::AudioParameterBool> (pid5 (id::throwFx), "Throw", false));
+
     layout.add (std::move (dco), std::move (unison), std::move (vcf), std::move (env1), std::move (env2),
                 std::move (lfo), std::move (fx), std::move (character), std::move (global));
+    layout.add (std::move (oscB), std::move (sub808), std::move (dustDetail), std::move (lead));
     return layout;
 }
 }
