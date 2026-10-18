@@ -44,23 +44,106 @@ private:
     juce::AudioProcessorValueTreeState::SliderAttachment attachment;
 };
 
+// Segment-Pillen; Grundlage für Parameter-Auswahl und Theme-Schalter.
+class Segments : public juce::Component
+{
+public:
+    explicit Segments (juce::StringArray labels);
+
+    void paint (juce::Graphics&) override;
+    void mouseDown (const juce::MouseEvent&) override;
+
+    void setSelected (int index);
+    int getSelected() const noexcept { return selected; }
+    int getNaturalWidth() const;
+
+    std::function<void (int)> onSelect;
+
+private:
+    juce::Rectangle<float> segmentBounds (int index) const;
+
+    juce::StringArray labels;
+    int selected = 0;
+};
+
 // Segment-Pillen für Auswahl-Parameter.
-class SegmentedControl final : public juce::Component
+class SegmentedControl final : public Segments
 {
 public:
     SegmentedControl (juce::AudioProcessorValueTreeState&, const juce::String& paramId,
                       juce::StringArray labels, ShowValue show);
 
+private:
+    juce::RangedAudioParameter& parameter;
+    ShowValue show;
+    juce::ParameterAttachment attachment;
+};
+
+// Horizontaler Crossfader A–B (Blend) mit Schiebekappe.
+class Crossfader final : public juce::Component
+{
+public:
+    Crossfader (juce::AudioProcessorValueTreeState&, const juce::String& paramId, ShowValue show);
+
+    void paint (juce::Graphics&) override;
+    void resized() override;
+
+private:
+    class Track final : public juce::Slider
+    {
+    public:
+        Track();
+        void paint (juce::Graphics&) override;
+        void mouseDrag (const juce::MouseEvent&) override;
+        void mouseDown (const juce::MouseEvent&) override;
+        void mouseEnter (const juce::MouseEvent&) override;
+        std::function<void()> onHover;
+
+    private:
+        juce::Point<float> lastPosition, virtualPosition;
+    };
+
+    void report();
+
+    juce::RangedAudioParameter& parameter;
+    ShowValue show;
+    Track slider;
+    juce::AudioProcessorValueTreeState::SliderAttachment attachment;
+};
+
+// Quadratische Taste, gedrückt halten = Parameter an (Throw).
+class MomentaryPad final : public juce::Component
+{
+public:
+    MomentaryPad (juce::AudioProcessorValueTreeState&, const juce::String& paramId, const juce::String& label,
+                  ShowValue show);
+
+    void paint (juce::Graphics&) override;
+    void mouseDown (const juce::MouseEvent&) override;
+    void mouseUp (const juce::MouseEvent&) override;
+
+private:
+    juce::RangedAudioParameter& parameter;
+    juce::String label;
+    ShowValue show;
+    bool on = false;
+    juce::ParameterAttachment attachment;
+};
+
+// Taste mit LED für die Seitenwahl.
+class TabKey final : public juce::Component
+{
+public:
+    explicit TabKey (const juce::String& label);
+
     void paint (juce::Graphics&) override;
     void mouseDown (const juce::MouseEvent&) override;
 
-private:
-    juce::Rectangle<float> segmentBounds (int index) const;
+    void setActive (bool);
+    std::function<void()> onClick;
 
-    juce::RangedAudioParameter& parameter;
-    juce::StringArray labels;
-    ShowValue show;
-    int selected = 0;
-    juce::ParameterAttachment attachment;
+private:
+    juce::String label;
+    bool active = false;
 };
 }

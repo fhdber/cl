@@ -4,9 +4,9 @@
 
 namespace ui
 {
-// Knobs im Stil von Hardware-Drehreglern: heller Knopf, schwarzer Ring,
-// roter Zeigerpunkt, dünner oranger Wertebogen. Slider-Properties:
-//   "hero"    – oranger Knopf (Cutoff, Volume)
+// Reduzierte Hardware-Knöpfe: weicher Knopf mit Mulde und Zeigerstrich,
+// dünner oranger Wertebogen. Farben aus dem aktuellen Theme. Slider-Properties:
+//   "hero"    – kräftiger Bogen mit Schein, oranger Zeiger (Cutoff, Dust, Volume …)
 //   "bipolar" – Bogen startet in der Mitte
 class LookAndFeel final : public juce::LookAndFeel_V4
 {

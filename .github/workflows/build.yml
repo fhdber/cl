@@ -64,8 +64,13 @@ jobs:
       - name: Render & check presets
         run: ./build/CONTRA86_Render_artefacts/Release/CONTRA86_Render renders
 
-      - name: UI screenshot
-        run: xvfb-run -a ./build/CONTRA86_Render_artefacts/Release/CONTRA86_Render --ui renders/ui.png 1
+      - name: UI screenshots (beide Seiten, hell und dunkel)
+        run: |
+          R=./build/CONTRA86_Render_artefacts/Release/CONTRA86_Render
+          xvfb-run -a $R --ui renders/ui_sound_light.png 8 0 light
+          xvfb-run -a $R --ui renders/ui_character_light.png 8 1 light
+          xvfb-run -a $R --ui renders/ui_sound_dark.png 8 0 dark
+          xvfb-run -a $R --ui renders/ui_character_dark.png 8 1 dark
 
       - uses: actions/upload-artifact@v4
         with:

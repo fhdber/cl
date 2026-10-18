@@ -27,13 +27,13 @@ void Display::showValue (const juce::String& name, const juce::String& value)
 
 void Display::resized()
 {
-    auto area = getLocalBounds().toFloat().reduced (34.0f, 26.0f);
-    scopeArea = area.removeFromRight (360.0f);
-    area.removeFromRight (30.0f);
+    auto area = getLocalBounds().toFloat().reduced (30.0f, 20.0f);
+    scopeArea = area.removeFromRight (300.0f);
+    area.removeFromRight (28.0f);
 
-    auto arrows = area.removeFromBottom (26.0f);
-    prevArea = arrows.removeFromLeft (34.0f);
-    nextArea = arrows.removeFromLeft (34.0f);
+    auto arrows = area.removeFromBottom (24.0f);
+    prevArea = arrows.removeFromLeft (30.0f);
+    nextArea = arrows.removeFromLeft (30.0f);
     nameArea = area;
 }
 
@@ -91,31 +91,35 @@ juce::String Display::statusText() const
 
     if (const auto dust = state.getParameter (params::id::dust)->getValue(); dust > 0.005f)
         text << "  /  DUST " << juce::roundToInt (dust * 100.0f) << "%";
+    if (const auto dist = state.getParameter (params::id::dist)->getValue(); dist > 0.005f)
+        text << "  /  DIST " << juce::roundToInt (dist * 100.0f) << "%";
+    if (state.getParameter (params::id::sub808Level)->getValue() > 0.005f)
+        text << "  /  808";
+    if (state.getParameter (params::id::throwFx)->getValue() > 0.5f)
+        text << "  /  THROW";
     return text;
 }
 
 void Display::paint (juce::Graphics& g)
 {
+    const auto& p = palette();
     const auto bounds = getLocalBounds().toFloat();
-    const auto radius = 26.0f;
+    const auto radius = 18.0f;
 
-    // Glas
-    g.setGradientFill (juce::ColourGradient (juce::Colour (0xff1c1c1d), bounds.getX(), bounds.getY(),
-                                             colour::display, bounds.getX(), bounds.getBottom(), false));
-    g.fillRoundedRectangle (bounds, radius);
+    // Glas mit Rahmen in Gehäusefarbe
+    juce::Path glass;
+    glass.addRoundedRectangle (bounds, radius);
+    g.setGradientFill (juce::ColourGradient (juce::Colour (0xff1a1a1b), bounds.getX(), bounds.getY(),
+                                             p.display, bounds.getX(), bounds.getBottom(), false));
+    g.fillPath (glass);
 
-    juce::Path sheen;
-    sheen.startNewSubPath (bounds.getX(), bounds.getY());
-    sheen.lineTo (bounds.getRight() * 0.62f, bounds.getY());
-    sheen.quadraticTo (bounds.getRight() * 0.42f, bounds.getCentreY(), bounds.getX(), bounds.getBottom() * 0.86f);
-    sheen.closeSubPath();
+    // feines Punktraster wie ein LCD
     g.saveState();
-    g.reduceClipRegion (sheen);
-    juce::Path clip;
-    clip.addRoundedRectangle (bounds, radius);
-    g.reduceClipRegion (clip);
+    g.reduceClipRegion (glass);
     g.setColour (juce::Colours::white.withAlpha (0.035f));
-    g.fillRect (bounds);
+    for (auto y = bounds.getY() + 6.0f; y < bounds.getBottom(); y += 6.0f)
+        for (auto x = bounds.getX() + 6.0f; x < bounds.getRight(); x += 6.0f)
+            g.fillRect (x, y, 1.5f, 1.5f);
     g.restoreState();
 
     g.setColour (juce::Colours::white.withAlpha (0.10f));
@@ -124,18 +128,20 @@ void Display::paint (juce::Graphics& g)
     // Preset bzw. Wert
     const auto showingValue = valueUntil > 0.0;
     auto text = nameArea;
-    g.setColour (colour::accent.withAlpha (0.75f));
-    drawTracked (g, showingValue ? valueName.toUpperCase() : presets::category (shownProgram).toUpperCase(),
-                 text.removeFromTop (24.0f), 14.0f, juce::Justification::centredLeft, 0.12f);
+    g.setColour (p.accent.withAlpha (0.7f));
+    g.setFont (pixelFont (14.0f).withExtraKerningFactor (0.08f));
+    g.drawText (showingValue ? valueName.toUpperCase() : presets::category (shownProgram).toUpperCase(),
+                text.removeFromTop (22.0f), juce::Justification::centredLeft, false);
 
-    g.setColour (colour::accent);
-    auto title = text.removeFromTop (60.0f);
-    const auto mainText = showingValue ? valueText : presets::name (shownProgram);
-    g.setFont (font (44.0f));
-    g.drawFittedText (mainText, title.toNearestInt(), juce::Justification::centredLeft, 1, 0.7f);
+    g.setColour (p.accent);
+    auto title = text.removeFromTop (58.0f);
+    const auto mainText = (showingValue ? valueText : presets::name (shownProgram)).toUpperCase();
+    g.setFont (dotFont (50.0f));
+    g.drawFittedText (mainText, title.toNearestInt(), juce::Justification::centredLeft, 1, 0.6f);
 
-    g.setColour (juce::Colours::white.withAlpha (0.35f));
-    drawTracked (g, statusText(), text.removeFromTop (24.0f), 11.5f, juce::Justification::centredLeft, 0.08f);
+    g.setColour (juce::Colours::white.withAlpha (0.45f));
+    g.setFont (pixelFont (12.0f).withExtraKerningFactor (0.04f));
+    g.drawText (statusText(), text.removeFromTop (22.0f), juce::Justification::centredLeft, false);
 
     // Pfeile
     for (auto [area, left] : { std::pair { prevArea, true }, { nextArea, false } })
@@ -144,22 +150,32 @@ void Display::paint (juce::Graphics& g)
         juce::Path tri;
         if (left) tri.addTriangle (c.x + 4.0f, c.y - 6.0f, c.x + 4.0f, c.y + 6.0f, c.x - 5.0f, c.y);
         else      tri.addTriangle (c.x - 4.0f, c.y - 6.0f, c.x - 4.0f, c.y + 6.0f, c.x + 5.0f, c.y);
-        g.setColour (colour::accent.withAlpha (0.85f));
+        g.setColour (p.accent.withAlpha (0.85f));
         g.fillPath (tri);
     }
 
-    // Oszilloskop
-    g.setColour (juce::Colours::white.withAlpha (0.06f));
-    for (int i = 0; i <= 4; ++i)
+    // Oszilloskop mit Mittellinie und Zeitstrichen
+    g.setColour (juce::Colours::white.withAlpha (0.12f));
+    for (int i = 0; i <= 20; ++i)
     {
-        const auto y = scopeArea.getY() + scopeArea.getHeight() * static_cast<float> (i) / 4.0f;
-        g.drawHorizontalLine (juce::roundToInt (y), scopeArea.getX(), scopeArea.getRight());
+        const auto x = scopeArea.getX() + scopeArea.getWidth() * static_cast<float> (i) / 20.0f;
+        const auto len = i % 5 == 0 ? 6.0f : 3.0f;
+        g.fillRect (x, scopeArea.getBottom() - len, 1.0f, len);
     }
+    g.setColour (juce::Colours::white.withAlpha (0.18f));
+    for (auto x = scopeArea.getX(); x < scopeArea.getRight(); x += 4.0f)
+        g.fillRect (x, scopeArea.getCentreY(), 1.5f, 1.0f);
 
-    g.setColour (colour::accent.withAlpha (0.18f));
+    g.setColour (p.accent.withAlpha (0.18f));
     g.strokePath (wave, juce::PathStrokeType (5.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-    g.setColour (colour::accent);
+    g.setColour (p.accent);
     g.strokePath (wave, juce::PathStrokeType (1.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+
+    // Abspielmarke wie bei einem Recorder
+    const auto markX = scopeArea.getX() + scopeArea.getWidth() * 0.62f;
+    g.setColour (p.led);
+    g.fillRect (markX - 0.75f, scopeArea.getY(), 1.5f, scopeArea.getHeight() - 8.0f);
+    g.fillEllipse (markX - 3.0f, scopeArea.getY() - 3.0f, 6.0f, 6.0f);
 }
 
 void Display::mouseDown (const juce::MouseEvent& e)

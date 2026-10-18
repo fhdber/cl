@@ -5,7 +5,7 @@ if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum macOS")
 endif()
 
-project(CONTRA86 VERSION 0.4.0 LANGUAGES C CXX)
+project(CONTRA86 VERSION 0.5.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -35,7 +35,10 @@ juce_add_plugin(CONTRA86
     AU_MAIN_TYPE                kAudioUnitType_MusicDevice
     COPY_PLUGIN_AFTER_BUILD     TRUE)
 
-juce_add_binary_data(CONTRA86_Assets SOURCES Resources/Fonts/Michroma-Regular.ttf)
+juce_add_binary_data(CONTRA86_Assets SOURCES
+    Resources/Fonts/Michroma-Regular.ttf
+    Resources/Fonts/Doto-Black.ttf
+    Resources/Fonts/Silkscreen-Regular.ttf)
 
 set(CONTRA86_SOURCES
     Source/PluginProcessor.cpp
@@ -80,6 +83,7 @@ if(CONTRA86_TOOLS)
 
     target_compile_definitions(CONTRA86_Render PRIVATE
         JucePlugin_Name="CONTRA-86"
+        JucePlugin_VersionString="${PROJECT_VERSION}"
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0)
 
