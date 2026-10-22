@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "dribbble": {
+      "command": "node",
+      "args": ["mcp/dribbble-mcp-server/dist/index.js"],
+      "env": { "DRIBBBLE_ACCESS_TOKEN": "${DRIBBBLE_ACCESS_TOKEN}" }
+    }
+  }
+}

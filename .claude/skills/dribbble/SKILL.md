@@ -152,6 +152,11 @@ Two paths. Pick by what the shot is:
 - **API v2** (`scripts/dribbble.mjs`): single-image shots at exactly 800×600 or
   400×300, scripted edits of titles and tags, scheduling, listing own shots.
 
+If the `dribbble` MCP server is connected (tools named `dribbble_*`, source in
+`mcp/dribbble-mcp-server`), prefer its tools over the script: same API, same
+dry-run-first behaviour (`dry_run` defaults to true), and `dribbble_update_shot`
+keeps existing tags automatically.
+
 API setup, once: the user registers an app at dribbble.com/account/applications,
 gets an access token with `public upload` scope, and puts it in `.env` as
 `DRIBBBLE_ACCESS_TOKEN`. Never ask them to paste the token into the chat;
