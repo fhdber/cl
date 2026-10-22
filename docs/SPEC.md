@@ -1,4 +1,4 @@
-# CONTRA-86 – Spezifikation (v0.5)
+# CONTRA-86 – Spezifikation (v0.7)
 
 Arbeitstitel. Polyphoner Retro-Synth mit Juno-60/106-Kern, erweitert um das,
 was 80s/90s-Produktionen fertig klingen lässt: Unison, zweite Hüllkurve,
