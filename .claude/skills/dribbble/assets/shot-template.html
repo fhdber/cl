@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dribbble shots</title>
+<!--
+  Dribbble shot template. Each <section class="shot" id="..."> is one
+  1600x1200 canvas; render_shot.mjs writes it to <id>.png.
+
+  1. Set the brand tokens in :root.
+  2. Replace every .placeholder with the user's real files (img src="...").
+  3. Delete the layouts you do not need, duplicate the ones you do.
+  The placeholder mark below is a neutral stand-in, never a design proposal.
+-->
+<style>
+  /* Brand fonts: link Google Fonts here or @font-face the user's files. */
+  :root {
+    --bg:        #10233F;   /* primary brand colour: thumbnail background */
+    --fg:        #F3EEE6;   /* text and mark on --bg */
+    --accent:    #E2703A;
+    --surface:   #F3EEE6;   /* light tiles */
+    --ink:       #10233F;   /* text on --surface */
+    --muted:     color-mix(in srgb, var(--fg) 55%, transparent);
+    --font:      "Inter", system-ui, sans-serif;
+    --font-display: var(--font);
+
+    --w: 1600px;  --h: 1200px;
+    --margin: 96px;  --gap: 24px;  --radius: 28px;
+    --label: 20px;
+  }
+
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #777; font-family: var(--font); display: grid; gap: 40px; padding: 40px; justify-content: center; }
+
+  .shot {
+    width: var(--w); height: var(--h); overflow: hidden; position: relative;
+    background: var(--bg); color: var(--fg); padding: var(--margin);
+  }
+  .label {
+    position: absolute; left: var(--margin); bottom: calc(var(--margin) * .66);
+    font-size: var(--label); letter-spacing: .02em; color: var(--muted);
+  }
+  .label b { color: var(--fg); font-weight: 600; }
+  .placeholder {
+    display: grid; place-items: center; text-align: center;
+    border: 2px dashed currentColor; opacity: .5; font-size: 22px; padding: 24px;
+  }
+  img { display: block; max-width: 100%; }
+  .mark-svg { width: 100%; height: auto; }
+
+  /* 1 · mark: logo alone on brand colour */
+  .mark { display: grid; place-items: center; }
+  .mark .logo { width: 44%; }
+
+  /* 2 · idea: steps from construction to final */
+  .idea { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); align-items: center; }
+  .idea figure { display: grid; gap: 20px; justify-items: center; }
+  .idea figcaption { font-size: var(--label); color: var(--muted); }
+  .idea .step { width: 80%; aspect-ratio: 1; display: grid; place-items: center;
+    background-image: linear-gradient(var(--muted) 1px, transparent 1px), linear-gradient(90deg, var(--muted) 1px, transparent 1px);
+    background-size: 10% 10%; background-position: center; }
+  .idea .step.final { background: none; }
+
+  /* 3 · system: bento grid */
+  .system { display: grid; gap: var(--gap); padding: calc(var(--margin) * .75);
+    grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); }
+  .system > * { border-radius: var(--radius); padding: 32px; overflow: hidden; }
+  .system .t-mark  { grid-column: span 2; grid-row: span 2; background: var(--bg); outline: 1px solid var(--muted); display: grid; place-items: center; }
+  .system .t-mark .logo { width: 55%; }
+  .system .swatch  { display: flex; flex-direction: column; justify-content: flex-end; font-size: 18px; line-height: 1.4; }
+  .system .swatch b { font-size: 22px; }
+  .system .t-type  { grid-column: 3 / span 2; grid-row: 2 / span 2; background: var(--surface); color: var(--ink); display: flex; flex-direction: column; justify-content: space-between; }
+  .system .t-type .big { font-family: var(--font-display); font-size: 220px; line-height: .9; letter-spacing: -.03em; }
+  .system .t-pattern { grid-column: 1 / span 2; grid-row: 3; background: var(--accent);
+    background-image: radial-gradient(circle, var(--bg) 18%, transparent 19%); background-size: 48px 48px; }
+
+  /* 4 · applications: one hero, two support */
+  .applications { display: grid; gap: var(--gap); padding: calc(var(--margin) * .75);
+    grid-template-columns: 3fr 2fr; grid-template-rows: 1fr 1fr; }
+  .applications > * { border-radius: var(--radius); overflow: hidden; }
+  .applications .hero { grid-row: span 2; }
+  .applications img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* split: two halves */
+  .split { display: grid; grid-template-columns: 1fr 1fr; padding: 0; }
+  .split > * { display: grid; place-items: center; padding: var(--margin); }
+  .split .light { background: var(--surface); color: var(--ink); }
+  .split .logo { width: 60%; }
+
+  /* specimen: type cropped by the frame */
+  .specimen { display: flex; flex-direction: column; justify-content: space-between; }
+  .specimen .display { font-family: var(--font-display); font-size: 520px; line-height: .8; letter-spacing: -.04em; margin-left: -.06em; white-space: nowrap; }
+  .specimen .charset { font-size: 40px; line-height: 1.3; max-width: 70%; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- Placeholder mark, reused via <use>. Replace with the user's logo. -->
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="mark" viewBox="0 0 200 200">
+    <circle cx="100" cy="100" r="92" fill="none" stroke="currentColor" stroke-width="16"/>
+    <path d="M60 140 V60 L140 140 V60" fill="none" stroke="currentColor" stroke-width="16" stroke-linejoin="round"/>
+  </symbol>
+</svg>
+
+<section class="shot mark" id="mark">
+  <div class="logo"><svg class="mark-svg" viewBox="0 0 200 200"><use href="#mark"/></svg></div>
+  <p class="label"><b>Brand Name</b> · Brand identity</p>
+</section>
+
+<section class="shot idea" id="idea">
+  <figure><div class="step"><div class="placeholder">sketch</div></div><figcaption>01 Sketch</figcaption></figure>
+  <figure><div class="step"><svg class="mark-svg" viewBox="0 0 200 200" style="opacity:.6"><use href="#mark"/></svg></div><figcaption>02 Construction</figcaption></figure>
+  <figure><div class="step final"><svg class="mark-svg" viewBox="0 0 200 200" style="color:var(--accent)"><use href="#mark"/></svg></div><figcaption>03 Final</figcaption></figure>
+</section>
+
+<section class="shot system" id="system">
+  <div class="t-mark"><div class="logo"><svg class="mark-svg" viewBox="0 0 200 200"><use href="#mark"/></svg></div></div>
+  <div class="swatch" style="background:var(--accent);color:var(--bg)"><b>Accent</b>#E2703A</div>
+  <div class="swatch" style="background:var(--surface);color:var(--ink)"><b>Paper</b>#F3EEE6</div>
+  <div class="t-type"><span>Primary typeface · Inter</span><span class="big">Aa Bb</span></div>
+  <div class="t-pattern"></div>
+</section>
+
+<section class="shot applications" id="applications">
+  <div class="hero placeholder">hero application<br>(photo or mockup)</div>
+  <div class="placeholder">touchpoint 2</div>
+  <div class="placeholder">touchpoint 3</div>
+</section>
+
+<section class="shot split" id="split">
+  <div><div class="logo"><svg class="mark-svg" viewBox="0 0 200 200"><use href="#mark"/></svg></div></div>
+  <div class="light"><div class="logo"><svg class="mark-svg" viewBox="0 0 200 200"><use href="#mark"/></svg></div></div>
+</section>
+
+<section class="shot specimen" id="specimen">
+  <p class="label" style="position:static"><b>Typeface</b> · Display</p>
+  <div class="display">Aa Gg</div>
+  <p class="charset">ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789 &amp; ! ? €</p>
+</section>
+
+</body>
+</html>
