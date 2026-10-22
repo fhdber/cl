@@ -190,31 +190,35 @@ Host-Programm (Name „Kategorie / Name“), damit es auch über das DAW-Menü l
 ◀ ▶ zum Durchsteppen. Folgt auch Programmwechseln aus dem Host.
 Siehe UI-Konzept.
 
-## UI v0.5 (Figma: https://www.figma.com/design/WcbU0mHUSr09HE6obaBNe8)
-Referenz: Inspirationsboard in Figma (Braun / Teenage Engineering, Recorder, Radios).
-Leitsatz: **reduzieren statt verkleinern** – lieber weniger Elemente als kleinere.
+## UI v0.7 (Figma: https://www.figma.com/design/WcbU0mHUSr09HE6obaBNe8, Seite „v0.6–0.7 Screens“)
+Leitbild Apple/ChatGPT: ruhige Flächen, Karten mit weichem Schatten, Farbe nur für Werte.
+Leitsatz: **reduzieren statt verkleinern**.
 
-- **Format:** Designfläche 1200 × 800 (Querformat). Passt auf Laptops in ~100 %,
-  frei skalierbar 50–160 %, Seitenverhältnis fest, startet nie größer als der Bildschirm.
-- **Kopf:** schwarzes Display (Kategorie in Pixel-Schrift, Preset-Name in Dot-Matrix,
-  Status-Zeile, Oszilloskop mit roter Abspielmarke, LCD-Punktraster), rechts Wortmarke,
-  radiales Lochraster, Volume als Hero-Knopf.
-- **Seiten:** Tasten SOUND / CHARACTER mit LED.
-  - SOUND: OSC A · OSC B · LAYER (Crossfader A–B) / FILTER · LFO · UNISON /
-    ENV 1 · ENV 2 · VOICE
-  - CHARACTER: DUST · 808 · CHARACTER / SPACE · LEAD (Dist + THROW-Taste) · MOD FX
-- **Regler:** weicher Knopf ohne Ring, flache Mulde, Zeigerstrich, dünner oranger
-  Bogen. Hero (Cutoff, Dust, 808 Level, Dist, Volume): größer, kräftiger Bogen mit Schein.
-  Beschriftungen einer Seite liegen auf einer Grundlinie.
-- **Schalter:** Segment-Pillen, Breite nach Text mit festem Innenabstand, Auswahl =
-  gefüllte Pille (keine LED). LEDs nur auf echten Tasten (Seiten, THROW).
-- **Theme:** AUTO / DAY / NIGHT. AUTO = hell von 7 bis 19 Uhr, sonst dunkel.
-  Globale Einstellung (`~/Library/Application Support/CONTRABEATZ/CONTRA-86.settings`),
-  alle offenen Fenster folgen. Das Display bleibt in beiden Themes schwarz.
-- **Typo:** Michroma (Panel, Wortmarke), Doto Black (Preset-Name), Silkscreen
-  (kleine Display-Texte). Labels 13 px, Schalter 12 px, Tasten 14 px.
+- **Format:** 1200 × 800, skalierbar 50–160 %, startet nie größer als der Bildschirm.
+- **Kopf:** Wortmarke (Michroma), Kapsel Play/Edit, Kapsel Auto/Day/Night.
+- **PLAY:**
+  - Visualizer (schwarz): Kategorie/Preset, großer Wert in Dot-Matrix (Doto),
+    Statuszeile (Silkscreen). Ruhe: Oszilloskop + Live-Spektrum (FFT, 48 Bänder).
+    Beim Bedienen 1,5 s das Bild des Reglers: Filterkurve (Tone), Hüllkurve mit
+    markierter Phase (Motion), LFO mit Einblendung, 808-Pitch-Drop + Level (Sub),
+    Echos + Hall (Space), gerasterte/verrauschte Welle (Dust).
+    Ziehen im Bild: waagerecht = Cutoff, senkrecht = Resonanz, Shift = fein.
+  - CHARACTER-Pad: X = Dust, Y = Heat (Tube); Punktraster leuchtet um den Puck,
+    Feld kühl (sauber) → warm (heiß), Doppelklick = Default.
+  - Kernregler: Cutoff (Hero), Reso, Env, Attack, Release (Amp), Blend, 808, Glide; THROW-Taste.
+  - Effektkette in Signalreihenfolge: Dist › Chorus › Phaser › Delay › Reverb › Dust › Out.
+- **EDIT:** Visualizer als Streifen, Reiter Sound / Character, alle Parameter in Karten.
+- **Regler:** nur feine Spur + Wertebogen, kein Knopfkörper. Bedienung: ziehen,
+  Shift/Cmd = fein, Doppelklick = Default, Mausrad.
+- **Farbe = Funktion:** Bogen läuft vom hellen zum satten Ton der Gruppe.
+  Tone #FF9A5C → #FB5206 (SHOP-Orange), Motion #A08BFF → #5A6CFF,
+  Space #4FD6E8 → #2F7BEA, Heat #FFB547 → #E5320A, Dust #E6CB94 → #A86B3C,
+  Sub #FF5C8A → #B5225B. Akzent Day #FB5206, Night #FF6224.
+- **Theme:** Day #F5F5F7 / Karten weiß, Night #171717 / Karten #212121.
+  AUTO = hell 7–19 Uhr; globale Einstellung, alle Fenster folgen.
+- **Typo:** Inter (UI), Michroma (Wortmarke), Doto (Display-Wert), Silkscreen (Display klein).
 
-## UI-Konzept (v0.2, abgelöst durch v0.5)
+## UI-Konzept (v0.2, abgelöst durch v0.7)
 Referenzen: Teenage-Engineering/Braun-Hardware – helles Alu-Gehäuse, schwarzes
 Glas-Display, ein einziger warmer Akzent.
 

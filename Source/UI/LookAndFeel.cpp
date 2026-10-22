@@ -4,13 +4,13 @@ namespace ui
 {
 LookAndFeel::LookAndFeel()
 {
-    setDefaultSansSerifTypeface (typeface());
+    setDefaultSansSerifTypeface (interTypeface (Weight::regular));
 
-    setColour (juce::PopupMenu::backgroundColourId, lightPalette.display);
-    setColour (juce::PopupMenu::textColourId, juce::Colour (0xffd9dcdf));
+    setColour (juce::PopupMenu::backgroundColourId, juce::Colour (0xff1c1c1e));
+    setColour (juce::PopupMenu::textColourId, juce::Colour (0xffececec));
     setColour (juce::PopupMenu::headerTextColourId, lightPalette.accent);
     setColour (juce::PopupMenu::highlightedBackgroundColourId, lightPalette.accent);
-    setColour (juce::PopupMenu::highlightedTextColourId, lightPalette.display);
+    setColour (juce::PopupMenu::highlightedTextColourId, juce::Colours::white);
 }
 
 void LookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int width, int height, float sliderPos,
@@ -19,70 +19,58 @@ void LookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int width, 
     const auto& p = palette();
     const auto hero    = static_cast<bool> (slider.getProperties()["hero"]);
     const auto bipolar = static_cast<bool> (slider.getProperties()["bipolar"]);
+    const auto family  = static_cast<Family> (static_cast<int> (slider.getProperties()["family"]));
 
     const auto area = juce::Rectangle<int> (x, y, width, height).toFloat();
     const auto size = std::min (area.getWidth(), area.getHeight());
     const auto centre = area.getCentre();
-    const auto arcWidth = hero ? 3.5f : 2.5f;
-    const auto arcRadius = size * 0.5f - arcWidth;
-    const auto knobRadius = arcRadius - size * (hero ? 0.12f : 0.13f);
+    const auto arcWidth = hero ? 4.5f : std::max (2.5f, size * 0.05f);
+    const auto radius = size * 0.5f - arcWidth;
     const auto angle = startAngle + sliderPos * (endAngle - startAngle);
-    const auto stroke = juce::PathStrokeType (arcWidth, juce::PathStrokeType::curved, juce::PathStrokeType::rounded);
+    const auto span = endAngle - startAngle;
 
-    // Wertebogen
+    // Spur
     juce::Path track;
-    track.addCentredArc (centre.x, centre.y, arcRadius, arcRadius, 0.0f, startAngle, endAngle, true);
+    track.addCentredArc (centre.x, centre.y, radius, radius, 0.0f, startAngle, endAngle, true);
     g.setColour (p.track);
-    g.strokePath (track, stroke);
+    g.strokePath (track, juce::PathStrokeType (hero ? 2.0f : 1.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
+    // Wertebogen im Verlauf der Funktionsgruppe: je weiter aufgedreht, desto satter
     const auto from = bipolar ? (startAngle + endAngle) * 0.5f : startAngle;
-    juce::Path value;
-    value.addCentredArc (centre.x, centre.y, arcRadius, arcRadius, 0.0f, std::min (from, angle), std::max (from, angle), true);
+    const auto a0 = std::min (from, angle), a1 = std::max (from, angle);
+    if (a1 - a0 < 0.01f)
+        return;
+
+    const auto steps = std::max (2, static_cast<int> ((a1 - a0) / 0.05f));
+    const auto stroke = juce::PathStrokeType (arcWidth, juce::PathStrokeType::curved, juce::PathStrokeType::rounded);
+    for (int i = 0; i < steps; ++i)
+    {
+        const auto s0 = a0 + (a1 - a0) * static_cast<float> (i) / static_cast<float> (steps);
+        const auto s1 = a0 + (a1 - a0) * static_cast<float> (i + 1) / static_cast<float> (steps);
+        juce::Path seg;
+        seg.addCentredArc (centre.x, centre.y, radius, radius, 0.0f, s0, s1, true);
+        g.setColour (gradientAt (family, ((s0 + s1) * 0.5f - startAngle) / span));
+        g.strokePath (seg, stroke);
+    }
+
     if (hero)
     {
-        g.setColour (p.accent.withAlpha (0.22f));
-        g.strokePath (value, juce::PathStrokeType (arcWidth * 3.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        juce::Path glow;
+        glow.addCentredArc (centre.x, centre.y, radius, radius, 0.0f, a0, a1, true);
+        g.setColour (gradient (family).to.withAlpha (0.14f));
+        g.strokePath (glow, juce::PathStrokeType (arcWidth * 3.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
     }
-    g.setColour (p.accent);
-    g.strokePath (value, stroke);
-
-    // Knopf: weich, mit Schatten nach unten und Lichtkante oben
-    juce::Path knob;
-    const auto bounds = juce::Rectangle<float> (knobRadius * 2.0f, knobRadius * 2.0f).withCentre (centre);
-    knob.addEllipse (bounds);
-    juce::DropShadow (p.shadow, juce::roundToInt (size * 0.2f), { 0, juce::roundToInt (size * 0.08f) }).drawForPath (g, knob);
-
-    g.setGradientFill (juce::ColourGradient (p.knobTop, bounds.getX(), bounds.getY(),
-                                             p.knobBottom, bounds.getX(), bounds.getBottom(), false));
-    g.fillPath (knob);
-
-    // flache Mulde in der Mitte, wie bei gedrehten Alu-/Kunststoffknöpfen
-    const auto inner = bounds.reduced (knobRadius * 0.22f);
-    g.setGradientFill (juce::ColourGradient (p.knobBottom, inner.getX(), inner.getY(),
-                                             p.knobTop, inner.getX(), inner.getBottom(), false));
-    g.fillEllipse (inner);
-
-    g.setColour (p.highlight);
-    g.drawEllipse (bounds.reduced (0.75f), 1.0f);
-    g.setColour (p.knobEdge);
-    g.drawEllipse (bounds, 1.0f);
-
-    // Zeiger: kurzer Strich vom Rand nach innen
-    const auto outer = centre.getPointOnCircumference (knobRadius * 0.86f, angle);
-    const auto innerPoint = centre.getPointOnCircumference (knobRadius * (hero ? 0.42f : 0.5f), angle);
-    g.setColour (hero ? p.accent : p.ink);
-    g.drawLine ({ innerPoint, outer }, hero ? 3.2f : 2.4f);
 }
 
 void LookAndFeel::drawPopupMenuBackground (juce::Graphics& g, int width, int height)
 {
-    g.fillAll (lightPalette.display);
+    g.fillAll (juce::Colour (0xff1c1c1e));
     g.setColour (juce::Colours::white.withAlpha (0.08f));
     g.drawRect (0, 0, width, height);
 }
 
 juce::Font LookAndFeel::getPopupMenuFont()
 {
-    return pixelFont (15.0f);
+    return font (15.0f, Weight::regular);
 }
 }

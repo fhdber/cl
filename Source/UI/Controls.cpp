@@ -13,12 +13,14 @@ namespace
         last = e.position;
         return e.withNewPosition (virtualPos);
     }
+
+    constexpr float segmentText = 13.0f, segmentPadding = 12.0f, segmentInset = 3.0f;
 }
 
 FineSlider::FineSlider()
     : juce::Slider (juce::Slider::RotaryHorizontalVerticalDrag, juce::Slider::NoTextBox)
 {
-    setRotaryParameters (juce::MathConstants<float>::pi * 1.22f, juce::MathConstants<float>::pi * 2.78f, true);
+    setRotaryParameters (juce::MathConstants<float>::pi * 1.25f, juce::MathConstants<float>::pi * 2.75f, true);
     setMouseDragSensitivity (220);
 }
 
@@ -42,38 +44,57 @@ void FineSlider::mouseEnter (const juce::MouseEvent& e)
 
 //==============================================================================
 Knob::Knob (juce::AudioProcessorValueTreeState& state, const juce::String& paramId, const juce::String& labelText,
-            ShowValue showValue, bool hero)
+            ShowParameter showParameter, KnobLook knobLook)
     : parameter (*state.getParameter (paramId)),
       label (labelText),
-      show (std::move (showValue)),
+      show (std::move (showParameter)),
+      look (std::move (knobLook)),
       attachment (state, paramId, slider)
 {
-    slider.getProperties().set ("hero", hero);
+    slider.getProperties().set ("hero", look.hero);
+    slider.getProperties().set ("family", static_cast<int> (look.family));
     slider.getProperties().set ("bipolar", parameter.getNormalisableRange().start < 0.0f);
     slider.setDoubleClickReturnValue (true, parameter.convertFrom0to1 (parameter.getDefaultValue()));
     slider.onValueChange = [this] { if (slider.isMouseOverOrDragging()) report(); };
     slider.onHover = [this] { report(); };
-    slider.setTitle (label);
+    slider.setTitle (look.title.isEmpty() ? label : look.title + " " + label);
     addAndMakeVisible (slider);
 }
 
 void Knob::report()
 {
     if (show)
-        show (parameter.getName (64), parameter.getCurrentValueAsText());
+        show (parameter);
 }
 
 void Knob::resized()
 {
     auto area = getLocalBounds();
-    slider.setBounds (area.removeFromTop (area.getHeight() - 24));
+    if (look.title.isNotEmpty())
+        area.removeFromTop (24);
+    area.removeFromBottom (look.title.isNotEmpty() ? 20 : 24);
+    slider.setBounds (area);
 }
 
 void Knob::paint (juce::Graphics& g)
 {
-    g.setColour (palette().ink);
-    drawTracked (g, label.toUpperCase(), getLocalBounds().removeFromBottom (20).toFloat(), 13.0f,
-                 juce::Justification::centred);
+    const auto& p = palette();
+    auto area = getLocalBounds().toFloat();
+
+    if (look.title.isNotEmpty())
+    {
+        g.setColour (p.ink);
+        g.setFont (font (13.0f, Weight::semibold));
+        g.drawText (look.title, area.removeFromTop (20.0f), juce::Justification::centred, false);
+        g.setColour (p.inkSoft);
+        g.setFont (font (12.0f, Weight::regular));
+        g.drawText (label, area.removeFromBottom (16.0f), juce::Justification::centred, false);
+        return;
+    }
+
+    g.setColour (p.ink);
+    g.setFont (font (13.0f));
+    g.drawText (label, area.removeFromBottom (18.0f), juce::Justification::centred, false);
 }
 
 //==============================================================================
@@ -85,61 +106,50 @@ void Segments::setSelected (int index)
     repaint();
 }
 
-namespace
-{
-    constexpr float segmentPadding = 14.0f, segmentText = 12.0f, segmentTracking = 0.04f;
-
-    float labelWidth (const juce::String& text)
-    {
-        return juce::GlyphArrangement::getStringWidth (font (segmentText).withExtraKerningFactor (segmentTracking), text);
-    }
-}
-
 int Segments::getNaturalWidth() const
 {
-    auto w = 4.0f;
+    auto w = 2.0f * segmentInset;
     for (const auto& l : labels)
-        w += labelWidth (l) + 2.0f * segmentPadding;
+        w += textWidth (font (segmentText), l) + 2.0f * segmentPadding;
     return juce::roundToInt (std::ceil (w));
 }
 
 // Breite je Segment nach Textlänge, zusätzlicher Platz gleichmäßig verteilt
 juce::Rectangle<float> Segments::segmentBounds (int index) const
 {
-    const auto area = getLocalBounds().toFloat().reduced (2.0f);
-    const auto extra = (area.getWidth() - static_cast<float> (getNaturalWidth() - 4)) / static_cast<float> (labels.size());
-
+    const auto area = getLocalBounds().toFloat().reduced (segmentInset);
+    const auto extra = (area.getWidth() - (static_cast<float> (getNaturalWidth()) - 2.0f * segmentInset))
+                       / static_cast<float> (labels.size());
     auto x = area.getX();
     for (int i = 0; i < index; ++i)
-        x += labelWidth (labels[i]) + 2.0f * segmentPadding + extra;
+        x += textWidth (font (segmentText), labels[i]) + 2.0f * segmentPadding + extra;
 
-    return { x, area.getY(), labelWidth (labels[index]) + 2.0f * segmentPadding + extra, area.getHeight() };
+    return { x, area.getY(), textWidth (font (segmentText), labels[index]) + 2.0f * segmentPadding + extra, area.getHeight() };
 }
 
 void Segments::paint (juce::Graphics& g)
 {
     const auto& p = palette();
     const auto area = getLocalBounds().toFloat();
-    const auto radius = area.getHeight() * 0.5f;
 
-    g.setColour (p.track);
-    g.fillRoundedRectangle (area, radius);
-    g.setColour (p.knobEdge);
-    g.drawRoundedRectangle (area.reduced (0.5f), radius, 1.0f);
+    g.setColour (p.segBg);
+    g.fillRoundedRectangle (area, area.getHeight() * 0.5f);
 
+    if (juce::isPositiveAndBelow (selected, labels.size()))
+    {
+        const auto thumb = segmentBounds (selected);
+        juce::Path shape;
+        shape.addRoundedRectangle (thumb, thumb.getHeight() * 0.5f);
+        juce::DropShadow (p.shadow, 4, { 0, 1 }).drawForPath (g, shape);
+        g.setColour (p.segThumb);
+        g.fillPath (shape);
+    }
+
+    g.setFont (font (segmentText));
     for (int i = 0; i < labels.size(); ++i)
     {
-        const auto seg = segmentBounds (i);
-        const auto active = i == selected;
-
-        if (active)
-        {
-            g.setColour (p.segOn);
-            g.fillRoundedRectangle (seg, seg.getHeight() * 0.5f);
-        }
-
-        g.setColour (active ? p.segOnText : p.inkSoft);
-        drawTracked (g, labels[i], seg, segmentText, juce::Justification::centred, segmentTracking);
+        g.setColour (i == selected ? p.ink : p.inkSoft);
+        g.drawText (labels[i], segmentBounds (i), juce::Justification::centred, false);
     }
 }
 
@@ -155,10 +165,10 @@ void Segments::mouseDown (const juce::MouseEvent& e)
 }
 
 SegmentedControl::SegmentedControl (juce::AudioProcessorValueTreeState& state, const juce::String& paramId,
-                                    juce::StringArray segmentLabels, ShowValue showValue)
+                                    juce::StringArray segmentLabels, ShowParameter showParameter)
     : Segments (std::move (segmentLabels)),
       parameter (*state.getParameter (paramId)),
-      show (std::move (showValue)),
+      show (std::move (showParameter)),
       attachment (parameter, [this] (float value) { setSelected (juce::roundToInt (value)); })
 {
     attachment.sendInitialUpdate();
@@ -167,7 +177,7 @@ SegmentedControl::SegmentedControl (juce::AudioProcessorValueTreeState& state, c
     {
         attachment.setValueAsCompleteGesture (static_cast<float> (i));
         if (show)
-            show (parameter.getName (64), parameter.getCurrentValueAsText());
+            show (parameter);
     };
 }
 
@@ -201,37 +211,31 @@ void Crossfader::Track::paint (juce::Graphics& g)
 {
     const auto& p = palette();
     const auto area = getLocalBounds().toFloat();
-    const auto capWidth = 34.0f;
+    const auto capWidth = 22.0f;
     const auto travel = area.reduced (capWidth * 0.5f, 0.0f);
     const auto pos = static_cast<float> (valueToProportionOfLength (getValue()));
     const auto x = travel.getX() + travel.getWidth() * pos;
+    const auto slot = juce::Rectangle<float> (travel.getX(), area.getCentreY() - 2.0f, travel.getWidth(), 4.0f);
 
-    // Schlitz
-    const auto slot = juce::Rectangle<float> (travel.getX(), area.getCentreY() - 3.0f, travel.getWidth(), 6.0f);
-    g.setColour (p.ink.withAlpha (0.75f));
-    g.fillRoundedRectangle (slot, 3.0f);
-    g.setColour (p.accent);
-    g.fillRoundedRectangle (slot.withRight (x), 3.0f);
+    g.setColour (p.track);
+    g.fillRoundedRectangle (slot, 2.0f);
+    const auto gr = gradient (Family::tone);
+    g.setGradientFill (juce::ColourGradient (gr.from, slot.getX(), 0.0f, gr.to, slot.getRight(), 0.0f, false));
+    g.fillRoundedRectangle (slot.withRight (x), 2.0f);
 
-    // Rasterstriche
-    g.setColour (p.inkSoft.withAlpha (0.6f));
-    for (int i = 0; i <= 10; ++i)
-    {
-        const auto tx = travel.getX() + travel.getWidth() * static_cast<float> (i) / 10.0f;
-        const auto len = i % 5 == 0 ? 8.0f : 4.0f;
-        g.fillRect (tx - 0.5f, area.getBottom() - len, 1.0f, len);
-    }
-
-    // Kappe
-    const auto cap = juce::Rectangle<float> (capWidth, area.getHeight() - 14.0f).withCentre ({ x, area.getCentreY() - 2.0f });
-    drawKey (g, cap, false, 7.0f);
-    g.setColour (p.accent);
-    g.fillRect (juce::Rectangle<float> (2.5f, cap.getHeight() - 14.0f).withCentre (cap.getCentre()));
+    const auto cap = juce::Rectangle<float> (capWidth, 34.0f).withCentre ({ x, area.getCentreY() });
+    juce::Path shape;
+    shape.addRoundedRectangle (cap, capWidth * 0.5f);
+    juce::DropShadow (p.shadow, 6, { 0, 2 }).drawForPath (g, shape);
+    g.setColour (p.segThumb);
+    g.fillPath (shape);
+    g.setColour (p.line);
+    g.strokePath (shape, juce::PathStrokeType (1.0f));
 }
 
-Crossfader::Crossfader (juce::AudioProcessorValueTreeState& state, const juce::String& paramId, ShowValue showValue)
+Crossfader::Crossfader (juce::AudioProcessorValueTreeState& state, const juce::String& paramId, ShowParameter showParameter)
     : parameter (*state.getParameter (paramId)),
-      show (std::move (showValue)),
+      show (std::move (showParameter)),
       attachment (state, paramId, slider)
 {
     slider.setDoubleClickReturnValue (true, parameter.convertFrom0to1 (parameter.getDefaultValue()));
@@ -244,34 +248,33 @@ Crossfader::Crossfader (juce::AudioProcessorValueTreeState& state, const juce::S
 void Crossfader::report()
 {
     if (show)
-        show (parameter.getName (64), parameter.getCurrentValueAsText());
+        show (parameter);
 }
 
 void Crossfader::resized()
 {
-    slider.setBounds (getLocalBounds().reduced (34, 0).withTrimmedBottom (24));
+    slider.setBounds (getLocalBounds().reduced (28, 0).withTrimmedBottom (24));
 }
 
 void Crossfader::paint (juce::Graphics& g)
 {
     const auto& p = palette();
     auto area = getLocalBounds().toFloat();
-    const auto labels = area.removeFromBottom (20.0f);
-    const auto mid = area.getCentreY() - 2.0f;
+    const auto labels = area.removeFromBottom (18.0f);
+    const auto mid = area.getCentreY();
 
+    g.setColour (p.inkSoft);
+    g.setFont (font (13.0f));
+    g.drawText ("A", juce::Rectangle<float> (0.0f, mid - 10.0f, 22.0f, 20.0f), juce::Justification::centred, false);
+    g.drawText ("B", juce::Rectangle<float> (area.getRight() - 22.0f, mid - 10.0f, 22.0f, 20.0f), juce::Justification::centred, false);
     g.setColour (p.ink);
-    g.setFont (font (16.0f));
-    g.drawText ("A", juce::Rectangle<float> (0.0f, mid - 12.0f, 26.0f, 24.0f), juce::Justification::centred, false);
-    g.drawText ("B", juce::Rectangle<float> (area.getRight() - 26.0f, mid - 12.0f, 26.0f, 24.0f), juce::Justification::centred, false);
-    drawTracked (g, "BLEND", labels, 13.0f, juce::Justification::centred);
+    g.drawText ("Blend", labels, juce::Justification::centred, false);
 }
 
 //==============================================================================
-MomentaryPad::MomentaryPad (juce::AudioProcessorValueTreeState& state, const juce::String& paramId,
-                            const juce::String& labelText, ShowValue showValue)
+ThrowButton::ThrowButton (juce::AudioProcessorValueTreeState& state, const juce::String& paramId, ShowParameter showParameter)
     : parameter (*state.getParameter (paramId)),
-      label (labelText),
-      show (std::move (showValue)),
+      show (std::move (showParameter)),
       attachment (parameter, [this] (float value)
                   {
                       on = value > 0.5f;
@@ -282,63 +285,48 @@ MomentaryPad::MomentaryPad (juce::AudioProcessorValueTreeState& state, const juc
     setTitle (parameter.getName (64));
 }
 
-void MomentaryPad::mouseDown (const juce::MouseEvent&)
+void ThrowButton::mouseDown (const juce::MouseEvent&)
 {
     attachment.beginGesture();
     attachment.setValueAsPartOfGesture (1.0f);
     if (show)
-        show (parameter.getName (64), "ON");
+        show (parameter);
 }
 
-void MomentaryPad::mouseUp (const juce::MouseEvent&)
+void ThrowButton::mouseUp (const juce::MouseEvent&)
 {
     attachment.setValueAsPartOfGesture (0.0f);
     attachment.endGesture();
     if (show)
-        show (parameter.getName (64), "OFF");
+        show (parameter);
 }
 
-void MomentaryPad::paint (juce::Graphics& g)
+void ThrowButton::paint (juce::Graphics& g)
 {
     const auto& p = palette();
-    auto area = getLocalBounds().toFloat();
-    const auto text = area.removeFromBottom (20.0f);
-    const auto side = std::min (area.getWidth(), area.getHeight() - 6.0f);
-    const auto key = juce::Rectangle<float> (side, side).withCentre (area.getCentre()).reduced (2.0f);
+    const auto side = static_cast<float> (std::min (getWidth(), getHeight())) - 2.0f;
+    const auto disc = juce::Rectangle<float> (side, side).withCentre (getLocalBounds().toFloat().getCentre());
+    const auto gr = gradient (Family::space);
 
-    drawKey (g, key, on, 14.0f);
-    drawLed (g, key.getCentre(), on, p.led, 12.0f);
+    g.setColour (on ? gr.to.withAlpha (0.10f) : p.panel);
+    g.fillEllipse (disc);
+    g.setColour (on ? gr.to : p.track);
+    g.drawEllipse (disc.reduced (0.75f), on ? 2.0f : 1.0f);
+
+    const auto c = disc.getCentre();
+    const auto led = juce::Rectangle<float> (side * 0.2f, 3.0f).withCentre ({ c.x, c.y - side * 0.13f });
+    if (on)
+    {
+        g.setColour (gr.from.withAlpha (0.35f));
+        g.fillRoundedRectangle (led.expanded (4.0f, 3.0f), 4.0f);
+    }
+    g.setGradientFill (juce::ColourGradient (gr.from, led.getX(), 0.0f, gr.to, led.getRight(), 0.0f, false));
+    g.setOpacity (on ? 1.0f : 0.55f);
+    g.fillRoundedRectangle (led, 1.5f);
+    g.setOpacity (1.0f);
 
     g.setColour (p.ink);
-    drawTracked (g, label.toUpperCase(), text, 13.0f, juce::Justification::centred);
-}
-
-//==============================================================================
-TabKey::TabKey (const juce::String& labelText) : label (labelText)
-{
-    setTitle (label);
-}
-
-void TabKey::setActive (bool shouldBeActive)
-{
-    active = shouldBeActive;
-    repaint();
-}
-
-void TabKey::mouseDown (const juce::MouseEvent&)
-{
-    if (onClick)
-        onClick();
-}
-
-void TabKey::paint (juce::Graphics& g)
-{
-    const auto& p = palette();
-    const auto r = getLocalBounds().toFloat().reduced (3.0f);
-    drawKey (g, r, active, 9.0f);
-    drawLed (g, { r.getX() + 18.0f, r.getCentreY() }, active, p.accent, 6.0f);
-
-    g.setColour (active ? p.ink : p.inkSoft);
-    drawTracked (g, label, r.withTrimmedLeft (30.0f), 14.0f, juce::Justification::centred, 0.14f);
+    g.setFont (font (13.0f));
+    g.drawText ("Throw", juce::Rectangle<float> (side, 20.0f).withCentre ({ c.x, c.y + side * 0.08f }), juce::Justification::centred, false);
 }
 }

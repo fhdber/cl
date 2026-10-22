@@ -384,7 +384,7 @@ void append (juce::AudioBuffer<float>& showcase, const juce::AudioBuffer<float>&
         showcase.copyFrom (ch, start, b, ch, 0, b.getNumSamples());
 }
 // Rendert den Editor mit laufendem Preset als PNG (für Doku und Sichtprüfung).
-int screenshot (const juce::File& file, int preset, float scale, int page, bool dark)
+int screenshot (const juce::File& file, int preset, float scale, int page, bool dark, const juce::String& paramId)
 {
     Contra86Processor proc;
     proc.setCurrentProgram (preset);
@@ -408,6 +408,8 @@ int screenshot (const juce::File& file, int preset, float scale, int page, bool 
     {
         contra->getPanel().setPage (page);
         contra->getPanel().previewTheme (dark ? ui::ThemeMode::night : ui::ThemeMode::day);
+        if (paramId.isNotEmpty())
+            contra->getPanel().previewParameter (paramId);
     }
     editor->setVisible (true);
     juce::Timer::callAfterDelay (400, [] { juce::MessageManager::getInstance()->stopDispatchLoop(); });
@@ -427,12 +429,13 @@ int main (int argc, char** argv)
 {
     juce::ScopedJuceInitialiser_GUI juce;
 
-    // --ui <datei.png> [preset] [seite 0/1] [light/dark]
+    // --ui <datei.png> [preset] [seite 0 Play / 1 Edit Sound / 2 Edit Character] [light/dark] [parameter-id]
     if (argc > 2 && juce::String (argv[1]) == "--ui")
         return screenshot (juce::File::getCurrentWorkingDirectory().getChildFile (argv[2]),
                            argc > 3 ? juce::String (argv[3]).getIntValue() : 1, 1.0f,
                            argc > 4 ? juce::String (argv[4]).getIntValue() : 0,
-                           argc > 5 && juce::String (argv[5]) == "dark");
+                           argc > 5 && juce::String (argv[5]) == "dark",
+                           argc > 6 ? juce::String (argv[6]) : juce::String());
 
     const auto outDir = juce::File::getCurrentWorkingDirectory().getChildFile (argc > 1 ? argv[1] : "renders");
     outDir.createDirectory();

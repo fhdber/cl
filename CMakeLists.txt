@@ -5,7 +5,7 @@ if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum macOS")
 endif()
 
-project(CONTRA86 VERSION 0.5.0 LANGUAGES C CXX)
+project(CONTRA86 VERSION 0.7.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -38,7 +38,10 @@ juce_add_plugin(CONTRA86
 juce_add_binary_data(CONTRA86_Assets SOURCES
     Resources/Fonts/Michroma-Regular.ttf
     Resources/Fonts/Doto-Black.ttf
-    Resources/Fonts/Silkscreen-Regular.ttf)
+    Resources/Fonts/Silkscreen-Regular.ttf
+    Resources/Fonts/Inter-Regular.ttf
+    Resources/Fonts/Inter-Medium.ttf
+    Resources/Fonts/Inter-SemiBold.ttf)
 
 set(CONTRA86_SOURCES
     Source/PluginProcessor.cpp
@@ -48,7 +51,8 @@ set(CONTRA86_SOURCES
     Source/DSP/SynthEngine.cpp
     Source/UI/LookAndFeel.cpp
     Source/UI/Controls.cpp
-    Source/UI/Display.cpp)
+    Source/UI/Display.cpp
+    Source/UI/CharacterPad.cpp)
 
 target_sources(CONTRA86 PRIVATE ${CONTRA86_SOURCES})
 

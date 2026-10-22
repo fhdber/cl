@@ -4,10 +4,11 @@
 
 namespace ui
 {
-// Reduzierte Hardware-Knöpfe: weicher Knopf mit Mulde und Zeigerstrich,
-// dünner oranger Wertebogen. Farben aus dem aktuellen Theme. Slider-Properties:
-//   "hero"    – kräftiger Bogen mit Schein, oranger Zeiger (Cutoff, Dust, Volume …)
+// Minimale Regler: feine Spur und Wertebogen im Verlauf der Funktionsgruppe,
+// kein Knopfkörper. Slider-Properties:
+//   "hero"    – größerer Bogen mit Schein (Cutoff, Dust, 808, Dist, Volume)
 //   "bipolar" – Bogen startet in der Mitte
+//   "family"  – Funktionsgruppe (ui::Family) für den Farbverlauf
 class LookAndFeel final : public juce::LookAndFeel_V4
 {
 public:

@@ -20,7 +20,7 @@ System: macOS
 - `Source/PluginEditor.*` – UI
 - `Source/DSP/` – eigene DSP-Klassen
 - `Source/UI/` – eigene Komponenten und LookAndFeel (Theme, Controls, Display)
-- `Resources/` – Fonts (Michroma, Doto, Silkscreen; alle OFL) als Binary Data
+- `Resources/` – Fonts (Inter, Michroma, Doto, Silkscreen; alle OFL) als Binary Data
 - `docs/SPEC.md` – Spezifikation des aktuellen Plugins (vor dem Coden lesen)
 
 ## Befehle
@@ -31,8 +31,9 @@ System: macOS
 - Render-Test (Presets, NaN, Pegel, Blockgrößen, WAVs):
   `cmake -B build -DCONTRA86_TOOLS=ON && cmake --build build --target CONTRA86_Render`,
   dann `./build/CONTRA86_Render_artefacts/Release/CONTRA86_Render renders`
-- UI-Screenshot (PNG; Preset, Seite 0/1, light/dark optional):
-  `CONTRA86_Render --ui ui.png 8 1 dark`
+- UI-Screenshot (PNG; Preset, Seite 0 Play / 1 Edit Sound / 2 Edit Character,
+  light/dark, Parameter-ID für ein Visualizer-Bild – alles optional):
+  `CONTRA86_Render --ui ui.png 8 0 dark cutoff`
   (Linux braucht einen X-Server, z. B. `xvfb-run`)
 - CI: `.github/workflows/build.yml` baut macOS Universal, prüft auval + pluginval,
   rendert Presets und UI-Screenshot als Artifacts

@@ -1,15 +1,20 @@
 #pragma once
 
 #include "PluginProcessor.h"
+#include "UI/CharacterPad.h"
 #include "UI/Controls.h"
 #include "UI/Display.h"
 #include "UI/LookAndFeel.h"
 
 // Gesamte Oberfläche auf der festen Designfläche; der Editor skaliert sie.
-// Zwei Seiten (SOUND, CHARACTER), Theme hell/dunkel nach Uhrzeit oder fest.
+// PLAY: Visualizer, CHARACTER-Pad, Kernregler, Effektkette.
+// EDIT: alle Parameter in Karten, Reiter Sound / Character.
+// Theme hell/dunkel nach Uhrzeit oder fest.
 class Contra86Panel final : public juce::Component, private juce::Timer
 {
 public:
+    enum Page { play, editSound, editCharacter };
+
     explicit Contra86Panel (Contra86Processor&);
 
     void paint (juce::Graphics&) override;
@@ -18,6 +23,8 @@ public:
     void setPage (int page);
     // Für Screenshots: Theme setzen, ohne die Einstellung zu speichern.
     void previewTheme (ui::ThemeMode);
+    // Für Screenshots: Display zeigt das Bild eines Parameters.
+    void previewParameter (const juce::String& paramId);
 
 private:
     struct Item
@@ -40,20 +47,25 @@ private:
     void applyTheme();
     void setThemeMode (ui::ThemeMode, bool save);
 
-    Item knob (const juce::String& id, const juce::String& label, int height, bool hero = false);
+    Item knob (const juce::String& id, const juce::String& label, int height, ui::KnobLook look);
     ui::SegmentedControl& segment (const juce::String& id, juce::StringArray labels);
     template <typename T> T& own (std::unique_ptr<T>);
     void layoutSection (const Section&);
-    void paintSpeaker (juce::Graphics&, juce::Rectangle<float>) const;
+    void layoutRow (const std::vector<Item>&, juce::Rectangle<int> area, int baseline);
+    std::vector<juce::Rectangle<int>> cards() const;
 
     Contra86Processor& processor;
+    ui::ShowParameter show;
     ui::Display display;
     std::vector<std::unique_ptr<juce::Component>> controls;
     std::vector<Section> sections;
-    ui::TabKey soundTab { "SOUND" }, characterTab { "CHARACTER" };
-    ui::Segments themeSwitch { { "AUTO", "DAY", "NIGHT" } };
-    ui::Knob* volumeKnob = nullptr;
-    int page = 0;
+    std::vector<Item> playKnobs, chain;
+    ui::CharacterPad* pad = nullptr;
+    ui::ThrowButton* throwButton = nullptr;
+    ui::Segments pageSwitch { { "Play", "Edit" } };
+    ui::Segments editTabs { { "Sound", "Character" } };
+    ui::Segments themeSwitch { { "Auto", "Day", "Night" } };
+    int page = play;
     ui::ThemeMode themeMode = ui::ThemeMode::automatic;
     bool shownDark = false;
     juce::PropertiesFile settings;

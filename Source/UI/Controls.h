@@ -6,8 +6,8 @@
 
 namespace ui
 {
-// Meldet Parametername und Wert ans Display (Hover, Drehen, Umschalten).
-using ShowValue = std::function<void (const juce::String& name, const juce::String& value)>;
+// Meldet den bedienten Parameter ans Display (Hover, Drehen, Umschalten).
+using ShowParameter = std::function<void (juce::RangedAudioParameter&)>;
 
 // Slider mit Feinjustierung: Shift oder Cmd beim Ziehen = ×0,15.
 class FineSlider final : public juce::Slider
@@ -25,11 +25,22 @@ private:
     juce::Point<float> lastPosition, virtualPosition;
 };
 
+// Aussehen eines Reglers
+struct KnobLook
+{
+    KnobLook (Family f = Family::tone, bool isHero = false, juce::String moduleTitle = {})
+        : family (f), hero (isHero), title (std::move (moduleTitle)) {}
+
+    Family family;
+    bool hero;
+    juce::String title; // gesetzt = Modul-Stil: Titel oben, Beschriftung klein darunter
+};
+
 class Knob final : public juce::Component
 {
 public:
     Knob (juce::AudioProcessorValueTreeState&, const juce::String& paramId, const juce::String& label,
-          ShowValue show, bool hero = false);
+          ShowParameter show, KnobLook look = {});
 
     void paint (juce::Graphics&) override;
     void resized() override;
@@ -39,12 +50,14 @@ private:
 
     juce::RangedAudioParameter& parameter;
     juce::String label;
-    ShowValue show;
+    ShowParameter show;
+    KnobLook look;
     FineSlider slider;
     juce::AudioProcessorValueTreeState::SliderAttachment attachment;
 };
 
-// Segment-Pillen; Grundlage für Parameter-Auswahl und Theme-Schalter.
+// Kapsel-Umschalter (Apple Segmented Control); Grundlage für Parameter-Auswahl,
+// Seiten- und Theme-Wahl.
 class Segments : public juce::Component
 {
 public:
@@ -66,24 +79,24 @@ private:
     int selected = 0;
 };
 
-// Segment-Pillen für Auswahl-Parameter.
+// Kapsel-Umschalter für Auswahl-Parameter.
 class SegmentedControl final : public Segments
 {
 public:
     SegmentedControl (juce::AudioProcessorValueTreeState&, const juce::String& paramId,
-                      juce::StringArray labels, ShowValue show);
+                      juce::StringArray labels, ShowParameter show);
 
 private:
     juce::RangedAudioParameter& parameter;
-    ShowValue show;
+    ShowParameter show;
     juce::ParameterAttachment attachment;
 };
 
-// Horizontaler Crossfader A–B (Blend) mit Schiebekappe.
+// Horizontaler Crossfader A–B (Blend).
 class Crossfader final : public juce::Component
 {
 public:
-    Crossfader (juce::AudioProcessorValueTreeState&, const juce::String& paramId, ShowValue show);
+    Crossfader (juce::AudioProcessorValueTreeState&, const juce::String& paramId, ShowParameter show);
 
     void paint (juce::Graphics&) override;
     void resized() override;
@@ -106,17 +119,16 @@ private:
     void report();
 
     juce::RangedAudioParameter& parameter;
-    ShowValue show;
+    ShowParameter show;
     Track slider;
     juce::AudioProcessorValueTreeState::SliderAttachment attachment;
 };
 
-// Quadratische Taste, gedrückt halten = Parameter an (Throw).
-class MomentaryPad final : public juce::Component
+// Runde Taste, gedrückt halten = Parameter an (Throw).
+class ThrowButton final : public juce::Component
 {
 public:
-    MomentaryPad (juce::AudioProcessorValueTreeState&, const juce::String& paramId, const juce::String& label,
-                  ShowValue show);
+    ThrowButton (juce::AudioProcessorValueTreeState&, const juce::String& paramId, ShowParameter show);
 
     void paint (juce::Graphics&) override;
     void mouseDown (const juce::MouseEvent&) override;
@@ -124,26 +136,8 @@ public:
 
 private:
     juce::RangedAudioParameter& parameter;
-    juce::String label;
-    ShowValue show;
+    ShowParameter show;
     bool on = false;
     juce::ParameterAttachment attachment;
-};
-
-// Taste mit LED für die Seitenwahl.
-class TabKey final : public juce::Component
-{
-public:
-    explicit TabKey (const juce::String& label);
-
-    void paint (juce::Graphics&) override;
-    void mouseDown (const juce::MouseEvent&) override;
-
-    void setActive (bool);
-    std::function<void()> onClick;
-
-private:
-    juce::String label;
-    bool active = false;
 };
 }
