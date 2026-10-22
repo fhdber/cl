@@ -6,8 +6,6 @@ namespace
     namespace id = params::id;
     using ui::Family;
 
-    const juce::Identifier uiScaleProperty { "uiScale" };
-    const juce::Identifier uiPageProperty { "uiPage" };
     constexpr auto themeKey = "theme";
 
     constexpr int left = 32, right = 1168;
@@ -200,7 +198,7 @@ Contra86Panel::Contra86Panel (Contra86Processor& p)
     setThemeMode (static_cast<ui::ThemeMode> (juce::jlimit (0, 2, settings.getIntValue (themeKey, 0))), false);
     startTimer (20000);
 
-    setPage (juce::jlimit (0, 2, static_cast<int> (processor.state.state.getProperty (uiPageProperty, 0))));
+    setPage (juce::jlimit (0, 2, processor.uiPage.load()));
 }
 
 template <typename T>
@@ -245,7 +243,7 @@ void Contra86Panel::setPage (int newPage)
             item.component->setVisible (section.page == page);
     }
 
-    processor.state.state.setProperty (uiPageProperty, page, nullptr);
+    processor.uiPage.store (page);
     resized();
     repaint();
 }
@@ -448,7 +446,7 @@ Contra86Editor::Contra86Editor (Contra86Processor& p)
     if (auto* c = getConstrainer())
         c->setFixedAspectRatio (w / h);
 
-    const auto scale = juce::jlimit (0.5, 1.6, static_cast<double> (contraProcessor.state.state.getProperty (uiScaleProperty, 1.0)));
+    const auto scale = juce::jlimit (0.5, 1.6, static_cast<double> (contraProcessor.uiScale.load()));
     // Nie größer als der Bildschirm (mit Platz für Host-Fensterleiste)
     auto fitted = scale;
     if (const auto* display = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay())
@@ -467,5 +465,5 @@ void Contra86Editor::resized()
 {
     const auto scale = static_cast<float> (getWidth()) / static_cast<float> (ui::designWidth);
     panel.setTransform (juce::AffineTransform::scale (scale));
-    contraProcessor.state.state.setProperty (uiScaleProperty, scale, nullptr);
+    contraProcessor.uiScale.store (scale);
 }

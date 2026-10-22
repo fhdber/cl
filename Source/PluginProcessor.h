@@ -39,8 +39,14 @@ public:
     juce::AudioProcessorValueTreeState state;
     ScopeBuffer scope;
 
+    // UI-Zustand (Fenstergröße, Seite): außerhalb des Parameterbaums, damit der
+    // Host den Zustand jederzeit aus einem anderen Thread lesen kann.
+    std::atomic<float> uiScale { 1.0f };
+    std::atomic<int> uiPage { 0 };
+
 private:
     dsp86::Settings readSettings() const noexcept;
+    std::atomic<bool> prepared { false };
     double hostBpm() const noexcept;
 
     struct Raw
@@ -68,7 +74,7 @@ private:
     } raw;
 
     dsp86::SynthEngine engine;
-    int currentProgram = 0;
+    std::atomic<int> currentProgram { 0 };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Contra86Processor)
 };

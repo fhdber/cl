@@ -6,6 +6,8 @@
 namespace
 {
     const juce::Identifier programAttribute { "program" };
+    const juce::Identifier uiScaleAttribute { "uiScale" };
+    const juce::Identifier uiPageAttribute { "uiPage" };
 }
 
 Contra86Processor::Contra86Processor()
@@ -46,8 +48,10 @@ bool Contra86Processor::isBusesLayoutSupported (const BusesLayout& layouts) cons
 
 void Contra86Processor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    prepared.store (false);
     engine.prepare (sampleRate, samplesPerBlock, readSettings());
     setLatencySamples (engine.getLatencySamples());
+    prepared.store (true);
 }
 
 void Contra86Processor::reset()
@@ -141,6 +145,15 @@ double Contra86Processor::hostBpm() const noexcept
 void Contra86Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
     juce::ScopedNoDenormals noDenormals;
+
+    // Manche Hosts rufen processBlock vor prepareToPlay auf
+    if (! prepared.load())
+    {
+        buffer.clear();
+        midi.clear();
+        return;
+    }
+
     auto settings = readSettings();
     settings.bpm = hostBpm();
     engine.process (buffer, midi, settings);
@@ -176,7 +189,9 @@ const juce::String Contra86Processor::getProgramName (int index)
 void Contra86Processor::getStateInformation (juce::MemoryBlock& destData)
 {
     auto tree = state.copyState();
-    tree.setProperty (programAttribute, currentProgram, nullptr);
+    tree.setProperty (programAttribute, currentProgram.load(), nullptr);
+    tree.setProperty (uiScaleAttribute, uiScale.load(), nullptr);
+    tree.setProperty (uiPageAttribute, uiPage.load(), nullptr);
 
     if (auto xml = tree.createXml())
         copyXmlToBinary (*xml, destData);
@@ -190,6 +205,10 @@ void Contra86Processor::setStateInformation (const void* data, int sizeInBytes)
 
     auto tree = juce::ValueTree::fromXml (*xml);
     currentProgram = juce::jlimit (0, presets::count() - 1, static_cast<int> (tree.getProperty (programAttribute, 0)));
+    uiScale.store (juce::jlimit (0.5f, 1.6f, static_cast<float> (tree.getProperty (uiScaleAttribute, 1.0f))));
+    uiPage.store (juce::jlimit (0, 2, static_cast<int> (tree.getProperty (uiPageAttribute, 0))));
+    for (const auto& id : { uiScaleAttribute, uiPageAttribute, programAttribute })
+        tree.removeProperty (id, nullptr);
     state.replaceState (tree);
 }
 

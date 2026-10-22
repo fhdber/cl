@@ -11,6 +11,7 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <iostream>
 #include <map>
+#include <thread>
 
 namespace
 {
@@ -188,6 +189,68 @@ bool stateRoundTrip()
 
     const auto ok = b.getCurrentProgram() == 5;
     std::cout << (ok ? "ok   " : "FAIL ") << "state round trip\n";
+    return ok;
+}
+
+// Host-Verhalten wie in FL: Audio vor prepareToPlay, Zustand speichern aus einem
+// anderen Thread, während Noten spielen und die Oberfläche Werte schreibt.
+bool hostStress()
+{
+    Contra86Processor proc;
+    juce::AudioBuffer<float> block (2, 512);
+    juce::MidiBuffer midi;
+    midi.addEvent (juce::MidiMessage::noteOn (1, 60, 0.9f), 0);
+    proc.processBlock (block, midi); // noch nicht vorbereitet: muss still bleiben
+    auto ok = block.getMagnitude (0, 512) < 1.0e-9f;
+
+    proc.setRateAndBufferSizeDetails (48000.0, 512);
+    proc.prepareToPlay (48000.0, 512);
+
+    std::atomic<bool> running { true };
+    std::atomic<int> saves { 0 };
+    std::thread saver ([&]
+    {
+        while (running)
+        {
+            juce::MemoryBlock data;
+            proc.getStateInformation (data);
+            ++saves;
+        }
+    });
+
+    std::thread audio ([&]
+    {
+        juce::AudioBuffer<float> b (2, 256);
+        juce::MidiBuffer m;
+        for (int i = 0; i < 3000; ++i)
+        {
+            m.clear();
+            m.addEvent (juce::MidiMessage::noteOn (1, 48 + i % 24, 0.8f), 0);
+            m.addEvent (juce::MidiMessage::noteOff (1, 48 + (i + 12) % 24), 128);
+            proc.processBlock (b, m);
+        }
+    });
+
+    for (int i = 0; i < 400; ++i)
+    {
+        proc.uiScale.store (0.5f + static_cast<float> (i % 10) * 0.1f);
+        proc.uiPage.store (i % 3);
+        if (i % 50 == 0)
+            proc.setCurrentProgram (i / 50 % presets::count());
+        juce::Thread::sleep (1);
+    }
+
+    audio.join();
+    running = false;
+    saver.join();
+
+    juce::MemoryBlock data;
+    proc.getStateInformation (data);
+    Contra86Processor copy;
+    copy.setStateInformation (data.getData(), static_cast<int> (data.getSize()));
+    ok = ok && saves > 10 && std::abs (copy.uiScale.load() - proc.uiScale.load()) < 1.0e-6f && copy.uiPage.load() == proc.uiPage.load();
+    std::cout << (ok ? "ok   " : "FAIL ") << "host stress: silent before prepare, " << saves.load()
+              << " state saves during playback, UI state restored\n";
     return ok;
 }
 
@@ -429,6 +492,10 @@ int main (int argc, char** argv)
 {
     juce::ScopedJuceInitialiser_GUI juce;
 
+    // --stress: nur der Host-Stresstest (z. B. mit ThreadSanitizer)
+    if (argc > 1 && juce::String (argv[1]) == "--stress")
+        return hostStress() ? 0 : 1;
+
     // --ui <datei.png> [preset] [seite 0 Play / 1 Edit Sound / 2 Edit Character] [light/dark] [parameter-id]
     if (argc > 2 && juce::String (argv[1]) == "--ui")
         return screenshot (juce::File::getCurrentWorkingDirectory().getChildFile (argv[2]),
@@ -443,6 +510,7 @@ int main (int argc, char** argv)
     constexpr int demoRate = 48000;
     auto ok = stateRoundTrip();
     ok &= characterChecks();
+    ok &= hostStress();
     int checked = 0;
     std::map<juce::String, juce::AudioBuffer<float>> showcases;
 
