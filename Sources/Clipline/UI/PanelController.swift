@@ -45,7 +45,7 @@ final class SurfaceController {
     /// until you type or click inside.
     private var autoHidesOnLeave = false
     private var resignObserver: NSObjectProtocol?
-    private var previewSubscription: AnyCancellable?
+    private var subscriptions = Set<AnyCancellable>()
     private var screen: NSScreen?
     private(set) var isOpen = false
 
@@ -78,11 +78,16 @@ final class SurfaceController {
         ) { [weak self] _ in self?.hide() }
 
         if surface == .shelf {
-            // The preview grows the shelf downwards.
-            previewSubscription = model.$previewID
+            // The preview and the mini/full switch resize the shelf.
+            model.$previewID
                 .map { $0 != nil }
                 .removeDuplicates()
                 .sink { [weak self] _ in DispatchQueue.main.async { self?.relayout() } }
+                .store(in: &subscriptions)
+            model.$isMini
+                .removeDuplicates()
+                .sink { [weak self] _ in DispatchQueue.main.async { self?.relayout() } }
+                .store(in: &subscriptions)
         }
     }
 
@@ -99,6 +104,7 @@ final class SurfaceController {
         self.screen = screen
 
         isOpen = true
+        if surface == .shelf { model.isMini = Layout.shelfIsMini(on: screen) }
         model.prepareForShow()
         let frame = targetFrame(on: screen, mouse: mouse)
 
@@ -159,8 +165,9 @@ final class SurfaceController {
     private func targetFrame(on screen: NSScreen, mouse: NSPoint) -> NSRect {
         switch surface {
         case .shelf:
-            let width = min(Layout.shelfWidth, screen.frame.width - 40)
-            let height = Layout.shelfHeight + (model.previewID == nil ? 0 : Layout.detailGap + Layout.detailHeight)
+            let size = Layout.shelfSize(mini: model.isMini, preview: model.previewID != nil)
+            let width = min(size.width, screen.frame.width - 40)
+            let height = size.height
             return NSRect(x: screen.frame.midX - width / 2, y: screen.frame.maxY - height, width: width, height: height)
         case .quickPaste:
             let size = CGSize(width: Layout.quickPasteWidth,

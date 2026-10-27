@@ -10,6 +10,28 @@ enum Layout {
     /// Roughly the notch: where the shelf grows out of and folds back into.
     static let notchSize = CGSize(width: 200, height: 34)
 
+    // Mini shelf – for smaller screens like the 14" MacBook Pro
+    static let miniShelfWidth: CGFloat = 460
+    static let miniCard = CGSize(width: 98, height: 72)
+    static let miniShelfHeight: CGFloat = 6 + 32 + 6 + miniCard.height + 12
+    static let miniDetailHeight: CGFloat = 300
+
+    /// "auto" picks the mini shelf on screens narrower than 1600 pt (14" MacBook Pro and smaller).
+    static func shelfIsMini(on screen: NSScreen) -> Bool {
+        switch Prefs.shelfSize {
+        case "mini": return true
+        case "full": return false
+        default: return screen.frame.width < 1600
+        }
+    }
+
+    static func shelfSize(mini: Bool, preview: Bool) -> (width: CGFloat, height: CGFloat) {
+        let width = mini ? miniShelfWidth : shelfWidth
+        let base = mini ? miniShelfHeight : shelfHeight
+        let detail = preview ? detailGap + (mini ? miniDetailHeight : detailHeight) : 0
+        return (width, base + detail)
+    }
+
     // Quick paste
     static let quickPasteWidth: CGFloat = 318
     static let quickPasteColumns = 3
@@ -43,14 +65,16 @@ struct ShelfView: View {
 
     var body: some View {
         VStack(spacing: Layout.detailGap) {
-            shelf
-                .frame(height: Layout.shelfHeight)
+            Group {
+                if model.isMini { miniShelf } else { shelf }
+            }
+                .frame(height: model.isMini ? Layout.miniShelfHeight : Layout.shelfHeight)
                 .background(Self.shelfShape.fill(Theme.surface))
                 .clipShape(Self.shelfShape)
 
             if let item = model.previewItem {
                 ClipDetailView(item: item, model: model, store: store)
-                    .frame(height: Layout.detailHeight)
+                    .frame(height: model.isMini ? Layout.miniDetailHeight : Layout.detailHeight)
                     .background(Self.detailShape.fill(Theme.surface))
                     .clipShape(Self.detailShape)
             }
@@ -83,6 +107,9 @@ struct ShelfView: View {
                 RoundButton(symbol: "gearshape.fill", help: "Einstellungen (⌘,)") {
                     model.onOpenSettings?()
                 }
+                RoundButton(symbol: "arrow.down.right.and.arrow.up.left", help: "Mini-Shelf") {
+                    model.setMini(true)
+                }
             }
             .padding(.horizontal, 16)
             .frame(height: 44)
@@ -93,6 +120,75 @@ struct ShelfView: View {
 
             ShelfStrip(model: model, store: store)
         }
+    }
+
+    /// Compact: search + three small buttons, one row of cards. Filters live in a menu.
+    private var miniShelf: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            SearchRow(model: model, fontSize: 13) {
+                if !Paster.isTrusted {
+                    RoundButton(symbol: "exclamationmark", diameter: 24, help: "Auto-Einfügen aktivieren") {
+                        Paster.requestAccess()
+                    }
+                    .foregroundStyle(.orange)
+                }
+                RoundButton(symbol: "star.fill", isOn: model.filter == .pinned, diameter: 24, help: "Favoriten") {
+                    model.filter = model.filter == .pinned ? .all : .pinned
+                }
+                MiniFilterMenu(model: model, store: store)
+                RoundButton(symbol: "arrow.up.left.and.arrow.down.right", diameter: 24, help: "Großes Shelf") {
+                    model.setMini(false)
+                }
+            }
+            .padding(.horizontal, 14)
+            .frame(height: 32)
+            .padding(.top, 6)
+
+            ShelfStrip(model: model, store: store, card: Layout.miniCard, showsDayLabels: false)
+        }
+    }
+}
+
+/// Categories, types and apps in one menu – the mini shelf has no room for pills.
+private struct MiniFilterMenu: View {
+    @ObservedObject var model: PanelModel
+    @ObservedObject var store: ClipStore
+
+    var body: some View {
+        Menu {
+            Button("Alle") { model.filter = .all }
+            if !store.collections.isEmpty {
+                Section("Kategorien") {
+                    ForEach(store.collections, id: \.self) { name in
+                        Button(name) { model.filter = .collection(name) }
+                    }
+                }
+            }
+            Section("Typ") {
+                ForEach(model.kindsPresent) { kind in
+                    Button {
+                        model.filter = .kind(kind)
+                    } label: {
+                        Label(kind.pluralTitle, systemImage: kind.symbol)
+                    }
+                }
+            }
+            Section("App") {
+                ForEach(model.topApps) { app in
+                    Button(app.name) { model.filter = .app(app.bundleID) }
+                }
+            }
+            Divider()
+            Button("Bibliothek öffnen") { model.onOpenLibrary?() }
+            Button("Einstellungen …") { model.onOpenSettings?() }
+        } label: {
+            RoundIcon(symbol: "line.3.horizontal.decrease", isOn: model.filter != .all && model.filter != .pinned,
+                      diameter: 24)
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Filtern")
     }
 }
 
@@ -119,6 +215,8 @@ private struct NotchReveal: View {
 private struct ShelfStrip: View {
     @ObservedObject var model: PanelModel
     @ObservedObject var store: ClipStore
+    var card: CGSize = Layout.shelfCard
+    var showsDayLabels = true
 
     var body: some View {
         let items = model.visibleItems
@@ -131,14 +229,16 @@ private struct ShelfStrip: View {
                     HStack(alignment: .top, spacing: 8) {
                         ForEach(model.sections(for: items)) { section in
                             VStack(alignment: .leading, spacing: 6) {
-                                Text(section.title)
-                                    .font(.system(size: 11, weight: .semibold))
-                                    .foregroundStyle(Theme.secondaryText)
-                                    .frame(height: 16)
+                                if showsDayLabels {
+                                    Text(section.title)
+                                        .font(.system(size: 11, weight: .semibold))
+                                        .foregroundStyle(Theme.secondaryText)
+                                        .frame(height: 16)
+                                }
                                 LazyHStack(spacing: 8) {
                                     ForEach(section.items) { item in
                                         ClipCard(item: item,
-                                                 size: Layout.shelfCard,
+                                                 size: card,
                                                  shortcut: shortcuts[item.id],
                                                  isSelected: model.selection.contains(item.id),
                                                  isHovered: model.hoveredID == item.id,

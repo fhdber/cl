@@ -35,6 +35,8 @@ final class PanelModel: ObservableObject {
     @Published var newCollectionName = ""
     /// 0 = tucked into the notch, 1 = fully open. Drives the shelf's grow-from-notch reveal.
     @Published var reveal: CGFloat = 1
+    /// Compact shelf for smaller screens.
+    @Published var isMini = false
 
     let store: ClipStore
     /// Cards per row, so ↑/↓ can jump a row in grid layouts.
@@ -180,6 +182,12 @@ final class PanelModel: ObservableObject {
         let options = filterOptions
         let index = options.firstIndex(of: filter) ?? 0
         filter = options[(index + delta + options.count) % options.count]
+    }
+
+    /// Switches shelf size and remembers the choice.
+    func setMini(_ mini: Bool) {
+        UserDefaults.standard.set(mini ? "mini" : "full", forKey: Prefs.Key.shelfSize)
+        isMini = mini
     }
 
     func togglePreview() {

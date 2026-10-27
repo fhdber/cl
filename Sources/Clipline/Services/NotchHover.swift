@@ -35,7 +35,8 @@ final class NotchHover {
     /// The menu bar strip above the shelf: full menu-bar height, as wide as the shelf.
     static func triggerZone(on screen: NSScreen) -> NSRect {
         let menuBarHeight = max(screen.frame.maxY - screen.visibleFrame.maxY, NSStatusBar.system.thickness)
-        let width = min(Layout.shelfWidth, screen.frame.width - 40)
+        let shelfWidth = Layout.shelfIsMini(on: screen) ? Layout.miniShelfWidth : Layout.shelfWidth
+        let width = min(shelfWidth, screen.frame.width - 40)
         return NSRect(x: screen.frame.midX - width / 2, y: screen.frame.maxY - menuBarHeight,
                       width: width, height: menuBarHeight)
     }

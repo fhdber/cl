@@ -16,6 +16,7 @@ struct SettingsView: View {
     @AppStorage(Prefs.Key.captureScreenshots) private var captureScreenshots = true
     @AppStorage(Prefs.Key.ocrEnabled) private var ocrEnabled = true
     @AppStorage(Prefs.Key.notchHover) private var notchHover = true
+    @AppStorage(Prefs.Key.shelfSize) private var shelfSize = "auto"
     @AppStorage(Prefs.Key.ignoredApps) private var ignoredAppsRaw = Prefs.defaultIgnoredApps
 
     var body: some View {
@@ -23,6 +24,11 @@ struct SettingsView: View {
             Section("Allgemein") {
                 Toggle("Beim Anmelden starten", isOn: launchAtLogin)
                 Toggle("Shelf einblenden, wenn die Maus in die Menüleiste fährt", isOn: $notchHover)
+                Picker("Shelf-Größe", selection: $shelfSize) {
+                    Text("Automatisch").tag("auto")
+                    Text("Mini").tag("mini")
+                    Text("Groß").tag("full")
+                }
             }
 
             Section("Kurzbefehle") {

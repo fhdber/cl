@@ -10,6 +10,7 @@ Native SwiftUI und AppKit, die Daten bleiben lokal. Keine Abhängigkeiten.
 | | |
 |---|---|
 | **Notch-Shelf** | Ein schwarzes Panel hängt oben aus der Notch. Es wächst aus der Notch, wenn die Maus in die Menüleiste fährt, und zieht sich wieder zurück, wenn sie sie verlässt. Alternativ mit `⌥⌘V`. Die Karten sind nach Tagen gruppiert. |
+| **Mini-Shelf** | Kompakte Variante (460 × 126 pt) mit Suche, drei kleinen Buttons und einer Kartenreihe. Kategorien, Typen und Apps stecken im Filter-Menü. Auf Bildschirmen unter 1600 pt (z. B. MacBook Pro 14") automatisch aktiv. Per Button oder in den Einstellungen umschaltbar. |
 | **Quick Paste** | `⌃⌘V` öffnet an der Maus ein kompaktes Raster mit drei Spalten. Mit `↩` wird direkt eingefügt. |
 | **Bibliothek** | `⌃⌘L` öffnet ein großes Fenster mit Raster und einer Detail-Seitenleiste (Quelle, Link, Maße, erkannter Text). |
 | **Letzte 10 Clips** | `⌃⌘0` … `⌃⌘9` fügt systemweit sofort ein. Jede Karte zeigt ihr Kürzel als Badge. |
