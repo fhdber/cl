@@ -36,7 +36,7 @@ struct SettingsView: View {
             }
 
             Section {
-                ForEach(ignoredApps, id: \.self) { bundleID in
+                ForEach(installedIgnoredApps, id: \.self) { bundleID in
                     HStack {
                         if let icon = AppIcons.icon(for: bundleID) {
                             Image(nsImage: icon).resizable().frame(width: 18, height: 18)
@@ -77,7 +77,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 460, height: 600)
+        .frame(width: 460, height: 720)
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             refresher.refresh()
         }
@@ -111,6 +111,11 @@ struct SettingsView: View {
     }
 
     private var ignoredApps: [String] { Prefs.split(ignoredAppsRaw) }
+
+    /// Defaults cover password managers you may not have; only list what's actually installed.
+    private var installedIgnoredApps: [String] {
+        ignoredApps.filter { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) != nil }
+    }
 
     private func appName(for bundleID: String) -> String {
         guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else { return bundleID }

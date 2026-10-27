@@ -65,10 +65,10 @@ struct KeyHint: View {
     var body: some View {
         Text(text)
             .font(.system(size: 10, weight: .medium, design: .rounded))
-            .foregroundStyle(.white.opacity(0.45))
+            .foregroundStyle(.secondary)
             .padding(.horizontal, 5)
             .padding(.vertical, 2)
-            .background(RoundedRectangle(cornerRadius: 4).strokeBorder(.white.opacity(0.15)))
+            .background(RoundedRectangle(cornerRadius: 4).strokeBorder(Color.secondary.opacity(0.35)))
     }
 }
 
