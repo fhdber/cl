@@ -56,6 +56,7 @@ struct ShelfView: View {
             }
         }
         .frame(maxHeight: .infinity, alignment: .top)
+        .compositingGroup() // fade the shelf as one layer, not card by card
         .opacity(Double(0.25 + 0.75 * model.reveal)) // content eases in while the shape opens
         .mask(alignment: .top) { NotchReveal(progress: model.reveal) }
         .environment(\.colorScheme, .dark)

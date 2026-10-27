@@ -69,6 +69,9 @@ final class SurfaceController {
         let host = NSHostingView(rootView: root)
         host.sizingOptions = [] // the controller owns the panel frame
         panel.contentView = host
+        // The window shadow is computed once for the full shape, so it would linger while the
+        // shelf folds into the notch. The shelf merges with the notch and needs none anyway.
+        panel.hasShadow = surface != .shelf
 
         resignObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.didResignKeyNotification, object: panel, queue: .main
@@ -128,9 +131,10 @@ final class SurfaceController {
         isOpen = false
         removeMonitors()
         if surface == .shelf {
-            // Folds back into the notch.
-            withAnimation(.timingCurve(0.4, 0, 0.2, 1, duration: 0.32)) { model.reveal = 0 }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.34) { [weak self] in
+            // Folds back into the notch; the window goes away exactly when the animation ends.
+            withAnimation(.timingCurve(0.4, 0, 0.2, 1, duration: 0.32)) {
+                model.reveal = 0
+            } completion: { [weak self] in
                 guard let self, !self.isOpen else { return }
                 self.panel.orderOut(nil)
             }
