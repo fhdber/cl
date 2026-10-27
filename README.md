@@ -9,7 +9,7 @@ Native SwiftUI und AppKit, die Daten bleiben lokal. Keine Abhängigkeiten.
 
 | | |
 |---|---|
-| **Notch-Shelf** | Ein schwarzes Panel hängt oben aus der Notch. Es blendet sich ein, wenn die Maus in die Menüleiste fährt (und wieder aus, wenn sie sie verlässt), oder mit `⌥⌘V`. Die Karten sind nach Tagen gruppiert. |
+| **Notch-Shelf** | Ein schwarzes Panel hängt oben aus der Notch. Es wächst aus der Notch, wenn die Maus in die Menüleiste fährt, und zieht sich wieder zurück, wenn sie sie verlässt. Alternativ mit `⌥⌘V`. Die Karten sind nach Tagen gruppiert. |
 | **Quick Paste** | `⌃⌘V` öffnet an der Maus ein kompaktes Raster mit drei Spalten. Mit `↩` wird direkt eingefügt. |
 | **Bibliothek** | `⌃⌘L` öffnet ein großes Fenster mit Raster und einer Detail-Seitenleiste (Quelle, Link, Maße, erkannter Text). |
 | **Letzte 10 Clips** | `⌃⌘0` … `⌃⌘9` fügt systemweit sofort ein. Jede Karte zeigt ihr Kürzel als Badge. |

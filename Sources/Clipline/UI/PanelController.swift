@@ -98,17 +98,27 @@ final class SurfaceController {
         isOpen = true
         model.prepareForShow()
         let frame = targetFrame(on: screen, mouse: mouse)
-        // The shelf simply fades in where it lives; quick paste rises slightly from the pointer.
-        let start = surface == .shelf ? frame : frame.offsetBy(dx: 0, dy: -8)
-        panel.setFrame(start, display: false)
-        panel.alphaValue = 0
-        panel.makeKeyAndOrderFront(nil)
 
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = self.surface == .shelf ? 0.25 : 0.22
-            context.timingFunction = CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.3, 1)
-            if self.surface != .shelf { self.panel.animator().setFrame(frame, display: true) }
-            self.panel.animator().alphaValue = 1
+        if surface == .shelf {
+            // Grows out of the notch: the window sits at full size, the content is revealed.
+            model.reveal = 0
+            panel.setFrame(frame, display: false)
+            panel.alphaValue = 1
+            panel.makeKeyAndOrderFront(nil)
+            DispatchQueue.main.async {
+                withAnimation(.spring(response: 0.38, dampingFraction: 0.86)) { self.model.reveal = 1 }
+            }
+        } else {
+            // Quick paste rises slightly from the pointer.
+            panel.setFrame(frame.offsetBy(dx: 0, dy: -8), display: false)
+            panel.alphaValue = 0
+            panel.makeKeyAndOrderFront(nil)
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.22
+                context.timingFunction = CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.3, 1)
+                self.panel.animator().setFrame(frame, display: true)
+                self.panel.animator().alphaValue = 1
+            }
         }
         installMonitors()
     }
@@ -117,8 +127,17 @@ final class SurfaceController {
         guard isOpen else { return }
         isOpen = false
         removeMonitors()
+        if surface == .shelf {
+            // Folds back into the notch.
+            withAnimation(.easeIn(duration: 0.2)) { model.reveal = 0 }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) { [weak self] in
+                guard let self, !self.isOpen else { return }
+                self.panel.orderOut(nil)
+            }
+            return
+        }
         NSAnimationContext.runAnimationGroup({ context in
-            context.duration = self.surface == .shelf ? 0.2 : 0.12
+            context.duration = 0.12
             self.panel.animator().alphaValue = 0
         }, completionHandler: { [weak self] in
             guard let self, !self.isOpen else { return }

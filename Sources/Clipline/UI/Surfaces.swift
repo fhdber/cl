@@ -7,6 +7,8 @@ enum Layout {
     static let shelfHeight: CGFloat = 44 + 40 + 24 + shelfCard.height + 14
     static let detailHeight: CGFloat = 340
     static let detailGap: CGFloat = 8
+    /// Roughly the notch: where the shelf grows out of and folds back into.
+    static let notchSize = CGSize(width: 200, height: 34)
 
     // Quick paste
     static let quickPasteWidth: CGFloat = 318
@@ -54,6 +56,7 @@ struct ShelfView: View {
             }
         }
         .frame(maxHeight: .infinity, alignment: .top)
+        .mask(alignment: .top) { NotchReveal(progress: model.reveal) }
         .environment(\.colorScheme, .dark)
     }
 
@@ -87,6 +90,25 @@ struct ShelfView: View {
                 .frame(height: 40)
 
             ShelfStrip(model: model, store: store)
+        }
+    }
+}
+
+/// Grows from notch size to the full panel, anchored top-centre. The content keeps its
+/// layout and is uncovered rather than squeezed – like Supaste's shelf.
+private struct NotchReveal: View {
+    let progress: CGFloat
+
+    var body: some View {
+        GeometryReader { geometry in
+            let notch = Layout.notchSize
+            let width = notch.width + (geometry.size.width - notch.width) * progress
+            let height = notch.height + (geometry.size.height - notch.height) * progress
+            let radius = 12 + 14 * progress
+            UnevenRoundedRectangle(topLeadingRadius: 0, bottomLeadingRadius: radius,
+                                   bottomTrailingRadius: radius, topTrailingRadius: 0, style: .continuous)
+                .frame(width: width, height: height)
+                .frame(maxWidth: .infinity, alignment: .top)
         }
     }
 }

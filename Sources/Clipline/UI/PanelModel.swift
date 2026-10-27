@@ -33,6 +33,8 @@ final class PanelModel: ObservableObject {
     @Published var focusToken = 0
     @Published var isAddingCollection = false
     @Published var newCollectionName = ""
+    /// 0 = tucked into the notch, 1 = fully open. Drives the shelf's grow-from-notch reveal.
+    @Published var reveal: CGFloat = 1
 
     let store: ClipStore
     /// Cards per row, so ↑/↓ can jump a row in grid layouts.
