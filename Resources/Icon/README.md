@@ -8,6 +8,6 @@ Konzepte (SVG zum Weiterbearbeiten, PNG gerendert):
 - `B-stack`: aufgefächerter Stapel, der neueste Clip liegt vorn
 - `C-line`: Clips auf einer Linie, einer ist angehoben und ausgewählt
 - `D-glossy`: Verlauf von Blau nach Indigo, durchscheinende Karten im Hintergrund, vorn ein weißer Clip mit der Clip-Linie-Marke
-- `E-clip`: wie D, aber mit einer stilisierten Büroklammer aus einem Draht, die die Karte an der Oberkante festklemmt (**aktuell aktiv**)
+- `E-clip`: wie D, aber mit einer stilisierten Büroklammer aus einem Draht, die durchs Blatt greift (Bogen hinten, Haken vorn) und die Karte an der Oberkante festklemmt (**aktuell aktiv**)
 
 Icon wechseln: die gewünschte PNG nach `AppIcon.png` kopieren und `./scripts/build-app.sh --install` ausführen.
