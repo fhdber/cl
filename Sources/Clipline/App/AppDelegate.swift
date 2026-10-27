@@ -152,10 +152,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        statusItem.button?.image = NSImage(systemSymbolName: "list.clipboard", accessibilityDescription: "Clipline")
+        statusItem.button?.image = Self.menuBarIcon()
         let menu = NSMenu()
         menu.delegate = self
         statusItem.menu = menu
+    }
+
+    /// The app icon's paper clip as a template image, so it follows the menu bar's light/dark tint.
+    /// Same geometry as Resources/Icon/E-clip.svg, drawn upright for crisp pixels.
+    private static func menuBarIcon() -> NSImage {
+        let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { rect in
+            // Wire in icon units (y up): outer loop, long right leg, small bend, inner leg.
+            let path = NSBezierPath()
+            path.move(to: NSPoint(x: 0, y: 156))
+            path.line(to: NSPoint(x: 0, y: 374))
+            path.appendArc(withCenter: NSPoint(x: 112, y: 374), radius: 112, startAngle: 180, endAngle: 0, clockwise: true)
+            path.line(to: NSPoint(x: 224, y: 56))
+            path.appendArc(withCenter: NSPoint(x: 168, y: 56), radius: 56, startAngle: 0, endAngle: 180, clockwise: true)
+            path.line(to: NSPoint(x: 112, y: 296))
+
+            let scale: CGFloat = 13.5 / 486
+            path.transform(using: AffineTransform(m11: scale, m12: 0, m21: 0, m22: scale,
+                                                  tX: (rect.width - 224 * scale) / 2,
+                                                  tY: (rect.height - 486 * scale) / 2))
+            path.lineWidth = 1.7
+            path.lineCapStyle = .round
+            path.lineJoinStyle = .round
+            NSColor.black.setStroke()
+            path.stroke()
+            return true
+        }
+        image.isTemplate = true
+        image.accessibilityDescription = "Clipline"
+        return image
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
