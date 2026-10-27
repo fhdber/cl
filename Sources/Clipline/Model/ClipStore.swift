@@ -2,11 +2,13 @@ import AppKit
 import Combine
 import CryptoKit
 import ImageIO
+import UniformTypeIdentifiers
 
 /// Local-first library: a JSON index plus PNG files in ~/Library/Application Support/Clipline.
 final class ClipStore: ObservableObject {
     @Published private(set) var items: [ClipItem] = []
     @Published private(set) var collections: [String] = []
+    @Published private(set) var collectionColors: [String: Int] = [:]
 
     let imagesURL: URL
     private let indexURL: URL
@@ -16,6 +18,7 @@ final class ClipStore: ObservableObject {
     private struct Library: Codable {
         var items: [ClipItem]
         var collections: [String]
+        var collectionColors: [String: Int]?
     }
 
     init() {
@@ -54,11 +57,56 @@ final class ClipStore: ObservableObject {
     func ingestText(_ string: String, appName: String?, bundleID: String?) {
         let hash = Self.hash(Data(string.utf8))
         if bump(hash: hash, appName: appName, bundleID: bundleID) { return }
-        add(ClipItem(kind: ContentClassifier.classify(string), text: string,
-                     sourceAppName: appName, sourceBundleID: bundleID, contentHash: hash))
+        let item = ClipItem(kind: ContentClassifier.classify(string), text: string,
+                            sourceAppName: appName, sourceBundleID: bundleID, contentHash: hash)
+        add(item)
+        if item.kind == .link { fetchLinkPreview(for: item) }
+    }
+
+    private func fetchLinkPreview(for item: ClipItem) {
+        var raw = (item.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        if raw.lowercased().hasPrefix("www.") { raw = "https://" + raw }
+        guard let url = URL(string: raw), url.scheme?.hasPrefix("http") == true else { return }
+        LinkPreviewFetcher.fetch(url) { [weak self] title, image in
+            guard let self else { return }
+            let png = image.flatMap(Self.downscaledPNG)
+            DispatchQueue.global(qos: .utility).async {
+                var file: String?
+                if let png {
+                    let name = "\(UUID().uuidString).png"
+                    if (try? png.write(to: self.imagesURL.appendingPathComponent(name))) != nil { file = name }
+                }
+                DispatchQueue.main.async {
+                    self.update(item.id) { clip in
+                        clip.title = title
+                        if let file { clip.imageFile = file }
+                    }
+                }
+            }
+        }
+    }
+
+    private static func downscaledPNG(_ image: NSImage) -> Data? {
+        guard let tiff = image.tiffRepresentation,
+              let source = CGImageSourceCreateWithData(tiff as CFData, nil) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: 800,
+        ]
+        guard let cg = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
+        return NSBitmapImageRep(cgImage: cg).representation(using: .png, properties: [:])
     }
 
     func ingestFiles(_ urls: [URL], appName: String?, bundleID: String?) {
+        // A single image file copied in Finder becomes an image card with its file name.
+        if urls.count == 1, let url = urls.first,
+           let type = UTType(filenameExtension: url.pathExtension), type.conforms(to: .image),
+           let data = try? Data(contentsOf: url) {
+            ingestImage(data, kind: .image, title: url.lastPathComponent, fileURLs: urls,
+                        appName: appName, bundleID: bundleID)
+            return
+        }
         let hash = Self.hash(Data(urls.map(\.path).joined(separator: "\n").utf8))
         if bump(hash: hash, appName: appName, bundleID: bundleID) { return }
         add(ClipItem(kind: .file, fileURLs: urls,
@@ -66,7 +114,8 @@ final class ClipStore: ObservableObject {
     }
 
     /// Normalises any image data to PNG, stores it and runs OCR in the background.
-    func ingestImage(_ data: Data, kind: ClipKind, appName: String?, bundleID: String?) {
+    func ingestImage(_ data: Data, kind: ClipKind, title: String? = nil, fileURLs: [URL]? = nil,
+                     appName: String?, bundleID: String?) {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self,
                   let rep = NSBitmapImageRep(data: data),
@@ -81,7 +130,8 @@ final class ClipStore: ObservableObject {
                 DispatchQueue.global(qos: .utility).async {
                     guard (try? png.write(to: url)) != nil else { return }
                     DispatchQueue.main.async {
-                        let item = ClipItem(kind: kind, imageFile: file, imageSize: size,
+                        let item = ClipItem(kind: kind, title: title, imageFile: file, imageSize: size,
+                                            fileURLs: fileURLs,
                                             sourceAppName: appName, sourceBundleID: bundleID, contentHash: hash)
                         self.add(item)
                         guard Prefs.ocrEnabled else { return }
@@ -146,11 +196,13 @@ final class ClipStore: ObservableObject {
     func addCollection(_ name: String) {
         guard !collections.contains(name) else { return }
         collections.append(name)
+        collectionColors[name] = (collections.count - 1) % Theme.categoryPalette.count
         scheduleSave()
     }
 
     func removeCollection(_ name: String) {
         collections.removeAll { $0 == name }
+        collectionColors[name] = nil
         for item in items where item.collection == name {
             update(item.id) { $0.collection = nil }
         }
@@ -159,6 +211,10 @@ final class ClipStore: ObservableObject {
 
     func setCollection(_ name: String?, for ids: [UUID]) {
         for id in ids { update(id) { $0.collection = name } }
+    }
+
+    func count(in collection: String) -> Int {
+        items.reduce(0) { $1.collection == collection ? $0 + 1 : $0 }
     }
 
     // MARK: - Files
@@ -181,6 +237,19 @@ final class ClipStore: ObservableObject {
         let image = NSImage(cgImage: cg, size: NSSize(width: cg.width, height: cg.height))
         thumbnails.setObject(image, forKey: file as NSString)
         return image
+    }
+
+    private static let byteFormatter: ByteCountFormatter = {
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        return formatter
+    }()
+
+    func fileSizeText(for item: ClipItem) -> String? {
+        guard let url = imageURL(for: item),
+              let bytes = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.size] as? Int64
+        else { return nil }
+        return Self.byteFormatter.string(fromByteCount: bytes)
     }
 
     func itemProvider(for item: ClipItem) -> NSItemProvider {
@@ -218,11 +287,12 @@ final class ClipStore: ObservableObject {
         }
         items = library.items
         collections = library.collections
+        collectionColors = library.collectionColors ?? [:]
     }
 
     private func scheduleSave() {
         pendingSave?.cancel()
-        let snapshot = Library(items: items, collections: collections)
+        let snapshot = Library(items: items, collections: collections, collectionColors: collectionColors)
         let url = indexURL
         let work = DispatchWorkItem { Self.write(snapshot, to: url) }
         pendingSave = work
@@ -231,7 +301,8 @@ final class ClipStore: ObservableObject {
 
     func saveNow() {
         pendingSave?.cancel()
-        Self.write(Library(items: items, collections: collections), to: indexURL)
+        Self.write(Library(items: items, collections: collections, collectionColors: collectionColors),
+                   to: indexURL)
     }
 
     private static func write(_ library: Library, to url: URL) {

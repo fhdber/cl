@@ -39,7 +39,10 @@ enum Paster {
             pasteboard.setString(item.text ?? "", forType: .string)
         case .image, .screenshot:
             guard let url = store.imageURL(for: item), let data = try? Data(contentsOf: url) else { return }
-            pasteboard.declareTypes([.png, .tiff], owner: nil)
+            // Images copied from Finder keep their file, so pasting into Finder/Mail still yields the file.
+            let original = item.fileURLs?.first
+            pasteboard.declareTypes(original == nil ? [.png, .tiff] : [.fileURL, .png, .tiff], owner: nil)
+            if let original { pasteboard.setString(original.absoluteString, forType: .fileURL) }
             pasteboard.setData(data, forType: .png)
             if let tiff = NSImage(data: data)?.tiffRepresentation {
                 pasteboard.setData(tiff, forType: .tiff)

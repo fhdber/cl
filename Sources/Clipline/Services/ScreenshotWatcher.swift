@@ -44,7 +44,8 @@ final class ScreenshotWatcher {
             DispatchQueue.global(qos: .utility).async { [weak self] in
                 guard let data = try? Data(contentsOf: url) else { return }
                 DispatchQueue.main.async {
-                    self?.store.ingestImage(data, kind: .screenshot, appName: "Screenshot",
+                    self?.store.ingestImage(data, kind: .screenshot, title: url.lastPathComponent,
+                                            appName: "Screenshot",
                                             bundleID: "com.apple.screenshot.launcher")
                 }
             }

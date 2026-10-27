@@ -7,6 +7,7 @@ enum Prefs {
         static let captureScreenshots = "captureScreenshots"
         static let ocrEnabled = "ocrEnabled"
         static let paused = "paused"
+        static let notchHover = "notchHover"
         static let ignoredApps = "ignoredApps"
         static let didPromptAccessibility = "didPromptAccessibility"
     }
@@ -28,6 +29,7 @@ enum Prefs {
             Key.captureScreenshots: true,
             Key.ocrEnabled: true,
             Key.paused: false,
+            Key.notchHover: true,
             Key.ignoredApps: defaultIgnoredApps,
         ])
     }
@@ -35,6 +37,7 @@ enum Prefs {
     static var historyLimit: Int { defaults.integer(forKey: Key.historyLimit) }
     static var captureScreenshots: Bool { defaults.bool(forKey: Key.captureScreenshots) }
     static var ocrEnabled: Bool { defaults.bool(forKey: Key.ocrEnabled) }
+    static var notchHover: Bool { defaults.bool(forKey: Key.notchHover) }
 
     static var paused: Bool {
         get { defaults.bool(forKey: Key.paused) }

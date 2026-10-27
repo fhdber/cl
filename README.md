@@ -9,30 +9,31 @@ Native SwiftUI und AppKit, die Daten bleiben lokal. Keine Abhängigkeiten.
 
 | | |
 |---|---|
-| **Visuelle Timeline** | `⌃⌘V` öffnet eine Leiste am unteren Bildschirmrand, mit allen Clips als Karten und nach Tagen gruppiert. |
-| **Alles wird erfasst** | Text, Links, Code, Farben (`#hex`, `rgb()`, `hsl()`), Bilder, Dateien und Screenshots. Der Typ wird automatisch erkannt. |
-| **Screenshot-OCR** | Text in Bildern und Screenshots wird auf dem Gerät erkannt (Vision, DE und EN) und ist durchsuchbar. |
-| **Finden nach Typ und App** | Filter-Chips für Typen und die meistgenutzten Quell-Apps. `Tab` / `⇧Tab` schaltet durch. |
-| **Eigene Sammlungen** | Clips per Rechtsklick in Sammlungen ablegen. Sammlungen und angeheftete Clips fallen nie aus dem Verlauf. |
-| **Letzte 10 Clips** | `⌘1` … `⌘0` fügt direkt ein. |
-| **Multi-Clip Copy** | Mit `⇧←/→`, `⌘`-Klick oder `⇧`-Klick mehrere Clips wählen. `↩` fügt sie als einen Block ein. |
-| **Einfügen ohne App-Wechsel** | Das Panel aktiviert sich nicht selbst. `↩` drückt `⌘V` in der App, in der du gerade bist. |
-| **Drag & Drop** | Karten lassen sich direkt in andere Apps ziehen. |
-| **Privat** | Inhalte, die Passwort-Manager als vertraulich markieren, werden ignoriert. Dazu kommt eine Blockliste für Apps und eine Pause in der Menüleiste. |
+| **Notch-Shelf** | Ein schwarzes Panel hängt oben aus der Notch. Es öffnet sich, wenn die Maus kurz an der Notch steht, oder mit `⌥⌘V`. Die Karten sind nach Tagen gruppiert. |
+| **Quick Paste** | `⌃⌘V` öffnet an der Maus ein kompaktes Raster mit drei Spalten. Mit `↩` wird direkt eingefügt. |
+| **Bibliothek** | `⌃⌘L` öffnet ein großes Fenster mit Raster und einer Detail-Seitenleiste (Quelle, Link, Maße, erkannter Text). |
+| **Letzte 10 Clips** | `⌃⌘0` … `⌃⌘9` fügt systemweit sofort ein. Jede Karte zeigt ihr Kürzel als Badge. |
+| **Vorschau** | Auge oder Leertaste: großes Panel unter dem Shelf mit Infos. Für Farben gibt es HEX, RGB, CMYK und HSL. |
+| **Kategorien** | Farbige Pills mit Zähler. Clips per Rechtsklick zuordnen. Sie fallen nie aus dem Verlauf. |
+| **Finden nach App & Typ** | Runde Filter-Buttons für Favoriten, Typ und App. Die Suche findet auch Text in Bildern. |
+| **Screenshot-OCR** | Text in Bildern und Screenshots wird auf dem Gerät erkannt. Der Shelf-Button liest einen Bildschirmbereich aus und kopiert den Text. |
+| **Pipette** | Nimmt eine Farbe vom Bildschirm auf und kopiert sie als HEX. |
+| **Link-Vorschau** | Kopierte Links bekommen Vorschaubild und Seitentitel. |
+| **Multi-Clip Copy** | Mit `⇧←/→` oder `⌘`-Klick mehrere Clips wählen und als einen Block einfügen. |
+| **Privat** | Inhalte, die Passwort-Manager als vertraulich markieren, werden ignoriert. Dazu kommen eine Blockliste für Apps und eine Pause. |
 
-### Tastatur im Panel
+### Tastatur in Shelf, Quick Paste und Bibliothek
 
 | Taste | Aktion |
 |---|---|
-| `←` `→` | Clip wählen (mit `⇧` mehrere) |
+| `←` `→` (`↑` `↓` im Raster) | Clip wählen, mit `⇧` mehrere |
 | `↩` / Doppelklick | Einfügen |
+| `Leertaste` | Vorschau ein/aus (Shelf) |
 | `⌘C` | Nur kopieren |
-| `⌘1` … `⌘0` | Einen der letzten 10 Clips einfügen |
-| `⌘P` | Anheften / Lösen |
+| `⌘P` | Favorit |
 | `⌘⌫` | Löschen |
-| `Tab` | Nächster Filter |
-| `Esc` | Suche leeren / schließen |
-| `⌘,` | Einstellungen |
+| `Tab` | Nächste Kategorie |
+| `Esc` | Vorschau schließen, Suche leeren, Panel schließen |
 
 ## Bauen & starten
 
@@ -67,6 +68,7 @@ Die Daten liegen in `~/Library/Application Support/Clipline/` (`library.json` pl
 - **iCloud-Sync** (CloudKit, braucht einen Apple-Developer-Account)
 - **Inline Shortcuts**, also Textbausteine per Kürzel (braucht Input-Monitoring)
 - **Clip Reminders** (Erinnerung per `UNUserNotificationCenter`)
-- **Notch-Shelf** zum Zwischenparken per Drag
+- Dateien per Drag aufs Shelf ablegen
+- Bulk Copy (Sammelablage mit Zähler an der Notch)
 - **Apple Intelligence** zum Umschreiben und Zusammenfassen (Writing Tools API)
 - Frei belegbarer Hotkey

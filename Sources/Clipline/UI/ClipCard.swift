@@ -1,234 +1,269 @@
 import AppKit
 import SwiftUI
 
+/// Supaste-style card: content bleeds to the edges, a soft shade at the bottom carries the
+/// title, the source-app icon, the age and the ⌃⌘ shortcut. Hover reveals quick actions.
 struct ClipCard: View {
-    static let size = CGSize(width: 212, height: 240)
-
     let item: ClipItem
-    let index: Int
+    let size: CGSize
+    let shortcut: Int?
     let isSelected: Bool
+    let isHovered: Bool
+    var showsPreviewButton = true
     let model: PanelModel
     let store: ClipStore
 
-    private let radius: CGFloat = 14
+    private var compact: Bool { size.width < 110 }
+    private var radius: CGFloat { compact ? 10 : 12 }
+    private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: radius, style: .continuous) }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            header
-            content
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            footer
+        ZStack {
+            background
+                .frame(width: size.width, height: size.height)
+                .clipped()
+            if hasShade {
+                LinearGradient(colors: [.clear, .black.opacity(0.72)],
+                               startPoint: UnitPoint(x: 0.5, y: 0.3), endPoint: .bottom)
+            }
+            VStack(alignment: .leading, spacing: compact ? 2 : 3) {
+                if isHovered { hoverBar }
+                Spacer(minLength: 0)
+                if let title {
+                    Text(title)
+                        .font(.system(size: compact ? 10.5 : 12.5, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
+                metaRow
+            }
+            .padding(compact ? 6 : 8)
         }
-        .frame(width: Self.size.width, height: Self.size.height)
-        .background(
-            RoundedRectangle(cornerRadius: radius, style: .continuous)
-                .fill(Color.white.opacity(isSelected ? 0.09 : 0.055))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: radius, style: .continuous)
-                .strokeBorder(isSelected ? Color.white.opacity(0.9) : Color.white.opacity(0.07),
-                              lineWidth: isSelected ? 1.5 : 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
-        .scaleEffect(isSelected ? 1 : 0.985)
-        .animation(.easeOut(duration: 0.12), value: isSelected)
-        .contentShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+        .frame(width: size.width, height: size.height)
+        .clipShape(shape)
+        .overlay(shape.strokeBorder(isSelected ? Theme.selection : Theme.hairline, lineWidth: isSelected ? 2 : 1))
+        .contentShape(shape)
+        .onHover { inside in
+            if inside {
+                model.hoveredID = item.id
+            } else if model.hoveredID == item.id {
+                model.hoveredID = nil
+            }
+        }
         .onTapGesture(count: 2) { model.paste(model.targets(for: item)) }
         .onTapGesture { model.click(item) }
         .onDrag { store.itemProvider(for: item) }
-        .contextMenu { menu }
+        .contextMenu { ClipContextMenu(item: item, model: model, store: store) }
     }
 
-    // MARK: - Parts
+    // MARK: - Background
 
-    private var header: some View {
-        HStack(spacing: 6) {
-            if let icon = AppIcons.icon(for: item.sourceBundleID) {
-                Image(nsImage: icon).resizable().frame(width: 16, height: 16)
-            } else {
-                Image(systemName: item.kind.symbol).font(.system(size: 11)).frame(width: 16)
-            }
-            Text(item.kind.title)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(item.kind.tint)
-            Spacer(minLength: 4)
-            if item.pinned {
-                Image(systemName: "pin.fill").font(.system(size: 9)).foregroundStyle(.white.opacity(0.7))
-            }
-            if item.collection != nil {
-                Image(systemName: "square.stack").font(.system(size: 9)).foregroundStyle(.white.opacity(0.5))
-            }
-            Text(PanelModel.relativeTime(item.createdAt))
-                .font(.system(size: 10))
-                .foregroundStyle(.white.opacity(0.4))
-                .lineLimit(1)
+    private var hasShade: Bool {
+        switch item.kind {
+        case .image, .screenshot, .color: return true
+        case .link: return item.imageFile != nil
+        default: return false
         }
-        .padding(.horizontal, 12)
-        .frame(height: 34)
     }
 
     @ViewBuilder
-    private var content: some View {
+    private var background: some View {
         switch item.kind {
-        case .text:
-            Text(String((item.text ?? "").prefix(800)))
-                .font(.system(size: 12.5))
-                .lineSpacing(2)
-                .foregroundStyle(.white.opacity(0.88))
-                .padding(.horizontal, 12)
-
-        case .code:
-            Text(String((item.text ?? "").prefix(800)))
-                .font(.system(size: 10.5, design: .monospaced))
-                .foregroundStyle(Color(red: 0.75, green: 0.95, blue: 0.88))
-                .padding(10)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(.black.opacity(0.3)))
-                .clipped()
-                .padding(.horizontal, 8)
+        case .image, .screenshot:
+            thumbnail(fallback: "photo")
 
         case .link:
-            LinkPreview(text: item.text ?? "")
-                .padding(.horizontal, 12)
+            if item.imageFile != nil {
+                thumbnail(fallback: "globe")
+            } else {
+                ZStack(alignment: .topLeading) {
+                    Theme.card
+                    Image(systemName: "globe")
+                        .font(.system(size: compact ? 14 : 18, weight: .light))
+                        .foregroundStyle(ClipKind.link.tint)
+                        .padding(compact ? 7 : 10)
+                }
+            }
 
         case .color:
-            ColorSwatch(text: item.text ?? "")
-                .padding(.horizontal, 8)
+            Color(nsColor: ContentClassifier.color(from: item.text ?? "") ?? .gray)
 
-        case .image, .screenshot:
+        case .text, .code:
+            ZStack(alignment: .topLeading) {
+                item.kind == .code ? Color(red: 0.06, green: 0.09, blue: 0.08) : Theme.card
+                Text(String((item.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).prefix(300)))
+                    .font(item.kind == .code
+                          ? .system(size: compact ? 8.5 : 9.5, design: .monospaced)
+                          : .system(size: compact ? 10 : 11.5, weight: .medium))
+                    .foregroundStyle(item.kind == .code ? Color(red: 0.7, green: 0.95, blue: 0.85) : .white.opacity(0.92))
+                    .lineSpacing(compact ? 1 : 2)
+                    .lineLimit(compact ? 3 : 4)
+                    .padding(.horizontal, compact ? 7 : 9)
+                    .padding(.top, compact ? 8 : 11)
+            }
+
+        case .file:
+            ZStack {
+                Theme.card
+                if let first = item.fileURLs?.first {
+                    Image(nsImage: NSWorkspace.shared.icon(forFile: first.path))
+                        .resizable()
+                        .frame(width: compact ? 30 : 42, height: compact ? 30 : 42)
+                        .offset(y: compact ? -8 : -12)
+                }
+            }
+        }
+    }
+
+    private func thumbnail(fallback: String) -> some View {
+        ZStack {
+            Theme.card
             if let image = store.thumbnail(for: item) {
                 Image(nsImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .padding(.horizontal, 8)
+                    .frame(width: size.width, height: size.height)
+                    .clipped()
             } else {
-                Image(systemName: "photo").font(.system(size: 28, weight: .light))
+                Image(systemName: fallback)
+                    .font(.system(size: 20, weight: .light))
                     .foregroundStyle(.white.opacity(0.3))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-
-        case .file:
-            FilePreview(urls: item.fileURLs ?? [])
         }
     }
 
-    private var footer: some View {
-        HStack(spacing: 6) {
-            Text(item.meta)
-                .lineLimit(1)
-            if item.ocrText != nil {
-                Image(systemName: "text.viewfinder").help("Text erkannt – durchsuchbar")
+    // MARK: - Overlays
+
+    private var title: String? {
+        switch item.kind {
+        case .image, .screenshot:
+            return item.title
+        case .link:
+            let host = URL(string: item.text ?? "")?.host?.replacingOccurrences(of: "www.", with: "")
+            return host ?? item.text
+        case .color:
+            return item.text?.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        case .file:
+            let name = item.fileURLs?.first?.lastPathComponent ?? ""
+            let extra = (item.fileURLs?.count ?? 0) - 1
+            return extra > 0 ? "\(name) +\(extra)" : name
+        case .text, .code:
+            return nil
+        }
+    }
+
+    private var hoverBar: some View {
+        HStack(spacing: 4) {
+            CardIconButton(symbol: item.kind.symbol, compact: compact) { model.click(item) }
+            Spacer(minLength: 0)
+            if showsPreviewButton {
+                CardIconButton(symbol: "eye.fill", compact: compact) { model.togglePreview(item) }
             }
-            Spacer(minLength: 4)
-            if index < 10 {
-                KeyHint(text: "⌘\(index == 9 ? 0 : index + 1)")
+            CardIconButton(symbol: "trash.fill", compact: compact) { model.delete(model.targets(for: item)) }
+            CardIconButton(symbol: item.pinned ? "star.fill" : "star", compact: compact) {
+                store.togglePin([item.id])
             }
         }
-        .font(.system(size: 10))
-        .foregroundStyle(.white.opacity(0.4))
-        .padding(.horizontal, 12)
-        .frame(height: 30)
+    }
+
+    private var metaRow: some View {
+        HStack(spacing: 4) {
+            appIcon
+            Text(PanelModel.relativeTime(item.createdAt))
+                .foregroundStyle(.white.opacity(0.6))
+                .lineLimit(1)
+            Spacer(minLength: 2)
+            if let shortcut {
+                Text("⌃⌘\(shortcut)")
+                    .font(.system(size: compact ? 8.5 : 9.5, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.9))
+                    .padding(.horizontal, 5)
+                    .frame(height: compact ? 15 : 17)
+                    .background(Capsule().fill(Color.black.opacity(0.55)))
+                    .overlay(Capsule().strokeBorder(.white.opacity(0.12)))
+            } else if let size = fileSize {
+                Text(size)
+                    .foregroundStyle(.white.opacity(0.6))
+                    .lineLimit(1)
+            }
+        }
+        .font(.system(size: compact ? 9 : 10, weight: .medium))
     }
 
     @ViewBuilder
-    private var menu: some View {
+    private var appIcon: some View {
+        let side: CGFloat = compact ? 12 : 14
+        if let icon = AppIcons.icon(for: item.sourceBundleID) {
+            Image(nsImage: icon).resizable().frame(width: side, height: side)
+        } else {
+            Image(systemName: item.kind.symbol)
+                .font(.system(size: side * 0.5, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: side, height: side)
+                .background(RoundedRectangle(cornerRadius: 3).fill(.white.opacity(0.25)))
+        }
+    }
+
+    private var fileSize: String? {
+        guard item.kind == .image || item.kind == .screenshot else { return nil }
+        return store.fileSizeText(for: item)
+    }
+}
+
+private struct CardIconButton: View {
+    let symbol: String
+    let compact: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: compact ? 8 : 10, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: compact ? 18 : 22, height: compact ? 18 : 22)
+                .background(Circle().fill(Color.black.opacity(0.6)))
+                .overlay(Circle().strokeBorder(.white.opacity(0.15)))
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// Right-click menu shared by every surface.
+struct ClipContextMenu: View {
+    let item: ClipItem
+    let model: PanelModel
+    let store: ClipStore
+
+    var body: some View {
         let targets = model.targets(for: item)
         let ids = targets.map(\.id)
 
         Button(targets.count > 1 ? "\(targets.count) Clips einfügen" : "Einfügen") { model.paste(targets) }
         Button("Kopieren") { model.copy(targets) }
         Divider()
-        Button(item.pinned ? "Lösen" : "Anheften") { store.togglePin(ids) }
-        Menu("Zu Sammlung") {
+        Button(item.pinned ? "Aus Favoriten entfernen" : "Zu Favoriten") { store.togglePin(ids) }
+        Menu("Kategorie") {
             ForEach(store.collections, id: \.self) { name in
                 Button(name) { store.setCollection(name, for: ids) }
             }
             if !store.collections.isEmpty { Divider() }
-            Button("Neue Sammlung …") { model.beginNewCollection(for: targets) }
+            Button("Neue Kategorie …") { model.beginNewCollection(for: targets) }
             if item.collection != nil {
-                Button("Aus Sammlung entfernen") { store.setCollection(nil, for: ids) }
+                Button("Aus Kategorie entfernen") { store.setCollection(nil, for: ids) }
             }
         }
         if let ocr = item.ocrText {
             Button("Erkannten Text kopieren") { model.copyText(ocr) }
         }
-        if let url = item.fileURLs?.first ?? store.imageURL(for: item) {
+        if let url = item.fileURLs?.first ?? (item.kind == .link ? nil : store.imageURL(for: item)) {
             Button("Im Finder zeigen") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
         }
+        if item.kind == .link, let url = URL(string: item.text ?? "") {
+            Button("Im Browser öffnen") { NSWorkspace.shared.open(url) }
+        }
         Divider()
-        Button("Löschen", role: .destructive) { store.delete(Set(ids)) }
-    }
-}
-
-// MARK: - Content previews
-
-private struct LinkPreview: View {
-    let text: String
-
-    var body: some View {
-        let url = URL(string: text)
-        VStack(alignment: .leading, spacing: 8) {
-            Image(systemName: "globe")
-                .font(.system(size: 20, weight: .light))
-                .foregroundStyle(ClipKind.link.tint)
-                .padding(.top, 6)
-            Text(url?.host?.replacingOccurrences(of: "www.", with: "") ?? text)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(.white)
-                .lineLimit(2)
-            Text(text)
-                .font(.system(size: 11))
-                .foregroundStyle(.white.opacity(0.5))
-                .lineLimit(4)
-        }
-    }
-}
-
-private struct ColorSwatch: View {
-    let text: String
-
-    var body: some View {
-        let color = ContentClassifier.color(from: text) ?? .gray
-        let rgb = color.usingColorSpace(.sRGB) ?? color
-        let luminance = 0.299 * rgb.redComponent + 0.587 * rgb.greenComponent + 0.114 * rgb.blueComponent
-        let ink: Color = luminance > 0.6 ? .black.opacity(0.75) : .white.opacity(0.9)
-
-        RoundedRectangle(cornerRadius: 8, style: .continuous)
-            .fill(Color(nsColor: color))
-            .overlay(alignment: .bottomLeading) {
-                Text(text.trimmingCharacters(in: .whitespacesAndNewlines))
-                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(ink)
-                    .lineLimit(2)
-                    .padding(10)
-            }
-    }
-}
-
-private struct FilePreview: View {
-    let urls: [URL]
-
-    var body: some View {
-        VStack(spacing: 10) {
-            if let first = urls.first {
-                Image(nsImage: NSWorkspace.shared.icon(forFile: first.path))
-                    .resizable()
-                    .frame(width: 64, height: 64)
-                Text(first.lastPathComponent)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.88))
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                if urls.count > 1 {
-                    Text("+ \(urls.count - 1) weitere")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.45))
-                }
-            }
-        }
-        .padding(.horizontal, 12)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        Button("Löschen", role: .destructive) { model.delete(targets) }
     }
 }

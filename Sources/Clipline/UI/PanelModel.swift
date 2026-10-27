@@ -16,33 +16,34 @@ struct AppSource: Identifiable {
     var id: String { bundleID }
 }
 
-enum TimelineRow: Identifiable {
-    case day(String)
-    case clip(ClipItem, index: Int)
-
-    var id: String {
-        switch self {
-        case .day(let title): return "day-\(title)"
-        case .clip(let item, _): return item.id.uuidString
-        }
-    }
+struct DaySection: Identifiable {
+    let title: String
+    let items: [ClipItem]
+    var id: String { title }
 }
 
-/// UI state of the timeline panel: search, filter, cursor and multi-selection.
+/// UI state of one surface (shelf, quick paste or library): search, filter, cursor, selection.
 final class PanelModel: ObservableObject {
     @Published var query = "" { didSet { resetCursor() } }
     @Published var filter: ClipFilter = .all { didSet { resetCursor() } }
     @Published var cursor: UUID?
     @Published var selection: Set<UUID> = []
+    @Published var hoveredID: UUID?
+    @Published var previewID: UUID?
     @Published var focusToken = 0
     @Published var isAddingCollection = false
     @Published var newCollectionName = ""
 
     let store: ClipStore
+    /// Cards per row, so ↑/↓ can jump a row in grid layouts.
+    var columns = 1
     var onPaste: (([ClipItem]) -> Void)?
     var onCopy: (([ClipItem]) -> Void)?
     var onCopyText: ((String) -> Void)?
     var onOpenSettings: (() -> Void)?
+    var onOpenLibrary: (() -> Void)?
+    var onCaptureText: (() -> Void)?
+    var onPickColor: (() -> Void)?
     private var collectionTargets: [UUID] = []
 
     init(store: ClipStore) {
@@ -65,18 +66,26 @@ final class PanelModel: ObservableObject {
         }
     }
 
-    func rows(for items: [ClipItem]) -> [TimelineRow] {
-        var rows: [TimelineRow] = []
-        var lastDay: String?
-        for (index, item) in items.enumerated() {
-            let day = Self.dayTitle(item.createdAt)
-            if day != lastDay {
-                rows.append(.day(day))
-                lastDay = day
+    func sections(for items: [ClipItem]) -> [DaySection] {
+        var sections: [DaySection] = []
+        var current: [ClipItem] = []
+        var currentTitle: String?
+        for item in items {
+            let title = Self.dayTitle(item.createdAt)
+            if title != currentTitle, let done = currentTitle {
+                sections.append(DaySection(title: done, items: current))
+                current = []
             }
-            rows.append(.clip(item, index: index))
+            currentTitle = title
+            current.append(item)
         }
-        return rows
+        if let currentTitle { sections.append(DaySection(title: currentTitle, items: current)) }
+        return sections
+    }
+
+    /// ⌃⌘0 … ⌃⌘9 always address the ten newest clips in the whole history.
+    var shortcutIndex: [UUID: Int] {
+        Dictionary(uniqueKeysWithValues: store.items.prefix(10).enumerated().map { ($1.id, $0) })
     }
 
     var kindsPresent: [ClipKind] {
@@ -84,23 +93,28 @@ final class PanelModel: ObservableObject {
         return ClipKind.allCases.filter(present.contains)
     }
 
-    /// The most used source apps, for the app filter chips.
+    /// The most used source apps, for the app filter.
     var topApps: [AppSource] {
         var counts: [String: AppSource] = [:]
         for item in store.items {
             guard let id = item.sourceBundleID else { continue }
             counts[id, default: AppSource(bundleID: id, name: item.sourceAppName ?? id)].count += 1
         }
-        return Array(counts.values.sorted { $0.count > $1.count }.prefix(6))
+        return Array(counts.values.sorted { $0.count > $1.count }.prefix(8))
+    }
+
+    var isKindFilter: Bool {
+        if case .kind = filter { return true }
+        return false
+    }
+
+    var isAppFilter: Bool {
+        if case .app = filter { return true }
+        return false
     }
 
     var filterOptions: [ClipFilter] {
-        var options: [ClipFilter] = [.all]
-        if store.items.contains(where: \.pinned) { options.append(.pinned) }
-        options += kindsPresent.map { .kind($0) }
-        options += topApps.map { .app($0.bundleID) }
-        options += store.collections.map { .collection($0) }
-        return options
+        [.all] + store.collections.map { .collection($0) }
     }
 
     var selectedItems: [ClipItem] {
@@ -108,11 +122,21 @@ final class PanelModel: ObservableObject {
         visibleItems.filter { selection.contains($0.id) }.reversed()
     }
 
+    var previewItem: ClipItem? {
+        previewID.flatMap { id in store.items.first { $0.id == id } }
+    }
+
+    var cursorItem: ClipItem? {
+        cursor.flatMap { id in store.items.first { $0.id == id } }
+    }
+
     // MARK: - Navigation
 
     func prepareForShow() {
         query = ""
         isAddingCollection = false
+        previewID = nil
+        hoveredID = nil
         resetCursor()
         focusToken += 1
     }
@@ -120,6 +144,7 @@ final class PanelModel: ObservableObject {
     func resetCursor() {
         cursor = visibleItems.first?.id
         selection = cursor.map { Set([$0]) } ?? []
+        if previewID != nil { previewID = cursor }
     }
 
     func move(_ delta: Int, extend: Bool) {
@@ -130,6 +155,7 @@ final class PanelModel: ObservableObject {
         let id = items[next].id
         cursor = id
         if extend { selection.insert(id) } else { selection = [id] }
+        if previewID != nil { previewID = id }
     }
 
     func click(_ item: ClipItem) {
@@ -145,12 +171,27 @@ final class PanelModel: ObservableObject {
             selection = [item.id]
         }
         cursor = item.id
+        if previewID != nil { previewID = item.id }
     }
 
     func cycleFilter(_ delta: Int) {
         let options = filterOptions
         let index = options.firstIndex(of: filter) ?? 0
         filter = options[(index + delta + options.count) % options.count]
+    }
+
+    func togglePreview() {
+        previewID = previewID == nil ? cursor : nil
+    }
+
+    func togglePreview(_ item: ClipItem) {
+        if previewID == item.id {
+            previewID = nil
+        } else {
+            cursor = item.id
+            selection = [item.id]
+            previewID = item.id
+        }
     }
 
     // MARK: - Actions
@@ -175,13 +216,19 @@ final class PanelModel: ObservableObject {
         paste([items[index]])
     }
 
-    func deleteSelection() {
-        let items = visibleItems
-        let firstIndex = items.firstIndex { selection.contains($0.id) } ?? 0
-        store.delete(selection)
+    func delete(_ items: [ClipItem]) {
+        let ids = Set(items.map(\.id))
+        let visible = visibleItems
+        let firstIndex = visible.firstIndex { ids.contains($0.id) } ?? 0
+        if let previewID, ids.contains(previewID) { self.previewID = nil }
+        store.delete(ids)
         let remaining = visibleItems
         cursor = remaining.isEmpty ? nil : remaining[min(firstIndex, remaining.count - 1)].id
         selection = cursor.map { Set([$0]) } ?? []
+    }
+
+    func deleteSelection() {
+        delete(visibleItems.filter { selection.contains($0.id) })
     }
 
     func togglePinSelection() {
@@ -226,7 +273,7 @@ final class PanelModel: ObservableObject {
     private static let dayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "de_DE")
-        formatter.setLocalizedDateFormatFromTemplate("EEEEdMMM")
+        formatter.setLocalizedDateFormatFromTemplate("EEEdMMM")
         return formatter
     }()
 

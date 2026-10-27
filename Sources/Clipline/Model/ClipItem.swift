@@ -63,6 +63,8 @@ struct ClipItem: Codable, Identifiable, Equatable {
     var kind: ClipKind
     var createdAt: Date
     var text: String?
+    /// File name for images/screenshots, page title for links.
+    var title: String?
     var imageFile: String?
     var imageSize: CGSize?
     var fileURLs: [URL]?
@@ -75,6 +77,7 @@ struct ClipItem: Codable, Identifiable, Equatable {
 
     init(kind: ClipKind,
          text: String? = nil,
+         title: String? = nil,
          imageFile: String? = nil,
          imageSize: CGSize? = nil,
          fileURLs: [URL]? = nil,
@@ -85,6 +88,7 @@ struct ClipItem: Codable, Identifiable, Equatable {
         self.kind = kind
         self.createdAt = Date()
         self.text = text
+        self.title = title
         self.imageFile = imageFile
         self.imageSize = imageSize
         self.fileURLs = fileURLs
@@ -100,6 +104,7 @@ struct ClipItem: Codable, Identifiable, Equatable {
     var searchText: String {
         [
             text,
+            title,
             ocrText,
             fileURLs?.map(\.lastPathComponent).joined(separator: " "),
             sourceAppName,
@@ -113,6 +118,7 @@ struct ClipItem: Codable, Identifiable, Equatable {
     var menuTitle: String {
         switch kind {
         case .image, .screenshot:
+            if let title { return title }
             return imageSize.map { "\(kind.title) · \(Int($0.width))×\(Int($0.height))" } ?? kind.title
         case .file:
             return fileURLs?.first?.lastPathComponent ?? kind.title

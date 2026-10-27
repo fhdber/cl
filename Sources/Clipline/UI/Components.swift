@@ -1,28 +1,6 @@
 import AppKit
 import SwiftUI
 
-struct VisualEffect: NSViewRepresentable {
-    var material: NSVisualEffectView.Material = .hudWindow
-    var cornerRadius: CGFloat = 0
-
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let view = NSVisualEffectView()
-        view.material = material
-        view.blendingMode = .behindWindow
-        view.state = .active
-        view.wantsLayer = true
-        view.layer?.cornerRadius = cornerRadius
-        view.layer?.cornerCurve = .continuous
-        view.layer?.masksToBounds = true
-        return view
-    }
-
-    func updateNSView(_ view: NSVisualEffectView, context: Context) {
-        view.material = material
-        view.layer?.cornerRadius = cornerRadius
-    }
-}
-
 enum AppIcons {
     private static var cache: [String: NSImage] = [:]
 
@@ -33,29 +11,6 @@ enum AppIcons {
         let icon = NSWorkspace.shared.icon(forFile: url.path)
         cache[bundleID] = icon
         return icon
-    }
-}
-
-struct FilterChip<Content: View>: View {
-    let isOn: Bool
-    let action: () -> Void
-    @ViewBuilder let label: () -> Content
-
-    var body: some View {
-        Button(action: action) {
-            label()
-                .font(.system(size: 12, weight: .medium))
-                .padding(.horizontal, 10)
-                .frame(height: 26)
-                .foregroundStyle(isOn ? Color.black : Color.white.opacity(0.82))
-                .background(
-                    Capsule().fill(isOn ? Color.white.opacity(0.92)
-                                        : Color.white.opacity(0.07))
-                )
-                .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .animation(.easeOut(duration: 0.12), value: isOn)
     }
 }
 

@@ -15,13 +15,24 @@ struct SettingsView: View {
     @AppStorage(Prefs.Key.historyLimit) private var historyLimit = 1000
     @AppStorage(Prefs.Key.captureScreenshots) private var captureScreenshots = true
     @AppStorage(Prefs.Key.ocrEnabled) private var ocrEnabled = true
+    @AppStorage(Prefs.Key.notchHover) private var notchHover = true
     @AppStorage(Prefs.Key.ignoredApps) private var ignoredAppsRaw = Prefs.defaultIgnoredApps
 
     var body: some View {
         Form {
             Section("Allgemein") {
                 Toggle("Beim Anmelden starten", isOn: launchAtLogin)
-                LabeledContent("Verlauf öffnen") { KeyHint(text: "⌃ ⌘ V") }
+                Toggle("Shelf öffnen, wenn die Maus die Notch berührt", isOn: $notchHover)
+            }
+
+            Section("Kurzbefehle") {
+                LabeledContent("Quick Paste") { KeyHint(text: "⌃ ⌘ V") }
+                LabeledContent("Shelf") { KeyHint(text: "⌥ ⌘ V") }
+                LabeledContent("Bibliothek") { KeyHint(text: "⌃ ⌘ L") }
+                LabeledContent("Letzte 10 Clips einfügen") { KeyHint(text: "⌃ ⌘ 0 … 9") }
+            }
+
+            Section("Verlauf") {
                 Picker("Verlauf behalten", selection: $historyLimit) {
                     Text("200 Clips").tag(200)
                     Text("1.000 Clips").tag(1000)
@@ -77,7 +88,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 460, height: 720)
+        .frame(width: 480, height: 760)
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             refresher.refresh()
         }

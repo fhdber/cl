@@ -6,11 +6,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let store = ClipStore()
     private var monitor: PasteboardMonitor!
     private var screenshots: ScreenshotWatcher!
-    private var panel: PanelController!
-    private var hotKey: HotKey?
+    private var shelf: SurfaceController!
+    private var quickPaste: SurfaceController!
+    private var library: LibraryController!
+    private var notchHover: NotchHover!
+    private var hotKeys: [HotKey] = []
     private var statusItem: NSStatusItem!
     private var settingsWindow: NSWindow?
     private var defaultsObserver: NSObjectProtocol?
+
+    /// kVK_ANSI_0 … kVK_ANSI_9
+    private static let digitKeyCodes = [kVK_ANSI_0, kVK_ANSI_1, kVK_ANSI_2, kVK_ANSI_3, kVK_ANSI_4,
+                                        kVK_ANSI_5, kVK_ANSI_6, kVK_ANSI_7, kVK_ANSI_8, kVK_ANSI_9]
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Prefs.register()
@@ -21,13 +28,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         screenshots = ScreenshotWatcher(store: store)
         if Prefs.captureScreenshots { screenshots.start() }
 
-        panel = PanelController(store: store, monitor: monitor)
-        panel.onOpenSettings = { [weak self] in self?.openSettings() }
+        shelf = SurfaceController(surface: .shelf, store: store, monitor: monitor)
+        quickPaste = SurfaceController(surface: .quickPaste, store: store, monitor: monitor)
+        library = LibraryController(store: store, monitor: monitor)
 
-        // ⌃⌘V opens the timeline from anywhere.
-        hotKey = HotKey(keyCode: UInt32(kVK_ANSI_V), modifiers: UInt32(controlKey | cmdKey)) { [weak self] in
-            self?.panel.toggle()
+        for model in [shelf.model, quickPaste.model, library.model] {
+            model.onOpenSettings = { [weak self] in self?.openSettings() }
+            model.onOpenLibrary = { [weak self] in self?.openLibrary() }
         }
+        shelf.model.onCaptureText = { [weak self] in self?.captureText() }
+        shelf.model.onPickColor = { [weak self] in self?.pickColor() }
+
+        registerHotKeys()
+
+        notchHover = NotchHover { [weak self] in
+            guard let self, !self.shelf.isOpen else { return }
+            self.quickPaste.hideNow()
+            self.shelf.show()
+        }
+        if Prefs.notchHover { notchHover.start() }
 
         setupStatusItem()
         observeDefaults()
@@ -40,6 +59,93 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         store.saveNow()
+    }
+
+    // MARK: - Shortcuts
+
+    private func registerHotKeys() {
+        let controlCommand = UInt32(controlKey | cmdKey)
+        // ⌃⌘V quick paste · ⌥⌘V shelf · ⌃⌘L library
+        hotKeys.append(HotKey(keyCode: UInt32(kVK_ANSI_V), modifiers: controlCommand) { [weak self] in
+            self?.toggleQuickPaste()
+        })
+        hotKeys.append(HotKey(keyCode: UInt32(kVK_ANSI_V), modifiers: UInt32(optionKey | cmdKey)) { [weak self] in
+            self?.toggleShelf()
+        })
+        hotKeys.append(HotKey(keyCode: UInt32(kVK_ANSI_L), modifiers: controlCommand) { [weak self] in
+            self?.openLibrary()
+        })
+        // ⌃⌘0 … ⌃⌘9 paste one of the ten newest clips straight away.
+        for (index, keyCode) in Self.digitKeyCodes.enumerated() {
+            hotKeys.append(HotKey(keyCode: UInt32(keyCode), modifiers: controlCommand) { [weak self] in
+                self?.pasteRecent(index)
+            })
+        }
+    }
+
+    @objc private func toggleQuickPaste() {
+        shelf.hideNow()
+        quickPaste.toggle()
+    }
+
+    @objc private func toggleShelf() {
+        quickPaste.hideNow()
+        shelf.toggle()
+    }
+
+    @objc private func openLibrary() {
+        shelf.hideNow()
+        quickPaste.hideNow()
+        library.show()
+    }
+
+    private func pasteRecent(_ index: Int) {
+        guard store.items.indices.contains(index) else { return }
+        shelf.hideNow()
+        quickPaste.hideNow()
+        Paster.write([store.items[index]], store: store)
+        monitor.skipCurrentChange()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { Paster.sendPasteKeystroke() }
+    }
+
+    // MARK: - Shelf tools
+
+    /// Select a screen area: it's stored as a screenshot and its text lands on the clipboard.
+    private func captureText() {
+        shelf.hideNow()
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("clipline-capture-\(UUID().uuidString).png")
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+        process.arguments = ["-i", "-x", url.path]
+        process.terminationHandler = { [weak self] _ in
+            DispatchQueue.main.async {
+                guard let self, let data = try? Data(contentsOf: url) else { return }
+                self.store.ingestImage(data, kind: .screenshot, title: "Textaufnahme", appName: "Screenshot",
+                                       bundleID: "com.apple.screenshot.launcher")
+                TextRecognizer.recognize(imageAt: url) { text in
+                    try? FileManager.default.removeItem(at: url)
+                    guard let text else { return }
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(text, forType: .string)
+                }
+            }
+        }
+        try? process.run()
+    }
+
+    private func pickColor() {
+        shelf.hideNow()
+        let sampler = NSColorSampler()
+        sampler.show { color in
+            _ = sampler
+            guard let color = color?.usingColorSpace(.sRGB) else { return }
+            let hex = String(format: "#%02X%02X%02X",
+                             Int(round(color.redComponent * 255)),
+                             Int(round(color.greenComponent * 255)),
+                             Int(round(color.blueComponent * 255)))
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(hex, forType: .string)
+        }
     }
 
     // MARK: - Status item
@@ -55,52 +161,58 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
 
-        let open = NSMenuItem(title: "Verlauf öffnen", action: #selector(openPanel), keyEquivalent: "v")
-        open.keyEquivalentModifierMask = [.control, .command]
-        open.target = self
-        menu.addItem(open)
+        addItem(to: menu, "Bibliothek öffnen", #selector(openLibraryFromMenu), key: "l", modifiers: [.control, .command])
+        addItem(to: menu, "Quick Paste …", #selector(openQuickPasteFromMenu), key: "v", modifiers: [.control, .command])
+        addItem(to: menu, "Shelf öffnen", #selector(openShelfFromMenu), key: "v", modifiers: [.option, .command])
+
+        let history = NSMenu()
+        for (index, item) in store.items.prefix(10).enumerated() {
+            let entry = NSMenuItem(title: item.menuTitle, action: #selector(pasteFromMenu(_:)), keyEquivalent: "\(index)")
+            entry.keyEquivalentModifierMask = [.control, .command]
+            entry.representedObject = index
+            entry.image = AppIcons.icon(for: item.sourceBundleID).map { icon in
+                let small = icon.copy() as? NSImage ?? icon
+                small.size = NSSize(width: 16, height: 16)
+                return small
+            }
+            entry.target = self
+            history.addItem(entry)
+        }
+        if history.items.isEmpty {
+            let empty = NSMenuItem(title: "Noch leer", action: nil, keyEquivalent: "")
+            empty.isEnabled = false
+            history.addItem(empty)
+        }
+        let historyItem = NSMenuItem(title: "Verlauf", action: nil, keyEquivalent: "")
+        historyItem.submenu = history
+        menu.addItem(historyItem)
         menu.addItem(.separator())
 
-        let recent = store.items.prefix(5)
-        if !recent.isEmpty {
-            let header = NSMenuItem(title: "Zuletzt kopiert", action: nil, keyEquivalent: "")
-            header.isEnabled = false
-            menu.addItem(header)
-            for item in recent {
-                let entry = NSMenuItem(title: item.menuTitle, action: #selector(copyRecent(_:)), keyEquivalent: "")
-                entry.representedObject = item.id
-                entry.image = NSImage(systemSymbolName: item.kind.symbol, accessibilityDescription: nil)
-                entry.target = self
-                menu.addItem(entry)
-            }
-            menu.addItem(.separator())
-        }
-
-        let pause = NSMenuItem(title: Prefs.paused ? "Aufnahme fortsetzen" : "Aufnahme pausieren",
-                               action: #selector(togglePause), keyEquivalent: "")
-        pause.target = self
-        menu.addItem(pause)
-
-        let settings = NSMenuItem(title: "Einstellungen …", action: #selector(openSettings), keyEquivalent: ",")
-        settings.target = self
-        menu.addItem(settings)
+        addItem(to: menu, "Einstellungen …", #selector(openSettings), key: ",", modifiers: [.command])
+        addItem(to: menu, Prefs.paused ? "Aufnahme fortsetzen" : "Aufnahme pausieren", #selector(togglePause))
+        addItem(to: menu, "Verlauf löschen …", #selector(confirmClearHistory))
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Clipline beenden", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
 
         statusItem.button?.appearsDisabled = Prefs.paused
     }
 
-    @objc private func openPanel() {
-        // Let the menu finish closing before the panel takes key focus.
-        DispatchQueue.main.async { self.panel.show() }
+    private func addItem(to menu: NSMenu, _ title: String, _ action: Selector,
+                         key: String = "", modifiers: NSEvent.ModifierFlags = []) {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: key)
+        item.keyEquivalentModifierMask = modifiers
+        item.target = self
+        menu.addItem(item)
     }
 
-    @objc private func copyRecent(_ sender: NSMenuItem) {
-        guard let id = sender.representedObject as? UUID,
-              let item = store.items.first(where: { $0.id == id }) else { return }
-        Paster.write([item], store: store)
-        monitor.skipCurrentChange()
-        store.moveToTop([id])
+    // Let the menu finish closing before a panel takes key focus.
+    @objc private func openLibraryFromMenu() { DispatchQueue.main.async { self.openLibrary() } }
+    @objc private func openQuickPasteFromMenu() { DispatchQueue.main.async { self.toggleQuickPaste() } }
+    @objc private func openShelfFromMenu() { DispatchQueue.main.async { self.toggleShelf() } }
+
+    @objc private func pasteFromMenu(_ sender: NSMenuItem) {
+        guard let index = sender.representedObject as? Int else { return }
+        DispatchQueue.main.async { self.pasteRecent(index) }
     }
 
     @objc private func togglePause() {
@@ -108,8 +220,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusItem.button?.appearsDisabled = Prefs.paused
     }
 
+    @objc private func confirmClearHistory() {
+        NSApp.activate()
+        let alert = NSAlert()
+        alert.messageText = "Gesamten Verlauf löschen?"
+        alert.informativeText = "Favoriten und Clips in Kategorien bleiben erhalten."
+        alert.addButton(withTitle: "Löschen")
+        alert.addButton(withTitle: "Abbrechen")
+        alert.buttons.first?.hasDestructiveAction = true
+        if alert.runModal() == .alertFirstButtonReturn { store.clearHistory() }
+    }
+
     @objc func openSettings() {
-        panel.hide()
+        shelf.hideNow()
+        quickPaste.hideNow()
         if settingsWindow == nil {
             let host = NSHostingController(rootView: SettingsView(store: store, refresher: SettingsRefresher()))
             let window = NSWindow(contentViewController: host)
@@ -131,6 +255,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         ) { [weak self] _ in
             guard let self else { return }
             if Prefs.captureScreenshots { self.screenshots.start() } else { self.screenshots.stop() }
+            if Prefs.notchHover { self.notchHover.start() } else { self.notchHover.stop() }
             self.store.prune()
         }
     }
