@@ -42,10 +42,19 @@ final class PasteboardMonitor {
 
         let app = NSWorkspace.shared.frontmostApplication
         if let id = app?.bundleIdentifier, Prefs.ignoredApps.contains(id) { return }
-        capture(types: types, appName: app?.localizedName, bundleID: app?.bundleIdentifier)
+        // ⌃⇧⌘4 copies via the screencaptureui helper, which has no proper icon.
+        if app?.bundleIdentifier == Self.screenCaptureHelper {
+            capture(types: types, appName: "Screenshot", bundleID: Self.screenshotApp, isScreenshot: true)
+        } else {
+            capture(types: types, appName: app?.localizedName, bundleID: app?.bundleIdentifier, isScreenshot: false)
+        }
     }
 
-    private func capture(types: [NSPasteboard.PasteboardType], appName: String?, bundleID: String?) {
+    private static let screenCaptureHelper = "com.apple.screencaptureui"
+    private static let screenshotApp = "com.apple.screenshot.launcher"
+
+    private func capture(types: [NSPasteboard.PasteboardType], appName: String?, bundleID: String?,
+                         isScreenshot: Bool) {
         if types.contains(.fileURL),
            let urls = pasteboard.readObjects(forClasses: [NSURL.self],
                                              options: [.urlReadingFileURLsOnly: true]) as? [URL],
@@ -60,7 +69,7 @@ final class PasteboardMonitor {
         let stringIndex = types.firstIndex(of: .string)
         if let imageIndex, stringIndex.map({ imageIndex < $0 }) ?? true,
            let data = pasteboard.data(forType: types[imageIndex]) {
-            store.ingestImage(data, kind: .image, appName: appName, bundleID: bundleID)
+            store.ingestImage(data, kind: isScreenshot ? .screenshot : .image, appName: appName, bundleID: bundleID)
             return
         }
 

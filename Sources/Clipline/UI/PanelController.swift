@@ -133,7 +133,8 @@ final class SurfaceController {
             let height = Layout.shelfHeight + (model.previewID == nil ? 0 : Layout.detailGap + Layout.detailHeight)
             return NSRect(x: screen.frame.midX - width / 2, y: screen.frame.maxY - height, width: width, height: height)
         case .quickPaste:
-            let size = Layout.quickPasteSize
+            let size = CGSize(width: Layout.quickPasteWidth,
+                              height: Layout.quickPasteHeight(itemCount: model.visibleItems.count))
             let visible = screen.visibleFrame
             let x = min(max(mouse.x - 24, visible.minX + 8), visible.maxX - size.width - 8)
             var y = mouse.y - size.height - 12

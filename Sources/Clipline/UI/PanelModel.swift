@@ -277,13 +277,6 @@ final class PanelModel: ObservableObject {
         return formatter
     }()
 
-    private static let relativeFormatter: RelativeDateTimeFormatter = {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.locale = Locale(identifier: "de_DE")
-        formatter.unitsStyle = .short
-        return formatter
-    }()
-
     static func dayTitle(_ date: Date) -> String {
         let calendar = Calendar.current
         if calendar.isDateInToday(date) { return "Heute" }
@@ -291,8 +284,15 @@ final class PanelModel: ObservableObject {
         return dayFormatter.string(from: date)
     }
 
+    /// Short ages that fit a card: "jetzt", "5 Min.", "3 Std.", "2 T.", "1 Wo."
     static func relativeTime(_ date: Date) -> String {
-        if Date().timeIntervalSince(date) < 60 { return "gerade eben" }
-        return relativeFormatter.localizedString(for: date, relativeTo: Date())
+        let seconds = max(0, Int(Date().timeIntervalSince(date)))
+        switch seconds {
+        case ..<60: return "jetzt"
+        case ..<3600: return "\(seconds / 60) Min."
+        case ..<86_400: return "\(seconds / 3600) Std."
+        case ..<604_800: return "\(seconds / 86_400) T."
+        default: return "\(seconds / 604_800) Wo."
+        }
     }
 }

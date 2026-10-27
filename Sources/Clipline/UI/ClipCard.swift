@@ -188,7 +188,7 @@ struct ClipCard: View {
                 .foregroundStyle(.white.opacity(0.6))
                 .lineLimit(1)
             Spacer(minLength: 2)
-            if let shortcut {
+            if let shortcut, !compact {
                 Text("⌃⌘\(shortcut)")
                     .font(.system(size: compact ? 8.5 : 9.5, weight: .bold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.9))
@@ -196,7 +196,7 @@ struct ClipCard: View {
                     .frame(height: compact ? 15 : 17)
                     .background(Capsule().fill(Color.black.opacity(0.55)))
                     .overlay(Capsule().strokeBorder(.white.opacity(0.12)))
-            } else if let size = fileSize {
+            } else if let size = fileSize, !compact {
                 Text(size)
                     .foregroundStyle(.white.opacity(0.6))
                     .lineLimit(1)

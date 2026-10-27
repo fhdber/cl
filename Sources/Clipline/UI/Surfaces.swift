@@ -3,15 +3,25 @@ import SwiftUI
 enum Layout {
     // Notch shelf
     static let shelfWidth: CGFloat = 660
-    static let shelfCard = CGSize(width: 126, height: 94)
+    static let shelfCard = CGSize(width: 136, height: 100)
     static let shelfHeight: CGFloat = 44 + 40 + 24 + shelfCard.height + 14
     static let detailHeight: CGFloat = 340
     static let detailGap: CGFloat = 8
 
     // Quick paste
-    static let quickPasteSize = CGSize(width: 312, height: 420)
+    static let quickPasteWidth: CGFloat = 318
     static let quickPasteColumns = 3
-    static let quickPasteCard = CGSize(width: 92, height: 70)
+    static let quickPasteCard = CGSize(width: 94, height: 72)
+    static let quickPasteSpacing: CGFloat = 6
+    static let quickPasteMaxRows = 4
+    /// Padding + search row + filter row + gaps around the grid.
+    static let quickPasteChrome: CGFloat = 10 + 30 + 8 + 28 + 8 + 4 + 10
+
+    /// Grows with the content, up to four rows – like Supaste's popup.
+    static func quickPasteHeight(itemCount: Int) -> CGFloat {
+        let rows = min(quickPasteMaxRows, max(1, (itemCount + quickPasteColumns - 1) / quickPasteColumns))
+        return quickPasteChrome + CGFloat(rows) * quickPasteCard.height + CGFloat(rows - 1) * quickPasteSpacing
+    }
 
     // Library
     static let libraryCard = CGSize(width: 150, height: 112)
@@ -145,10 +155,11 @@ struct QuickPasteView: View {
                       showsTypeAndApp: false, height: 26)
                 .frame(height: 28)
             CardGrid(model: model, store: store, card: Layout.quickPasteCard,
-                     columns: Layout.quickPasteColumns, spacing: 6, showsPreviewButton: false)
+                     columns: Layout.quickPasteColumns, spacing: Layout.quickPasteSpacing,
+                     showsPreviewButton: false)
         }
         .padding(10)
-        .frame(width: Layout.quickPasteSize.width, height: Layout.quickPasteSize.height)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Self.shape.fill(Color(white: 0.07)))
         .overlay(Self.shape.strokeBorder(.white.opacity(0.1)))
         .clipShape(Self.shape)
@@ -221,22 +232,25 @@ struct LibraryView: View {
                 SearchRow(model: model) {
                     RoundButton(symbol: "gearshape.fill", help: "Einstellungen") { model.onOpenSettings?() }
                 }
-                .padding(.leading, 64) // room for the traffic lights
+                .padding(.leading, 66) // sits on the title bar, next to the traffic lights
                 .frame(height: 30)
 
                 FilterBar(model: model, store: store, allTitle: "Verlauf", showsAllCount: true)
                     .frame(height: 32)
 
                 GeometryReader { geometry in
+                    // Cards stretch so the columns always fill the full width.
                     let spacing: CGFloat = 10
                     let columns = max(2, Int((geometry.size.width + spacing) / (Layout.libraryCard.width + spacing)))
-                    CardGrid(model: model, store: store, card: Layout.libraryCard, columns: columns,
-                             spacing: spacing, showsPreviewButton: false)
+                    let cardWidth = max(80, floor((geometry.size.width - spacing * CGFloat(columns - 1)) / CGFloat(columns)))
+                    CardGrid(model: model, store: store,
+                             card: CGSize(width: cardWidth, height: floor(cardWidth * 0.75)),
+                             columns: columns, spacing: spacing, showsPreviewButton: false)
                         .onChange(of: columns, initial: true) { model.columns = columns }
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.top, 10)
+            .padding(.top, 1)
             .padding(.bottom, 4)
 
             if let item = model.cursorItem, model.selection.count == 1 {
@@ -246,6 +260,7 @@ struct LibraryView: View {
             }
         }
         .background(Theme.surface)
+        .ignoresSafeArea() // content runs under the transparent title bar
         .environment(\.colorScheme, .dark)
     }
 }
