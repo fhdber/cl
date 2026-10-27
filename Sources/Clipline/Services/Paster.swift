@@ -6,7 +6,7 @@ enum Paster {
     static var isTrusted: Bool { AXIsProcessTrusted() }
 
     static func requestAccess() {
-        let key = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
+        let key = "AXTrustedCheckOptionPrompt" // kAXTrustedCheckOptionPrompt
         _ = AXIsProcessTrustedWithOptions([key: true] as CFDictionary)
     }
 

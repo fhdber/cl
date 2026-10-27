@@ -154,10 +154,7 @@ struct ClipCard: View {
             }
         }
         if let ocr = item.ocrText {
-            Button("Erkannten Text kopieren") {
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(ocr, forType: .string)
-            }
+            Button("Erkannten Text kopieren") { model.copyText(ocr) }
         }
         if let url = item.fileURLs?.first ?? store.imageURL(for: item) {
             Button("Im Finder zeigen") { NSWorkspace.shared.activateFileViewerSelecting([url]) }

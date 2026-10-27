@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import CryptoKit
 import ImageIO
 
@@ -208,7 +209,13 @@ final class ClipStore: ObservableObject {
         guard let data = try? Data(contentsOf: indexURL) else { return }
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
-        guard let library = try? decoder.decode(Library.self, from: data) else { return }
+        guard let library = try? decoder.decode(Library.self, from: data) else {
+            // Never overwrite an unreadable library: keep it aside for recovery.
+            let backup = indexURL.deletingLastPathComponent()
+                .appendingPathComponent("library.unreadable-\(Int(Date().timeIntervalSince1970)).json")
+            try? FileManager.default.moveItem(at: indexURL, to: backup)
+            return
+        }
         items = library.items
         collections = library.collections
     }

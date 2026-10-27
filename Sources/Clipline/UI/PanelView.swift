@@ -96,7 +96,10 @@ private struct TopBar: View {
         .padding(.horizontal, 16)
         .frame(height: 52)
         .onChange(of: model.focusToken, initial: true) { focus = .search }
-        .onChange(of: model.isAddingCollection) { _, adding in focus = adding ? .collection : .search }
+        .onChange(of: model.isAddingCollection) { _, adding in
+            // Wait one runloop so the collection field exists before it takes focus.
+            DispatchQueue.main.async { focus = adding ? .collection : .search }
+        }
     }
 
     private var search: some View {

@@ -1,4 +1,5 @@
 import Carbon
+import Foundation
 
 /// System-wide shortcut via Carbon's RegisterEventHotKey – needs no extra permissions.
 final class HotKey {

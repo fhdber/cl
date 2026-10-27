@@ -43,10 +43,17 @@ final class PanelController {
         model = PanelModel(store: store)
         model.onPaste = { [weak self] items in self?.deliver(items, paste: true) }
         model.onCopy = { [weak self] items in self?.deliver(items, paste: false) }
+        model.onCopyText = { [weak self] text in
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(text, forType: .string)
+            self?.monitor.skipCurrentChange()
+        }
         model.onOpenSettings = { [weak self] in self?.onOpenSettings?() }
 
         let root = PanelView(model: model, store: store)
-        panel.contentView = NSHostingView(rootView: root)
+        let host = NSHostingView(rootView: root)
+        host.sizingOptions = [] // the controller owns the panel frame
+        panel.contentView = host
 
         resignObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.didResignKeyNotification, object: panel, queue: .main
@@ -77,8 +84,8 @@ final class PanelController {
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.2
             context.timingFunction = CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.3, 1)
-            panel.animator().setFrame(frame, display: true)
-            panel.animator().alphaValue = 1
+            self.panel.animator().setFrame(frame, display: true)
+            self.panel.animator().alphaValue = 1
         }
         installMonitors()
     }
@@ -89,7 +96,7 @@ final class PanelController {
         removeMonitors()
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.12
-            panel.animator().alphaValue = 0
+            self.panel.animator().alphaValue = 0
         }, completionHandler: { [weak self] in
             guard let self, !self.isOpen else { return }
             self.panel.orderOut(nil)
@@ -100,9 +107,12 @@ final class PanelController {
         Paster.write(items, store: store)
         monitor.skipCurrentChange()
         if items.count == 1 { store.moveToTop(items.map(\.id)) }
-        hide()
+        // Close instantly so the synthetic ⌘V reaches the target app, not this panel.
+        isOpen = false
+        removeMonitors()
+        panel.orderOut(nil)
         if paste {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { Paster.sendPasteKeystroke() }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { Paster.sendPasteKeystroke() }
         }
     }
 

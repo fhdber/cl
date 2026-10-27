@@ -24,6 +24,8 @@
     <true/>
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.productivity</string>
+    <key>NSDesktopFolderUsageDescription</key>
+    <string>Clipline übernimmt Screenshots, die auf deinem Schreibtisch gespeichert werden.</string>
     <key>NSHighResolutionCapable</key>
     <true/>
 </dict>

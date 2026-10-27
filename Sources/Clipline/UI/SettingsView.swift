@@ -19,10 +19,14 @@ struct SettingsView: View {
             Section("Allgemein") {
                 Toggle("Beim Anmelden starten", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, enabled in
-                        if enabled {
-                            try? SMAppService.mainApp.register()
-                        } else {
-                            try? SMAppService.mainApp.unregister()
+                        do {
+                            if enabled {
+                                try SMAppService.mainApp.register()
+                            } else {
+                                try SMAppService.mainApp.unregister()
+                            }
+                        } catch {
+                            launchAtLogin = SMAppService.mainApp.status == .enabled
                         }
                     }
                 LabeledContent("Verlauf öffnen") { KeyHint(text: "⌃ ⌘ V") }

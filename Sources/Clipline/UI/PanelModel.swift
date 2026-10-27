@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 
 enum ClipFilter: Hashable {
     case all
@@ -40,6 +41,7 @@ final class PanelModel: ObservableObject {
     let store: ClipStore
     var onPaste: (([ClipItem]) -> Void)?
     var onCopy: (([ClipItem]) -> Void)?
+    var onCopyText: ((String) -> Void)?
     var onOpenSettings: (() -> Void)?
     private var collectionTargets: [UUID] = []
 
@@ -160,6 +162,7 @@ final class PanelModel: ObservableObject {
 
     func paste(_ items: [ClipItem]) { onPaste?(items) }
     func copy(_ items: [ClipItem]) { onCopy?(items) }
+    func copyText(_ text: String) { onCopyText?(text) }
 
     func pasteSelection() {
         let items = selectedItems
