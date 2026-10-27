@@ -39,6 +39,11 @@ final class SurfaceController {
     private let monitor: PasteboardMonitor
     private var keyMonitor: Any?
     private var clickMonitor: Any?
+    private var hoverMonitors: [Any] = []
+    private var pendingAutoHide: DispatchWorkItem?
+    /// Opened by moving into the menu bar: fades out again when the pointer leaves,
+    /// until you type or click inside.
+    private var autoHidesOnLeave = false
     private var resignObserver: NSObjectProtocol?
     private var previewSubscription: AnyCancellable?
     private var screen: NSScreen?
@@ -82,8 +87,9 @@ final class SurfaceController {
         isOpen ? hide() : show()
     }
 
-    func show() {
+    func show(openedByHover: Bool = false) {
         guard !isOpen else { return }
+        autoHidesOnLeave = openedByHover
         let mouse = NSEvent.mouseLocation
         guard let screen = NSScreen.screens.first(where: { NSMouseInRect(mouse, $0.frame, false) }) ?? NSScreen.main
         else { return }
@@ -92,15 +98,16 @@ final class SurfaceController {
         isOpen = true
         model.prepareForShow()
         let frame = targetFrame(on: screen, mouse: mouse)
-        let start = surface == .shelf ? frame.offsetBy(dx: 0, dy: 18) : frame.offsetBy(dx: 0, dy: -8)
+        // The shelf simply fades in where it lives; quick paste rises slightly from the pointer.
+        let start = surface == .shelf ? frame : frame.offsetBy(dx: 0, dy: -8)
         panel.setFrame(start, display: false)
         panel.alphaValue = 0
         panel.makeKeyAndOrderFront(nil)
 
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.22
+            context.duration = self.surface == .shelf ? 0.25 : 0.22
             context.timingFunction = CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.3, 1)
-            self.panel.animator().setFrame(frame, display: true)
+            if self.surface != .shelf { self.panel.animator().setFrame(frame, display: true) }
             self.panel.animator().alphaValue = 1
         }
         installMonitors()
@@ -111,7 +118,7 @@ final class SurfaceController {
         isOpen = false
         removeMonitors()
         NSAnimationContext.runAnimationGroup({ context in
-            context.duration = 0.12
+            context.duration = self.surface == .shelf ? 0.2 : 0.12
             self.panel.animator().alphaValue = 0
         }, completionHandler: { [weak self] in
             guard let self, !self.isOpen else { return }
@@ -168,6 +175,7 @@ final class SurfaceController {
         removeMonitors()
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self, self.panel.isKeyWindow else { return event }
+            self.autoHidesOnLeave = false // typing means you're working in the shelf
             let consumed = KeyRouter.handle(event, model: self.model,
                                             previewEnabled: self.surface == .shelf,
                                             close: { self.hide() })
@@ -177,6 +185,43 @@ final class SurfaceController {
         clickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
             self?.hide()
         }
+        if let local = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown], handler: { [weak self] event in
+            if event.window === self?.panel { self?.autoHidesOnLeave = false }
+            return event
+        }) {
+            hoverMonitors.append(local)
+        }
+        if let global = NSEvent.addGlobalMonitorForEvents(matching: .mouseMoved, handler: { [weak self] _ in
+            self?.checkPointerLeft()
+        }) {
+            hoverMonitors.append(global)
+        }
+        if let local = NSEvent.addLocalMonitorForEvents(matching: .mouseMoved, handler: { [weak self] event in
+            self?.checkPointerLeft()
+            return event
+        }) {
+            hoverMonitors.append(local)
+        }
+    }
+
+    private func checkPointerLeft() {
+        guard autoHidesOnLeave, isOpen else { return }
+        let inside = NSMouseInRect(NSEvent.mouseLocation, panel.frame.insetBy(dx: -16, dy: -16), false)
+            || NotchHover.pointerInZone()
+        guard !inside else {
+            pendingAutoHide?.cancel()
+            pendingAutoHide = nil
+            return
+        }
+        guard pendingAutoHide == nil else { return }
+        let work = DispatchWorkItem { [weak self] in
+            self?.pendingAutoHide = nil
+            guard let self, self.autoHidesOnLeave else { return }
+            let back = NSMouseInRect(NSEvent.mouseLocation, self.panel.frame.insetBy(dx: -16, dy: -16), false)
+            if !back { self.hide() }
+        }
+        pendingAutoHide = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: work)
     }
 
     private func removeMonitors() {
@@ -184,6 +229,10 @@ final class SurfaceController {
         if let clickMonitor { NSEvent.removeMonitor(clickMonitor) }
         keyMonitor = nil
         clickMonitor = nil
+        hoverMonitors.forEach(NSEvent.removeMonitor)
+        hoverMonitors = []
+        pendingAutoHide?.cancel()
+        pendingAutoHide = nil
     }
 }
 

@@ -22,7 +22,7 @@ struct SettingsView: View {
         Form {
             Section("Allgemein") {
                 Toggle("Beim Anmelden starten", isOn: launchAtLogin)
-                Toggle("Shelf öffnen, wenn die Maus die Notch berührt", isOn: $notchHover)
+                Toggle("Shelf einblenden, wenn die Maus in die Menüleiste fährt", isOn: $notchHover)
             }
 
             Section("Kurzbefehle") {

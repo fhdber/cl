@@ -1,6 +1,6 @@
 import AppKit
 
-/// Opens the shelf when the pointer rests at the top centre of a screen (the notch).
+/// Opens the shelf when the pointer moves into the menu bar, centred under the notch.
 final class NotchHover {
     private var monitors: [Any] = []
     private var pending: DispatchWorkItem?
@@ -32,25 +32,33 @@ final class NotchHover {
         pending = nil
     }
 
-    private static func pointerInNotchZone() -> Bool {
+    /// The menu bar strip above the shelf: full menu-bar height, as wide as the shelf.
+    static func triggerZone(on screen: NSScreen) -> NSRect {
+        let menuBarHeight = max(screen.frame.maxY - screen.visibleFrame.maxY, NSStatusBar.system.thickness)
+        let width = min(Layout.shelfWidth, screen.frame.width - 40)
+        return NSRect(x: screen.frame.midX - width / 2, y: screen.frame.maxY - menuBarHeight,
+                      width: width, height: menuBarHeight)
+    }
+
+    static func pointerInZone() -> Bool {
         let point = NSEvent.mouseLocation
         guard let screen = NSScreen.screens.first(where: { NSMouseInRect(point, $0.frame, false) }) else { return false }
-        return point.y >= screen.frame.maxY - 3 && abs(point.x - screen.frame.midX) <= 120
+        return NSMouseInRect(point, triggerZone(on: screen), false)
     }
 
     private func check() {
-        guard Self.pointerInNotchZone() else {
+        guard Self.pointerInZone() else {
             pending?.cancel()
             pending = nil
             return
         }
         guard pending == nil else { return }
-        // A short dwell, so merely passing the menu bar doesn't pop the shelf.
+        // A short dwell, so merely crossing the menu bar doesn't pop the shelf.
         let work = DispatchWorkItem { [weak self] in
             self?.pending = nil
-            if Self.pointerInNotchZone() { self?.onTrigger() }
+            if Self.pointerInZone() { self?.onTrigger() }
         }
         pending = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: work)
     }
 }

@@ -44,7 +44,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         notchHover = NotchHover { [weak self] in
             guard let self, !self.shelf.isOpen else { return }
             self.quickPaste.hideNow()
-            self.shelf.show()
+            self.shelf.show(openedByHover: true)
         }
         if Prefs.notchHover { notchHover.start() }
 
