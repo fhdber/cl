@@ -106,7 +106,7 @@ final class SurfaceController {
             panel.alphaValue = 1
             panel.makeKeyAndOrderFront(nil)
             DispatchQueue.main.async {
-                withAnimation(.spring(response: 0.38, dampingFraction: 0.86)) { self.model.reveal = 1 }
+                withAnimation(.spring(response: 0.55, dampingFraction: 0.94)) { self.model.reveal = 1 }
             }
         } else {
             // Quick paste rises slightly from the pointer.
@@ -129,8 +129,8 @@ final class SurfaceController {
         removeMonitors()
         if surface == .shelf {
             // Folds back into the notch.
-            withAnimation(.easeIn(duration: 0.2)) { model.reveal = 0 }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) { [weak self] in
+            withAnimation(.timingCurve(0.4, 0, 0.2, 1, duration: 0.32)) { model.reveal = 0 }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.34) { [weak self] in
                 guard let self, !self.isOpen else { return }
                 self.panel.orderOut(nil)
             }
