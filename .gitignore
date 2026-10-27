@@ -8,3 +8,10 @@ node_modules/
 
 # OS
 .DS_Store
+
+# Swift
+.build/
+.swiftpm/
+*.xcodeproj/xcuserdata/
+build/
+*.app
