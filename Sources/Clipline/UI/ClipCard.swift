@@ -91,12 +91,10 @@ struct ClipCard: View {
 
         case .text, .code:
             ZStack(alignment: .topLeading) {
-                item.kind == .code ? Color(red: 0.06, green: 0.09, blue: 0.08) : Theme.card
+                textBackground
                 Text(String((item.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).prefix(300)))
-                    .font(item.kind == .code
-                          ? .system(size: compact ? 8.5 : 9.5, design: .monospaced)
-                          : .system(size: compact ? 10 : 11.5, weight: .medium))
-                    .foregroundStyle(item.kind == .code ? Color(red: 0.7, green: 0.95, blue: 0.85) : .white.opacity(0.92))
+                    .font(textFont)
+                    .foregroundStyle(textInk)
                     .lineSpacing(compact ? 1 : 2)
                     .lineLimit(compact ? 3 : 4)
                     .padding(.horizontal, compact ? 7 : 9)
@@ -114,6 +112,22 @@ struct ClipCard: View {
                 }
             }
         }
+    }
+
+    // Precomputed so the text card's modifier chain stays cheap to type-check.
+    private var isCode: Bool { item.kind == .code }
+
+    private var textBackground: Color {
+        isCode ? Color(red: 0.06, green: 0.09, blue: 0.08) : Theme.card
+    }
+
+    private var textFont: Font {
+        if isCode { return .system(size: compact ? 8.5 : 9.5, design: .monospaced) }
+        return .system(size: compact ? 10 : 11.5, weight: .medium)
+    }
+
+    private var textInk: Color {
+        isCode ? Color(red: 0.7, green: 0.95, blue: 0.85) : Color.white.opacity(0.92)
     }
 
     private func thumbnail(fallback: String) -> some View {
