@@ -40,7 +40,6 @@ struct FilterChip<Content: View>: View {
     let isOn: Bool
     let action: () -> Void
     @ViewBuilder let label: () -> Content
-    @State private var hovering = false
 
     var body: some View {
         Button(action: action) {
@@ -51,12 +50,11 @@ struct FilterChip<Content: View>: View {
                 .foregroundStyle(isOn ? Color.black : Color.white.opacity(0.82))
                 .background(
                     Capsule().fill(isOn ? Color.white.opacity(0.92)
-                                        : Color.white.opacity(hovering ? 0.12 : 0.06))
+                                        : Color.white.opacity(0.07))
                 )
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .onHover { hovering = $0 }
         .animation(.easeOut(duration: 0.12), value: isOn)
     }
 }
@@ -71,5 +69,65 @@ struct KeyHint: View {
             .padding(.horizontal, 5)
             .padding(.vertical, 2)
             .background(RoundedRectangle(cornerRadius: 4).strokeBorder(.white.opacity(0.15)))
+    }
+}
+
+/// AppKit text field instead of SwiftUI's TextField + @FocusState, so the panel can pull
+/// focus into it reliably (and the project builds with the Command Line Tools alone).
+/// Focuses itself when it first appears and whenever `focusToken` changes.
+struct FocusableTextField: NSViewRepresentable {
+    let text: Binding<String>
+    var placeholder: String
+    var fontSize: CGFloat = 13
+    var focusToken: Int
+    var onSubmit: () -> Void = {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    func makeNSView(context: Context) -> NSTextField {
+        let field = NSTextField()
+        field.isBordered = false
+        field.drawsBackground = false
+        field.focusRingType = .none
+        field.usesSingleLineMode = true
+        field.cell?.isScrollable = true
+        field.cell?.wraps = false
+        field.font = .systemFont(ofSize: fontSize, weight: .medium)
+        field.textColor = .white
+        field.placeholderAttributedString = NSAttributedString(string: placeholder, attributes: [
+            .foregroundColor: NSColor.white.withAlphaComponent(0.4),
+            .font: NSFont.systemFont(ofSize: fontSize, weight: .medium),
+        ])
+        field.delegate = context.coordinator
+        return field
+    }
+
+    func updateNSView(_ field: NSTextField, context: Context) {
+        context.coordinator.parent = self
+        if field.stringValue != text.wrappedValue { field.stringValue = text.wrappedValue }
+        if context.coordinator.lastFocusToken != focusToken {
+            context.coordinator.lastFocusToken = focusToken
+            DispatchQueue.main.async { field.window?.makeFirstResponder(field) }
+        }
+    }
+
+    final class Coordinator: NSObject, NSTextFieldDelegate {
+        var parent: FocusableTextField
+        var lastFocusToken: Int?
+
+        init(_ parent: FocusableTextField) {
+            self.parent = parent
+        }
+
+        func controlTextDidChange(_ notification: Notification) {
+            guard let field = notification.object as? NSTextField else { return }
+            parent.text.wrappedValue = field.stringValue
+        }
+
+        func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
+            guard selector == #selector(NSResponder.insertNewline(_:)) else { return false }
+            parent.onSubmit()
+            return true
+        }
     }
 }

@@ -28,9 +28,6 @@ private struct TopBar: View {
     @ObservedObject var model: PanelModel
     @ObservedObject var store: ClipStore
 
-    private enum Field { case search, collection }
-    @FocusState private var focus: Field?
-
     var body: some View {
         HStack(spacing: 12) {
             search
@@ -95,19 +92,14 @@ private struct TopBar: View {
         }
         .padding(.horizontal, 16)
         .frame(height: 52)
-        .onChange(of: model.focusToken, initial: true) { focus = .search }
-        .onChange(of: model.isAddingCollection) { _, adding in
-            // Wait one runloop so the collection field exists before it takes focus.
-            DispatchQueue.main.async { focus = adding ? .collection : .search }
-        }
     }
 
     private var search: some View {
         HStack(spacing: 6) {
             Image(systemName: "magnifyingglass").foregroundStyle(.white.opacity(0.45))
-            TextField("Suchen – auch Text in Bildern", text: $model.query)
-                .textFieldStyle(.plain)
-                .focused($focus, equals: .search)
+            FocusableTextField(text: $model.query,
+                               placeholder: "Suchen – auch Text in Bildern",
+                               focusToken: model.focusToken)
         }
         .font(.system(size: 13))
         .padding(.horizontal, 10)
@@ -126,11 +118,11 @@ private struct TopBar: View {
             }
         }
         if model.isAddingCollection {
-            TextField("Name", text: $model.newCollectionName)
-                .textFieldStyle(.plain)
-                .font(.system(size: 12, weight: .medium))
-                .focused($focus, equals: .collection)
-                .onSubmit { model.commitNewCollection() }
+            FocusableTextField(text: $model.newCollectionName,
+                               placeholder: "Name",
+                               fontSize: 12,
+                               focusToken: model.focusToken,
+                               onSubmit: { model.commitNewCollection() })
                 .padding(.horizontal, 10)
                 .frame(width: 130, height: 26)
                 .background(Capsule().strokeBorder(.white.opacity(0.3)))

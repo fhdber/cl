@@ -111,7 +111,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc func openSettings() {
         panel.hide()
         if settingsWindow == nil {
-            let host = NSHostingController(rootView: SettingsView(store: store))
+            let host = NSHostingController(rootView: SettingsView(store: store, refresher: SettingsRefresher()))
             let window = NSWindow(contentViewController: host)
             window.title = "Clipline"
             window.styleMask = [.titled, .closable]

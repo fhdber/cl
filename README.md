@@ -36,7 +36,7 @@ Native SwiftUI und AppKit, die Daten bleiben lokal. Keine Abhängigkeiten.
 
 ## Bauen & starten
 
-Voraussetzungen: macOS 14 (Sonoma) oder neuer, Xcode 15 oder neuer (oder die Command Line Tools).
+Voraussetzungen: macOS 14 (Sonoma) oder neuer und die Command Line Tools (`xcode-select --install`). Xcode ist nicht nötig, weil der Code bewusst ohne SwiftUI-Makros (`@State`, `@FocusState`) auskommt.
 
 ```bash
 ./scripts/build-app.sh --install   # baut Clipline.app, kopiert nach /Applications, startet

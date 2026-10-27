@@ -9,7 +9,6 @@ struct ClipCard: View {
     let isSelected: Bool
     let model: PanelModel
     let store: ClipStore
-    @State private var hovering = false
 
     private let radius: CGFloat = 14
 
@@ -23,7 +22,7 @@ struct ClipCard: View {
         .frame(width: Self.size.width, height: Self.size.height)
         .background(
             RoundedRectangle(cornerRadius: radius, style: .continuous)
-                .fill(Color.white.opacity(hovering || isSelected ? 0.09 : 0.055))
+                .fill(Color.white.opacity(isSelected ? 0.09 : 0.055))
         )
         .overlay(
             RoundedRectangle(cornerRadius: radius, style: .continuous)
@@ -34,7 +33,6 @@ struct ClipCard: View {
         .scaleEffect(isSelected ? 1 : 0.985)
         .animation(.easeOut(duration: 0.12), value: isSelected)
         .contentShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
-        .onHover { hovering = $0 }
         .onTapGesture(count: 2) { model.paste(model.targets(for: item)) }
         .onTapGesture { model.click(item) }
         .onDrag { store.itemProvider(for: item) }

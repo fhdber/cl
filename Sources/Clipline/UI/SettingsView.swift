@@ -3,32 +3,24 @@ import ServiceManagement
 import SwiftUI
 import UniformTypeIdentifiers
 
+/// Re-renders the settings when values outside SwiftUI change (login item, Accessibility).
+final class SettingsRefresher: ObservableObject {
+    func refresh() { objectWillChange.send() }
+}
+
 struct SettingsView: View {
     let store: ClipStore
+    @ObservedObject var refresher: SettingsRefresher
 
     @AppStorage(Prefs.Key.historyLimit) private var historyLimit = 1000
     @AppStorage(Prefs.Key.captureScreenshots) private var captureScreenshots = true
     @AppStorage(Prefs.Key.ocrEnabled) private var ocrEnabled = true
     @AppStorage(Prefs.Key.ignoredApps) private var ignoredAppsRaw = Prefs.defaultIgnoredApps
-    @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
-    @State private var trusted = Paster.isTrusted
-    @State private var confirmClear = false
 
     var body: some View {
         Form {
             Section("Allgemein") {
-                Toggle("Beim Anmelden starten", isOn: $launchAtLogin)
-                    .onChange(of: launchAtLogin) { _, enabled in
-                        do {
-                            if enabled {
-                                try SMAppService.mainApp.register()
-                            } else {
-                                try SMAppService.mainApp.unregister()
-                            }
-                        } catch {
-                            launchAtLogin = SMAppService.mainApp.status == .enabled
-                        }
-                    }
+                Toggle("Beim Anmelden starten", isOn: launchAtLogin)
                 LabeledContent("Verlauf öffnen") { KeyHint(text: "⌃ ⌘ V") }
                 Picker("Verlauf behalten", selection: $historyLimit) {
                     Text("200 Clips").tag(200)
@@ -81,19 +73,41 @@ struct SettingsView: View {
             }
 
             Section {
-                Button("Verlauf löschen", role: .destructive) { confirmClear = true }
-                    .confirmationDialog("Gesamten Verlauf löschen?", isPresented: $confirmClear) {
-                        Button("Löschen", role: .destructive) { store.clearHistory() }
-                    } message: {
-                        Text("Angeheftete Clips und Sammlungen bleiben erhalten.")
-                    }
+                Button("Verlauf löschen", role: .destructive, action: confirmClearHistory)
             }
         }
         .formStyle(.grouped)
         .frame(width: 460, height: 600)
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            trusted = Paster.isTrusted
+            refresher.refresh()
         }
+    }
+
+    private var trusted: Bool { Paster.isTrusted }
+
+    /// Reads the real login-item status, so a failed registration never shows as "on".
+    private var launchAtLogin: Binding<Bool> {
+        Binding(
+            get: { SMAppService.mainApp.status == .enabled },
+            set: { enabled in
+                if enabled {
+                    try? SMAppService.mainApp.register()
+                } else {
+                    try? SMAppService.mainApp.unregister()
+                }
+                refresher.refresh()
+            }
+        )
+    }
+
+    private func confirmClearHistory() {
+        let alert = NSAlert()
+        alert.messageText = "Gesamten Verlauf löschen?"
+        alert.informativeText = "Angeheftete Clips und Sammlungen bleiben erhalten."
+        alert.addButton(withTitle: "Löschen")
+        alert.addButton(withTitle: "Abbrechen")
+        alert.buttons.first?.hasDestructiveAction = true
+        if alert.runModal() == .alertFirstButtonReturn { store.clearHistory() }
     }
 
     private var ignoredApps: [String] { Prefs.split(ignoredAppsRaw) }
