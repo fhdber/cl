@@ -91,6 +91,7 @@ struct SettingsView: View {
 
             Section {
                 Button("Verlauf löschen", role: .destructive, action: confirmClearHistory)
+                Button("Clipline beenden") { NSApp.terminate(nil) }
             }
         }
         .formStyle(.grouped)

@@ -181,6 +181,7 @@ private struct MiniFilterMenu: View {
             Divider()
             Button("Bibliothek öffnen") { model.onOpenLibrary?() }
             Button("Einstellungen …") { model.onOpenSettings?() }
+            Button("Clipline beenden") { NSApp.terminate(nil) }
         } label: {
             RoundIcon(symbol: "line.3.horizontal.decrease", isOn: model.filter != .all && model.filter != .pinned,
                       diameter: 24)

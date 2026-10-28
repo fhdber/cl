@@ -48,6 +48,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         if Prefs.notchHover { notchHover.start() }
 
+        setupMainMenu()
         setupStatusItem()
         observeDefaults()
 
@@ -150,6 +151,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     // MARK: - Status item
 
+    @objc func quit() {
+        store.saveNow()
+        NSApp.terminate(nil)
+    }
+
+    /// A menu-bar-only app has no main menu, so ⌘Q and the edit shortcuts (⌘C, ⌘V, ⌘A in text
+    /// fields) would do nothing while Settings or the Library is in front. This adds them.
+    private func setupMainMenu() {
+        let main = NSMenu()
+
+        let appMenu = NSMenu(title: "Clipline")
+        addItem(to: appMenu, "Einstellungen …", #selector(openSettings), key: ",", modifiers: [.command])
+        appMenu.addItem(.separator())
+        appMenu.addItem(NSMenuItem(title: "Clipline ausblenden", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h"))
+        appMenu.addItem(.separator())
+        addItem(to: appMenu, "Clipline beenden", #selector(quit), key: "q", modifiers: [.command])
+        let appItem = NSMenuItem()
+        appItem.submenu = appMenu
+        main.addItem(appItem)
+
+        let editMenu = NSMenu(title: "Bearbeiten")
+        editMenu.addItem(NSMenuItem(title: "Widerrufen", action: Selector(("undo:")), keyEquivalent: "z"))
+        editMenu.addItem(NSMenuItem(title: "Wiederholen", action: Selector(("redo:")), keyEquivalent: "Z"))
+        editMenu.addItem(.separator())
+        editMenu.addItem(NSMenuItem(title: "Ausschneiden", action: #selector(NSText.cut(_:)), keyEquivalent: "x"))
+        editMenu.addItem(NSMenuItem(title: "Kopieren", action: #selector(NSText.copy(_:)), keyEquivalent: "c"))
+        editMenu.addItem(NSMenuItem(title: "Einsetzen", action: #selector(NSText.paste(_:)), keyEquivalent: "v"))
+        editMenu.addItem(NSMenuItem(title: "Alles auswählen", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"))
+        let editItem = NSMenuItem()
+        editItem.submenu = editMenu
+        main.addItem(editItem)
+
+        let windowMenu = NSMenu(title: "Fenster")
+        windowMenu.addItem(NSMenuItem(title: "Schließen", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w"))
+        windowMenu.addItem(NSMenuItem(title: "Im Dock ablegen", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m"))
+        let windowItem = NSMenuItem()
+        windowItem.submenu = windowMenu
+        main.addItem(windowItem)
+
+        NSApp.mainMenu = main
+    }
+
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.button?.image = Self.menuBarIcon()
@@ -221,7 +264,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         addItem(to: menu, Prefs.paused ? "Aufnahme fortsetzen" : "Aufnahme pausieren", #selector(togglePause))
         addItem(to: menu, "Verlauf löschen …", #selector(confirmClearHistory))
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "Clipline beenden", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        addItem(to: menu, "Clipline beenden", #selector(quit), key: "q", modifiers: [.command])
 
         statusItem.button?.appearsDisabled = Prefs.paused
     }
