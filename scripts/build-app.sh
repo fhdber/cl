@@ -24,8 +24,18 @@ for size in 16 32 128 256 512; do
 done
 iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
 
-# Ad-hoc signature so macOS can remember the Accessibility permission.
-codesign --force --deep --sign - "$APP"
+# Sign with a stable local certificate, so macOS keeps Clipline's permissions
+# (Accessibility, Calendar, Camera, Automation) across rebuilds.
+IDENTITY="Clipline Local Signing"
+if ! security find-certificate -c "$IDENTITY" >/dev/null 2>&1; then
+  ./scripts/create-signing-cert.sh || true
+fi
+if security find-certificate -c "$IDENTITY" >/dev/null 2>&1; then
+  codesign --force --deep --sign "$IDENTITY" --identifier design.florianhierholzer.clipline "$APP"
+else
+  echo "⚠︎ Kein Signatur-Zertifikat – signiere ad hoc. macOS fragt Freigaben nach jedem Build neu ab."
+  codesign --force --deep --sign - "$APP"
+fi
 
 echo "✓ $APP"
 
