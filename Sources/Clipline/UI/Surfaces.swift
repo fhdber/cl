@@ -191,13 +191,6 @@ struct ShelfView: View {
         .background(Capsule().fill(Theme.control))
     }
 
-    /// Mini and compact have no visible field: typing goes into this one, the query shows as a tile.
-    private var hiddenSearchField: some View {
-        FocusableTextField(text: $model.query, placeholder: "", fontSize: 1, focusToken: model.focusToken)
-            .frame(width: 1, height: 1)
-            .opacity(0.01)
-    }
-
     @ViewBuilder
     private var fullTools: some View {
         if !Paster.isTrusted {
@@ -233,7 +226,7 @@ struct ShelfView: View {
     /// Mini: tabs and a few small buttons, then one row of content.
     private var miniShelf: some View {
         VStack(alignment: .leading, spacing: 6) {
-            // Tabs left, tools right – the middle stays free for the camera. Typing searches.
+            // Tabs left, tools right – the middle stays free for the camera. Search is the first tile.
             HStack(spacing: 6) {
                 ShelfTabs(model: model, diameter: 24)
                 Spacer(minLength: 0)
@@ -242,7 +235,6 @@ struct ShelfView: View {
             .padding(.horizontal, 14)
             .frame(height: 32)
             .padding(.top, 6)
-            .background(hiddenSearchField)
 
             switch model.tab {
             case .clips:
@@ -286,18 +278,15 @@ struct ShelfView: View {
 
     private var compactBand: CGFloat { max(Layout.compactBand, model.notchSize.height + 2) }
 
-    /// Only a row of small clips under the notch. Typing filters; a hidden field takes the keys.
-    /// The top band is as tall as the camera housing; only a hint and a button sit in the wings.
+    /// Only a row of small clips under the notch, the search field as the first tile.
+    /// The top band is as tall as the camera housing; only the size button sits in a wing.
     private var compactShelf: some View {
         // Wings beside the camera, with breathing room towards it.
         let wing = max(60, (Layout.compactShelfWidth - model.notchSize.width) / 2 - 16)
         return VStack(spacing: 0) {
             HStack(spacing: 0) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(Theme.secondaryText)
-                    .help("Einfach tippen, um zu suchen")
-                    .frame(width: wing - 14, alignment: .leading)
+                Color.clear
+                    .frame(width: wing - 14)
                 .padding(.leading, 14)
                 Spacer(minLength: 0)
                 HStack {
@@ -310,7 +299,6 @@ struct ShelfView: View {
                 .padding(.trailing, 14)
             }
             .frame(height: compactBand, alignment: .center)
-            .background(hiddenSearchField)
 
             ShelfStrip(model: model, store: store, card: Layout.compactCard, showsDayLabels: false,
                        showsQueryTile: true)
@@ -412,13 +400,13 @@ private struct ShelfStrip: View {
     @ObservedObject var store: ClipStore
     var card: CGSize = Layout.shelfCard
     var showsDayLabels = true
-    /// Shows what you've typed as the first tile (mini and compact have no visible search field).
+    /// Mini and compact: the search field is the first tile of the strip.
     var showsQueryTile = false
 
     var body: some View {
         let items = model.visibleItems
         let shortcuts = model.shortcutIndex
-        let queryTile = showsQueryTile && !model.query.isEmpty
+        let queryTile = showsQueryTile
         if items.isEmpty && !queryTile {
             EmptyHint(query: model.query)
         } else {
@@ -426,7 +414,7 @@ private struct ShelfStrip: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(alignment: .top, spacing: 8) {
                         if queryTile {
-                            QueryTile(model: model, size: card, hasResults: !items.isEmpty)
+                            SearchTile(model: model, size: card, hasResults: !items.isEmpty)
                         }
                         ForEach(model.sections(for: items)) { section in
                             VStack(alignment: .leading, spacing: 6) {
@@ -464,29 +452,32 @@ private struct ShelfStrip: View {
     }
 }
 
-/// The search term as a tile at the start of the strip, with a clear button.
-private struct QueryTile: View {
+/// A real, visible search field shaped like a card – first in the strip, focused on open.
+private struct SearchTile: View {
     @ObservedObject var model: PanelModel
     let size: CGSize
     let hasResults: Bool
 
+    private var small: Bool { size.width < 90 }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack {
+            HStack(spacing: 4) {
                 Image(systemName: "magnifyingglass")
-                Spacer()
-                Button { model.query = "" } label: { Image(systemName: "xmark.circle.fill") }
-                    .buttonStyle(.plain)
-                    .help("Suche leeren (Esc)")
+                Spacer(minLength: 0)
+                if !model.query.isEmpty {
+                    Button { model.query = "" } label: { Image(systemName: "xmark.circle.fill") }
+                        .buttonStyle(.plain)
+                        .help("Suche leeren (Esc)")
+                }
             }
             .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(Theme.secondaryText)
+            .foregroundStyle(model.query.isEmpty ? Theme.secondaryText : Theme.selection)
             Spacer(minLength: 0)
-            Text(model.query)
-                .font(.system(size: size.width < 90 ? 11 : 13, weight: .semibold))
-                .lineLimit(2)
-                .truncationMode(.head)
-            if !hasResults {
+            FocusableTextField(text: $model.query, placeholder: "Suchen", fontSize: small ? 11 : 13,
+                               focusToken: model.focusToken)
+                .frame(height: 18)
+            if !model.query.isEmpty && !hasResults {
                 Text("Nichts gefunden")
                     .font(.system(size: 9.5))
                     .foregroundStyle(Theme.secondaryText)
@@ -494,8 +485,10 @@ private struct QueryTile: View {
         }
         .padding(8)
         .frame(width: size.width, height: size.height, alignment: .topLeading)
-        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.selection.opacity(0.12)))
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.selection, lineWidth: 1.5))
+        .background(RoundedRectangle(cornerRadius: small ? 10 : 12, style: .continuous)
+            .fill(model.query.isEmpty ? Theme.card : Theme.selection.opacity(0.12)))
+        .overlay(RoundedRectangle(cornerRadius: small ? 10 : 12, style: .continuous)
+            .strokeBorder(model.query.isEmpty ? Theme.hairline : Theme.selection, lineWidth: model.query.isEmpty ? 1 : 1.5))
     }
 }
 
