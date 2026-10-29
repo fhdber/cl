@@ -17,8 +17,8 @@ struct NookView: View {
                     MediaWidget(player: player, compact: true)
                         .widgetCard()
                     CalendarWidget(calendar: calendar, compact: true)
-                        .frame(width: 150)
                         .widgetCard()
+                        .frame(width: 150) // after the card, so the card itself is this wide
                 }
             } else {
                 HStack(spacing: 10) {
@@ -32,11 +32,11 @@ struct NookView: View {
                         }
                     }
                     .overlay(alignment: .topTrailing) { secondarySwitch }
-                    .frame(width: 200)
                     .widgetCard()
+                    .frame(width: 200)
                     MirrorWidget(mirror: mirror)
-                        .frame(width: 140)
                         .widgetCard(padding: 0)
+                        .frame(width: 150)
                 }
             }
         }
@@ -313,14 +313,10 @@ struct MirrorWidget: View {
             if mirror.isRunning {
                 CameraPreview(session: mirror.session)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                VStack {
-                    HStack {
-                        Spacer()
+                    .overlay(alignment: .topTrailing) {
                         RoundButton(symbol: "xmark", diameter: 22, help: "Spiegel aus") { mirror.stop() }
+                            .padding(8)
                     }
-                    Spacer()
-                }
-                .padding(6)
             } else {
                 Button {
                     if mirror.denied {
