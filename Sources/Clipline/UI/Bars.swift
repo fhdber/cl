@@ -6,13 +6,15 @@ struct RoundIcon: View {
     let symbol: String
     var isOn = false
     var diameter: CGFloat = 30
+    /// Accent for status buttons (e.g. a missing permission).
+    var tint: Color?
 
     var body: some View {
         Image(systemName: symbol)
             .font(.system(size: diameter * 0.4, weight: .semibold))
-            .foregroundStyle(isOn ? Color.black : Color.white.opacity(0.85))
+            .foregroundStyle(isOn ? Color.black : (tint ?? Color.white.opacity(0.85)))
             .frame(width: diameter, height: diameter)
-            .background(Circle().fill(isOn ? Color.white : Theme.control))
+            .background(Circle().fill(isOn ? Color.white : (tint.map { $0.opacity(0.18) } ?? Theme.control)))
             .contentShape(Circle())
     }
 }
@@ -21,11 +23,12 @@ struct RoundButton: View {
     let symbol: String
     var isOn = false
     var diameter: CGFloat = 30
+    var tint: Color?
     let help: String
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) { RoundIcon(symbol: symbol, isOn: isOn, diameter: diameter) }
+        Button(action: action) { RoundIcon(symbol: symbol, isOn: isOn, diameter: diameter, tint: tint) }
             .buttonStyle(.plain)
             .help(help)
     }

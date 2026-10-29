@@ -178,10 +178,10 @@ struct ShelfView: View {
     @ViewBuilder
     private var fullTools: some View {
         if !Paster.isTrusted {
-            Button("Auto-Einfügen aktivieren") { Paster.requestAccess() }
-                .buttonStyle(.plain)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(.orange)
+            RoundButton(symbol: "exclamationmark", tint: .orange,
+                        help: "Auto-Einfügen aktivieren – Clipline braucht dafür die Bedienungshilfen") {
+                Paster.requestAccess()
+            }
         }
         if model.tab == .clips {
             RoundButton(symbol: "sparkle", help: "Claude fragen (⌃⌘C)") {
@@ -244,7 +244,8 @@ struct ShelfView: View {
     @ViewBuilder
     private var miniTools: some View {
         if !Paster.isTrusted {
-            RoundButton(symbol: "exclamationmark", diameter: 24, help: "Auto-Einfügen aktivieren") {
+            RoundButton(symbol: "exclamationmark", diameter: 24, tint: .orange,
+                        help: "Auto-Einfügen aktivieren – Clipline braucht dafür die Bedienungshilfen") {
                 Paster.requestAccess()
             }
         }
