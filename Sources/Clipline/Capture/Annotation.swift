@@ -79,7 +79,7 @@ struct BackdropStyle: Identifiable {
 final class AnnotationDocument: ObservableObject {
     let image: CGImage
     let size: CGSize
-    private(set) lazy var pixelated: CGImage? = Self.pixelate(image)
+    private(set) lazy var pixelated: CGImage? = AnnotationDocument.pixelate(image)
 
     @Published private(set) var annotations: [Annotation] = []
     @Published private(set) var draft: Annotation?
@@ -208,7 +208,9 @@ enum AnnotationRenderer {
                 context.drawLinearGradient(gradient, start: .zero, end: CGPoint(x: canvas.width, y: canvas.height),
                                            options: [])
             }
-            let radius = max(10, min(document.size.width, document.size.height) * 0.025)
+            // CoreGraphics traps when 2 × radius exceeds a side – clamp for thin captures.
+            let shortSide = min(document.size.width, document.size.height)
+            let radius = min(max(10, shortSide * 0.025), shortSide / 2)
             let path = CGPath(roundedRect: imageRect, cornerWidth: radius, cornerHeight: radius, transform: nil)
             // Shadow offsets are in device space: negative height falls downwards.
             context.saveGState()

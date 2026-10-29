@@ -19,6 +19,8 @@ final class Dictation: ObservableObject {
     private let engine = AVAudioEngine()
     private var request: SFSpeechAudioBufferRecognitionRequest?
     private var recognition: SFSpeechRecognitionTask?
+    /// Kept alive for the whole session – a recognizer that goes away delivers no results.
+    private var recognizer: SFSpeechRecognizer?
     private var delivered = false
     private var wantsStop = false
 
@@ -63,6 +65,7 @@ final class Dictation: ObservableObject {
             flash("Spracherkennung für \(locale.identifier) nicht verfügbar")
             return
         }
+        self.recognizer = recognizer
         let request = SFSpeechAudioBufferRecognitionRequest()
         request.shouldReportPartialResults = true
         request.addsPunctuation = true
@@ -71,6 +74,11 @@ final class Dictation: ObservableObject {
 
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
+        // Macs without a microphone report an empty format; installing a tap on it would crash.
+        guard format.sampleRate > 0, format.channelCount > 0 else {
+            flash("Kein Mikrofon gefunden")
+            return
+        }
         input.removeTap(onBus: 0)
         input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
             request.append(buffer)
