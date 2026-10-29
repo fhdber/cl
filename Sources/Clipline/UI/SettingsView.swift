@@ -33,8 +33,11 @@ final class SettingsWindowController {
         tabs.canPropagateSelectedChildViewControllerTitle = true
 
         func add<Content: View>(_ title: String, _ symbol: String, _ view: Content) {
-            let content = view.frame(width: Self.contentSize.width, height: Self.contentSize.height)
-            let host = NSHostingController(rootView: content)
+            // The content fills whatever the window gives it; the window size is set explicitly below,
+            // so the tab controller can't shrink it to the toolbar's width.
+            let host = NSHostingController(rootView: view.frame(maxWidth: .infinity, maxHeight: .infinity))
+            host.sizingOptions = []
+            host.preferredContentSize = Self.contentSize
             host.title = title
             let item = NSTabViewItem(viewController: host)
             item.label = title
@@ -50,10 +53,13 @@ final class SettingsWindowController {
         add("Ablage", "tray.full", TraySettingsView())
         add("Kurzbefehle", "command", ShortcutsSettingsView())
 
+        tabs.preferredContentSize = Self.contentSize
         let window = NSWindow(contentViewController: tabs)
         window.styleMask = [.titled, .closable]
         window.toolbarStyle = .preference
         window.isReleasedWhenClosed = false
+        window.setContentSize(Self.contentSize)
+        window.contentMinSize = Self.contentSize
         window.center()
         return window
     }
