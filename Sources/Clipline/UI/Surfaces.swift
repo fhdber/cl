@@ -18,10 +18,19 @@ enum Layout {
     static let miniDetailHeight: CGFloat = 300
 
     // Compact shelf – just a row of small clips under the notch; typing searches.
-    static let compactShelfWidth: CGFloat = 420
+    static let compactShelfWidth: CGFloat = 460
     static let compactCard = CGSize(width: 74, height: 56)
     static let compactBand: CGFloat = 30
     static let compactShelfHeight: CGFloat = compactBand + compactCard.height + 10
+
+    /// The camera housing on this screen: (width, height). Zero width where there is no notch.
+    static func notch(on screen: NSScreen) -> CGSize {
+        let menuBar = max(screen.frame.maxY - screen.visibleFrame.maxY, NSStatusBar.system.thickness)
+        guard screen.safeAreaInsets.top > 0,
+              let left = screen.auxiliaryTopLeftArea, let right = screen.auxiliaryTopRightArea
+        else { return CGSize(width: 0, height: menuBar) }
+        return CGSize(width: max(0, screen.frame.width - left.width - right.width), height: screen.safeAreaInsets.top)
+    }
 
     enum ShelfMode { case full, mini, compact }
 
@@ -37,14 +46,15 @@ enum Layout {
 
     static func shelfIsMini(on screen: NSScreen) -> Bool { shelfMode(on: screen) != .full }
 
-    static func shelfSize(mode: ShelfMode, preview: Bool) -> (width: CGFloat, height: CGFloat) {
+    static func shelfSize(mode: ShelfMode, preview: Bool, notchHeight: CGFloat = compactBand) -> (width: CGFloat, height: CGFloat) {
         switch mode {
         case .full:
             return (shelfWidth, shelfHeight + (preview ? detailGap + detailHeight : 0))
         case .mini:
             return (miniShelfWidth, miniShelfHeight + (preview ? detailGap + miniDetailHeight : 0))
         case .compact:
-            return (compactShelfWidth, compactShelfHeight + (preview ? detailGap + miniDetailHeight : 0))
+            let band = max(compactBand, notchHeight + 2)
+            return (compactShelfWidth, band + compactCard.height + 10 + (preview ? detailGap + miniDetailHeight : 0))
         }
     }
 
@@ -85,7 +95,7 @@ struct ShelfView: View {
             Group {
                 if model.isCompact { compactShelf } else if model.isMini { miniShelf } else { shelf }
             }
-                .frame(height: model.isCompact ? Layout.compactShelfHeight
+                .frame(height: model.isCompact ? compactBand + Layout.compactCard.height + 10
                        : model.isMini ? Layout.miniShelfHeight : Layout.shelfHeight)
                 .background(Self.shelfShape.fill(Theme.surface))
                 .overlay(
@@ -250,23 +260,36 @@ struct ShelfView: View {
 
     // MARK: Compact
 
+    private var compactBand: CGFloat { max(Layout.compactBand, model.notchSize.height + 2) }
+
     /// Only a row of small clips under the notch. Typing filters; a hidden field takes the keys.
+    /// The top band is as tall as the camera housing; text and button sit in the wings beside it.
     private var compactShelf: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 6) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 10, weight: .semibold))
-                Text(model.query.isEmpty ? "Tippen zum Suchen" : model.query)
-                    .font(.system(size: 11, weight: .medium))
-                    .lineLimit(1)
-                Spacer()
-                RoundButton(symbol: "arrow.up.left.and.arrow.down.right", diameter: 20, help: "Größer") {
-                    model.setShelfSize("mini")
+        let wing = max(60, (Layout.compactShelfWidth - model.notchSize.width) / 2 - 10)
+        return VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                HStack(spacing: 5) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 10, weight: .semibold))
+                    Text(model.query.isEmpty ? "Tippen zum Suchen" : model.query)
+                        .font(.system(size: 11, weight: .medium))
+                        .lineLimit(1)
+                        .truncationMode(.head)
                 }
+                .foregroundStyle(model.query.isEmpty ? Theme.secondaryText : Color.white)
+                .frame(width: wing - 14, alignment: .leading)
+                .padding(.leading, 14)
+                Spacer(minLength: 0)
+                HStack {
+                    Spacer(minLength: 0)
+                    RoundButton(symbol: "arrow.up.left.and.arrow.down.right", diameter: 20, help: "Größer") {
+                        model.setShelfSize("mini")
+                    }
+                }
+                .frame(width: wing - 14)
+                .padding(.trailing, 14)
             }
-            .foregroundStyle(model.query.isEmpty ? Theme.secondaryText : Color.white)
-            .padding(.horizontal, 16)
-            .frame(height: Layout.compactBand)
+            .frame(height: compactBand, alignment: .center)
             .background(
                 FocusableTextField(text: $model.query, placeholder: "", fontSize: 1, focusToken: model.focusToken)
                     .frame(width: 1, height: 1)

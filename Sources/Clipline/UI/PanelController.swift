@@ -121,6 +121,7 @@ final class SurfaceController {
             let mode = Layout.shelfMode(on: screen)
             model.isMini = mode == .mini
             model.isCompact = mode == .compact
+            model.notchSize = Layout.notch(on: screen)
         }
         model.prepareForShow()
         if surface == .shelf {
@@ -199,7 +200,8 @@ final class SurfaceController {
         switch surface {
         case .shelf:
             let mode: Layout.ShelfMode = model.isCompact ? .compact : model.isMini ? .mini : .full
-            let size = Layout.shelfSize(mode: mode, preview: model.previewID != nil)
+            let size = Layout.shelfSize(mode: mode, preview: model.previewID != nil,
+                                        notchHeight: model.notchSize.height)
             let width = min(size.width, screen.frame.width - 40)
             let height = size.height
             return NSRect(x: screen.frame.midX - width / 2, y: screen.frame.maxY - height, width: width, height: height)

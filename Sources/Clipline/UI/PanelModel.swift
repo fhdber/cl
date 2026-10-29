@@ -72,6 +72,8 @@ final class PanelModel: ObservableObject {
     @Published var isMini = false
     /// Smallest shelf: one row of clips, no header.
     @Published var isCompact = false
+    /// Camera housing of the screen the shelf opened on – the compact shelf keeps it clear.
+    @Published var notchSize = CGSize(width: 0, height: 24)
     @Published var tab: ShelfTab = .clips {
         didSet { if tab != .clips { previewID = nil } } // the clip preview belongs to the clips tab
     }
