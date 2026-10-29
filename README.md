@@ -53,8 +53,9 @@ Alternativ in Xcode: `Package.swift` öffnen und mit ⌘R starten.
 Beim ersten Start fragt macOS nach **Bedienungshilfen**. Das braucht Clipline, um `⌘V` für dich zu drücken.
 Ohne diesen Zugriff landet der Clip trotzdem in der Zwischenablage, und du fügst ihn selbst ein.
 
-> Nach jedem Neu-Build ändert sich die Ad-hoc-Signatur. Falls Auto-Einfügen dann nicht mehr geht, entferne Clipline unter
-> *Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen* und füg die App neu hinzu.
+> Beim ersten Build legt das Skript ein lokales Signatur-Zertifikat („Clipline Local Signing“) im Schlüsselbund an
+> (einmal Passwort eingeben). Damit bleibt die Signatur über alle Builds gleich, und macOS fragt Bedienungshilfen,
+> Kalender, Kamera und Musiksteuerung nur einmal ab.
 
 ## Aufbau
 
