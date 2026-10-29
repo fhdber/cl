@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 enum Layout {
     // Notch shelf
@@ -57,6 +58,7 @@ enum Layout {
 struct ShelfView: View {
     @ObservedObject var model: PanelModel
     @ObservedObject var store: ClipStore
+    @ObservedObject var tray: TrayStore = .shared
 
     private static let shelfShape = UnevenRoundedRectangle(topLeadingRadius: 0, bottomLeadingRadius: 24,
                                                            bottomTrailingRadius: 24, topTrailingRadius: 0,
@@ -70,9 +72,12 @@ struct ShelfView: View {
             }
                 .frame(height: model.isMini ? Layout.miniShelfHeight : Layout.shelfHeight)
                 .background(Self.shelfShape.fill(Theme.surface))
+                .overlay(
+                    Self.shelfShape.strokeBorder(Color.white.opacity(model.isDropTargeted ? 0.5 : 0), lineWidth: 2)
+                )
                 .clipShape(Self.shelfShape)
 
-            if let item = model.previewItem {
+            if model.tab == .clips, let item = model.previewItem {
                 ClipDetailView(item: item, model: model, store: store)
                     .frame(height: model.isMini ? Layout.miniDetailHeight : Layout.detailHeight)
                     .background(Self.detailShape.fill(Theme.surface))
@@ -83,69 +88,167 @@ struct ShelfView: View {
         .compositingGroup() // fade the shelf as one layer, not card by card
         .opacity(Double(0.25 + 0.75 * model.reveal)) // content eases in while the shape opens
         .mask(alignment: .top) { NotchReveal(progress: model.reveal) }
+        // Files dropped anywhere on the shelf land in the tray.
+        .onDrop(of: [.fileURL], isTargeted: Binding(get: { model.isDropTargeted },
+                                                    set: { model.isDropTargeted = $0 })) { providers in
+            TrayStore.loadURLs(from: providers) { urls in
+                TrayStore.shared.add(urls)
+                model.tab = .tray
+            }
+            return true
+        }
         .environment(\.colorScheme, .dark)
     }
 
+    // MARK: Full
+
     private var shelf: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SearchRow(model: model) {
-                if !Paster.isTrusted {
-                    Button("Auto-Einfügen aktivieren") { Paster.requestAccess() }
-                        .buttonStyle(.plain)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.orange)
-                }
-                RoundButton(symbol: "text.viewfinder", help: "Text aus Bildschirmbereich erkennen") {
-                    model.onCaptureText?()
-                }
-                RoundButton(symbol: "eyedropper", help: "Farbe vom Bildschirm aufnehmen") {
-                    model.onPickColor?()
-                }
-                RoundButton(symbol: "arrow.up.right", help: "Bibliothek öffnen") {
-                    model.onOpenLibrary?()
-                }
-                RoundButton(symbol: "gearshape.fill", help: "Einstellungen (⌘,)") {
-                    model.onOpenSettings?()
-                }
-                RoundButton(symbol: "arrow.down.right.and.arrow.up.left", help: "Mini-Shelf") {
-                    model.setMini(true)
+            HStack(spacing: 10) {
+                ShelfTabs(model: model, diameter: 30)
+                if model.tab == .clips {
+                    SearchRow(model: model) { fullTools }
+                } else {
+                    Text(model.tab.title)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.85))
+                    Spacer()
+                    if model.tab == .tray, !tray.files.isEmpty {
+                        Button("Leeren") { tray.clear() }
+                            .buttonStyle(.plain)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(Theme.secondaryText)
+                    }
+                    fullTools
                 }
             }
             .padding(.horizontal, 16)
             .frame(height: 44)
 
-            FilterBar(model: model, store: store)
-                .padding(.horizontal, 12)
-                .frame(height: 40)
-
-            ShelfStrip(model: model, store: store)
+            switch model.tab {
+            case .clips:
+                FilterBar(model: model, store: store)
+                    .padding(.horizontal, 12)
+                    .frame(height: 40)
+                ShelfStrip(model: model, store: store)
+            case .nook:
+                NookView(model: model, player: .shared, calendar: .shared, shortcuts: .shared, mirror: .shared)
+                    .padding(.horizontal, 14)
+                    .padding(.top, 4)
+                    .padding(.bottom, 14)
+            case .tray:
+                TrayView(model: model, tray: .shared)
+                    .padding(.horizontal, 14)
+                    .padding(.top, 4)
+                    .padding(.bottom, 14)
+            }
         }
     }
 
-    /// Compact: search + three small buttons, one row of cards. Filters live in a menu.
+    @ViewBuilder
+    private var fullTools: some View {
+        if !Paster.isTrusted {
+            Button("Auto-Einfügen aktivieren") { Paster.requestAccess() }
+                .buttonStyle(.plain)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(.orange)
+        }
+        if model.tab == .clips {
+            RoundButton(symbol: "text.viewfinder", help: "Text aus Bildschirmbereich erkennen") {
+                model.onCaptureText?()
+            }
+            RoundButton(symbol: "eyedropper", help: "Farbe vom Bildschirm aufnehmen") {
+                model.onPickColor?()
+            }
+        }
+        RoundButton(symbol: "arrow.up.right", help: "Bibliothek öffnen") {
+            model.onOpenLibrary?()
+        }
+        RoundButton(symbol: "gearshape.fill", help: "Einstellungen (⌘,)") {
+            model.onOpenSettings?()
+        }
+        RoundButton(symbol: "arrow.down.right.and.arrow.up.left", help: "Mini-Shelf") {
+            model.setMini(true)
+        }
+    }
+
+    // MARK: Mini
+
+    /// Compact: tabs, search and a few small buttons, then one row of content.
     private var miniShelf: some View {
         VStack(alignment: .leading, spacing: 6) {
-            SearchRow(model: model, fontSize: 13) {
-                if !Paster.isTrusted {
-                    RoundButton(symbol: "exclamationmark", diameter: 24, help: "Auto-Einfügen aktivieren") {
-                        Paster.requestAccess()
-                    }
-                    .foregroundStyle(.orange)
-                }
-                RoundButton(symbol: "star.fill", isOn: model.filter == .pinned, diameter: 24, help: "Favoriten") {
-                    model.filter = model.filter == .pinned ? .all : .pinned
-                }
-                MiniFilterMenu(model: model, store: store)
-                RoundButton(symbol: "arrow.up.left.and.arrow.down.right", diameter: 24, help: "Großes Shelf") {
-                    model.setMini(false)
+            HStack(spacing: 6) {
+                ShelfTabs(model: model, diameter: 24)
+                if model.tab == .clips {
+                    SearchRow(model: model, fontSize: 13) { miniTools }
+                } else {
+                    Text(model.tab.title)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.85))
+                    Spacer()
+                    miniTools
                 }
             }
             .padding(.horizontal, 14)
             .frame(height: 32)
             .padding(.top, 6)
 
-            ShelfStrip(model: model, store: store, card: Layout.miniCard, showsDayLabels: false)
+            switch model.tab {
+            case .clips:
+                ShelfStrip(model: model, store: store, card: Layout.miniCard, showsDayLabels: false)
+            case .nook:
+                NookView(model: model, player: .shared, calendar: .shared, shortcuts: .shared, mirror: .shared)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 10)
+            case .tray:
+                TrayView(model: model, tray: .shared)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 10)
+            }
         }
+    }
+
+    @ViewBuilder
+    private var miniTools: some View {
+        if !Paster.isTrusted {
+            RoundButton(symbol: "exclamationmark", diameter: 24, help: "Auto-Einfügen aktivieren") {
+                Paster.requestAccess()
+            }
+        }
+        if model.tab == .clips {
+            RoundButton(symbol: "star.fill", isOn: model.filter == .pinned, diameter: 24, help: "Favoriten") {
+                model.filter = model.filter == .pinned ? .all : .pinned
+            }
+            MiniFilterMenu(model: model, store: store)
+        }
+        RoundButton(symbol: "arrow.up.left.and.arrow.down.right", diameter: 24, help: "Großes Shelf") {
+            model.setMini(false)
+        }
+    }
+}
+
+/// Clips · Nook · Tray – small round segments at the start of the shelf's top row.
+private struct ShelfTabs: View {
+    @ObservedObject var model: PanelModel
+    let diameter: CGFloat
+
+    var body: some View {
+        HStack(spacing: 3) {
+            ForEach(ShelfTab.allCases, id: \.self) { tab in
+                Button { model.tab = tab } label: {
+                    Image(systemName: tab.symbol)
+                        .font(.system(size: diameter * 0.4, weight: .semibold))
+                        .foregroundStyle(model.tab == tab ? Color.black : Color.white.opacity(0.75))
+                        .frame(width: diameter, height: diameter)
+                        .background(Circle().fill(model.tab == tab ? Color.white : Color.clear))
+                        .contentShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .help("\(tab.title) (⌘\(tab.number))")
+            }
+        }
+        .padding(2)
+        .background(Capsule().fill(Theme.control))
     }
 }
 

@@ -9,6 +9,12 @@ enum Prefs {
         static let paused = "paused"
         static let notchHover = "notchHover"
         static let shelfSize = "shelfSize"
+        static let shelfStartTab = "shelfStartTab"
+        static let nookSecondary = "nookSecondary"
+        static let liveActivity = "liveActivity"
+        static let fileDragOpensTray = "fileDragOpensTray"
+        static let pinnedShortcuts = "pinnedShortcuts"
+        static let trayFiles = "trayFiles"
         static let ignoredApps = "ignoredApps"
         static let didPromptAccessibility = "didPromptAccessibility"
     }
@@ -32,6 +38,10 @@ enum Prefs {
             Key.paused: false,
             Key.notchHover: true,
             Key.shelfSize: "auto",
+            Key.shelfStartTab: "clips",
+            Key.liveActivity: true,
+            Key.fileDragOpensTray: true,
+            Key.pinnedShortcuts: "",
             Key.ignoredApps: defaultIgnoredApps,
         ])
     }
@@ -42,6 +52,10 @@ enum Prefs {
     static var notchHover: Bool { defaults.bool(forKey: Key.notchHover) }
     /// "auto", "mini" or "full"
     static var shelfSize: String { defaults.string(forKey: Key.shelfSize) ?? "auto" }
+    static var shelfStartTab: String { defaults.string(forKey: Key.shelfStartTab) ?? "clips" }
+    static var liveActivity: Bool { defaults.bool(forKey: Key.liveActivity) }
+    static var fileDragOpensTray: Bool { defaults.bool(forKey: Key.fileDragOpensTray) }
+    static var pinnedShortcuts: [String] { split(defaults.string(forKey: Key.pinnedShortcuts) ?? "") }
 
     static var paused: Bool {
         get { defaults.bool(forKey: Key.paused) }

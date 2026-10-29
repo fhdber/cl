@@ -48,6 +48,8 @@ final class SurfaceController {
     private var subscriptions = Set<AnyCancellable>()
     private var screen: NSScreen?
     private(set) var isOpen = false
+    /// Shelf opened (true) or closed (false) – the live activity steps aside meanwhile.
+    var onVisibilityChange: ((Bool) -> Void)?
 
     init(surface: Surface, store: ClipStore, monitor: PasteboardMonitor) {
         self.surface = surface
@@ -95,8 +97,11 @@ final class SurfaceController {
         isOpen ? hide() : show()
     }
 
-    func show(openedByHover: Bool = false) {
-        guard !isOpen else { return }
+    func show(openedByHover: Bool = false, tab: ShelfTab? = nil) {
+        if isOpen {
+            if let tab { model.tab = tab }
+            return
+        }
         autoHidesOnLeave = openedByHover
         let mouse = NSEvent.mouseLocation
         guard let screen = NSScreen.screens.first(where: { NSMouseInRect(mouse, $0.frame, false) }) ?? NSScreen.main
@@ -106,6 +111,11 @@ final class SurfaceController {
         isOpen = true
         if surface == .shelf { model.isMini = Layout.shelfIsMini(on: screen) }
         model.prepareForShow()
+        if surface == .shelf {
+            model.tab = tab ?? ShelfTab(rawValue: Prefs.shelfStartTab) ?? .clips
+            NowPlaying.shared.start()
+            onVisibilityChange?(true)
+        }
         let frame = targetFrame(on: screen, mouse: mouse)
 
         if surface == .shelf {
@@ -136,6 +146,7 @@ final class SurfaceController {
         guard isOpen else { return }
         isOpen = false
         removeMonitors()
+        didClose()
         if surface == .shelf {
             // Folds back into the notch; the window goes away exactly when the animation ends.
             withAnimation(.timingCurve(0.4, 0, 0.2, 1, duration: 0.32)) {
@@ -157,9 +168,19 @@ final class SurfaceController {
 
     /// Closes without animation, e.g. before a synthetic ⌘V or a screen capture.
     func hideNow() {
+        let wasOpen = isOpen
         isOpen = false
         removeMonitors()
         panel.orderOut(nil)
+        if wasOpen { didClose() }
+    }
+
+    private func didClose() {
+        guard surface == .shelf else { return }
+        CameraMirror.shared.stop() // never leave the camera on behind a closed shelf
+        NowPlaying.shared.stop()
+        model.isDropTargeted = false
+        onVisibilityChange?(false)
     }
 
     private func targetFrame(on screen: NSScreen, mouse: NSPoint) -> NSRect {
@@ -271,6 +292,18 @@ enum KeyRouter {
     /// Returns true when the event was consumed.
     static func handle(_ event: NSEvent, model: PanelModel, previewEnabled: Bool, close: () -> Void) -> Bool {
         let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+
+        // Shelf tabs: ⌘1 Clips · ⌘2 Nook · ⌘3 Ablage
+        if previewEnabled, modifiers == .command, let key = event.charactersIgnoringModifiers,
+           let tab = ShelfTab.allCases.first(where: { "\($0.number)" == key }) {
+            model.tab = tab
+            return true
+        }
+        // Nook and tray have no card selection – only Esc matters there.
+        if previewEnabled, model.tab != .clips {
+            if event.keyCode == 53 { close(); return true }
+            return false
+        }
 
         if model.isAddingCollection {
             if event.keyCode == 53 { model.cancelNewCollection(); return true }

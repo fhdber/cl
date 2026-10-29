@@ -11,6 +11,9 @@ Native SwiftUI und AppKit, die Daten bleiben lokal. Keine Abhängigkeiten.
 |---|---|
 | **Notch-Shelf** | Ein schwarzes Panel hängt oben aus der Notch. Es wächst aus der Notch, wenn die Maus in die Menüleiste fährt, und zieht sich wieder zurück, wenn sie sie verlässt. Alternativ mit `⌥⌘V`. Die Karten sind nach Tagen gruppiert. |
 | **Mini-Shelf** | Kompakte Variante (460 × 126 pt) mit Suche, drei kleinen Buttons und einer Kartenreihe. Kategorien, Typen und Apps stecken im Filter-Menü. Auf Bildschirmen unter 1600 pt (z. B. MacBook Pro 14") automatisch aktiv. Per Button oder in den Einstellungen umschaltbar. |
+| **Nook** (Tab 2) | Widgets in der Notch: Medien für Musik und Spotify (Cover, Titel, Fortschritt, Steuerung), Kalender mit Blättern zwischen Tagen oder wahlweise Kurzbefehle, und ein Spiegel (Kamera nur auf Klick, aus beim Schließen). |
+| **Ablage** (Tab 3) | Dateien zur Notch ziehen öffnet das Shelf direkt auf der Ablage. Die Dateien bleiben dort, bis du sie wieder herausziehst. Mit AirDrop-Kachel zum Senden. |
+| **Live-Aktivität** | Läuft Musik, legt sich ein schmales schwarzes Band um die Notch, links das Cover, rechts ein Equalizer. Ein Klick öffnet den Nook. |
 | **Quick Paste** | `⌃⌘V` öffnet an der Maus ein kompaktes Raster mit drei Spalten. Mit `↩` wird direkt eingefügt. |
 | **Bibliothek** | `⌃⌘L` öffnet ein großes Fenster mit Raster und einer Detail-Seitenleiste (Quelle, Link, Maße, erkannter Text). |
 | **Letzte 10 Clips** | `⌃⌘0` … `⌃⌘9` fügt systemweit sofort ein. Jede Karte zeigt ihr Kürzel als Badge. |
@@ -34,6 +37,7 @@ Native SwiftUI und AppKit, die Daten bleiben lokal. Keine Abhängigkeiten.
 | `⌘P` | Favorit |
 | `⌘⌫` | Löschen |
 | `Tab` | Nächste Kategorie |
+| `⌘1` `⌘2` `⌘3` | Shelf-Tabs Clips · Nook · Ablage |
 | `Esc` | Vorschau schließen, Suche leeren, Panel schließen |
 
 ## Bauen & starten
@@ -64,12 +68,13 @@ Sources/Clipline/
 
 Die Daten liegen in `~/Library/Application Support/Clipline/` (`library.json` plus `images/`).
 
-## Noch nicht drin (Supaste-Features für v2)
+## Noch nicht drin (für v2)
 
 - **iCloud-Sync** (CloudKit, braucht einen Apple-Developer-Account)
 - **Inline Shortcuts**, also Textbausteine per Kürzel (braucht Input-Monitoring)
 - **Clip Reminders** (Erinnerung per `UNUserNotificationCenter`)
-- Dateien per Drag aufs Shelf ablegen
 - Bulk Copy (Sammelablage mit Zähler an der Notch)
 - **Apple Intelligence** zum Umschreiben und Zusammenfassen (Writing Tools API)
 - Frei belegbarer Hotkey
+- Medien aus Browsern und anderen Playern (macOS 15.4+ sperrt die systemweite Medien-Schnittstelle für Dritt-Apps)
+- Ersatz für die Lautstärke- und Helligkeitsanzeige (HUD)

@@ -9,6 +9,39 @@ enum ClipFilter: Hashable {
     case collection(String)
 }
 
+/// The shelf's three areas, NotchNook-style.
+enum ShelfTab: String, CaseIterable {
+    case clips, nook, tray
+
+    var title: String {
+        switch self {
+        case .clips: return "Clips"
+        case .nook: return "Nook"
+        case .tray: return "Ablage"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .clips: return "doc.on.clipboard"
+        case .nook: return "square.grid.2x2"
+        case .tray: return "tray.full"
+        }
+    }
+
+    var number: Int {
+        switch self {
+        case .clips: return 1
+        case .nook: return 2
+        case .tray: return 3
+        }
+    }
+}
+
+enum NookSecondary: String {
+    case calendar, shortcuts
+}
+
 struct AppSource: Identifiable {
     let bundleID: String
     let name: String
@@ -37,6 +70,15 @@ final class PanelModel: ObservableObject {
     @Published var reveal: CGFloat = 1
     /// Compact shelf for smaller screens.
     @Published var isMini = false
+    @Published var tab: ShelfTab = .clips {
+        didSet { if tab != .clips { previewID = nil } } // the clip preview belongs to the clips tab
+    }
+    @Published var nookSecondary = NookSecondary(rawValue: UserDefaults.standard.string(forKey: Prefs.Key.nookSecondary) ?? "")
+        ?? .calendar {
+        didSet { UserDefaults.standard.set(nookSecondary.rawValue, forKey: Prefs.Key.nookSecondary) }
+    }
+    /// A file drag is hovering over the shelf.
+    @Published var isDropTargeted = false
 
     let store: ClipStore
     /// Cards per row, so ↑/↓ can jump a row in grid layouts.

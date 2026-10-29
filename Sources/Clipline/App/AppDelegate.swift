@@ -10,6 +10,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var quickPaste: SurfaceController!
     private var library: LibraryController!
     private var notchHover: NotchHover!
+    private var dragWatcher: DragWatcher!
+    private var liveActivity: LiveActivityController!
     private var hotKeys: [HotKey] = []
     private var statusItem: NSStatusItem!
     private var settingsWindow: NSWindow?
@@ -47,6 +49,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             self.shelf.show(openedByHover: true)
         }
         if Prefs.notchHover { notchHover.start() }
+
+        // Drag a file up to the notch → the shelf opens on the tray.
+        dragWatcher = DragWatcher { [weak self] in
+            guard let self else { return }
+            self.quickPaste.hideNow()
+            self.shelf.show(openedByHover: true, tab: .tray)
+        }
+        if Prefs.fileDragOpensTray { dragWatcher.start() }
+
+        // Closed-notch live activity while music plays; click opens the nook.
+        liveActivity = LiveActivityController()
+        liveActivity.onClick = { [weak self] in self?.shelf.show(tab: .nook) }
+        shelf.onVisibilityChange = { [weak self] open in self?.liveActivity.isSuppressed = open }
+        liveActivity.setEnabled(Prefs.liveActivity)
 
         setupMainMenu()
         setupStatusItem()
@@ -328,6 +344,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             guard let self else { return }
             if Prefs.captureScreenshots { self.screenshots.start() } else { self.screenshots.stop() }
             if Prefs.notchHover { self.notchHover.start() } else { self.notchHover.stop() }
+            if Prefs.fileDragOpensTray { self.dragWatcher.start() } else { self.dragWatcher.stop() }
+            self.liveActivity.setEnabled(Prefs.liveActivity)
             self.store.prune()
         }
     }

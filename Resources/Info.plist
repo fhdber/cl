@@ -26,6 +26,14 @@
     <true/>
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.productivity</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Clipline zeigt im Nook, was in Musik oder Spotify läuft, und steuert die Wiedergabe.</string>
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>Clipline zeigt deine nächsten Termine im Nook.</string>
+    <key>NSCalendarsUsageDescription</key>
+    <string>Clipline zeigt deine nächsten Termine im Nook.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Der Spiegel im Nook zeigt dein Kamerabild – nur solange du ihn eingeschaltet hast.</string>
     <key>NSDesktopFolderUsageDescription</key>
     <string>Clipline übernimmt Screenshots, die auf deinem Schreibtisch gespeichert werden.</string>
     <key>NSHighResolutionCapable</key>

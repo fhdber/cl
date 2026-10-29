@@ -17,6 +17,10 @@ struct SettingsView: View {
     @AppStorage(Prefs.Key.ocrEnabled) private var ocrEnabled = true
     @AppStorage(Prefs.Key.notchHover) private var notchHover = true
     @AppStorage(Prefs.Key.shelfSize) private var shelfSize = "auto"
+    @AppStorage(Prefs.Key.shelfStartTab) private var shelfStartTab = "clips"
+    @AppStorage(Prefs.Key.liveActivity) private var liveActivity = true
+    @AppStorage(Prefs.Key.fileDragOpensTray) private var fileDragOpensTray = true
+    @AppStorage(Prefs.Key.pinnedShortcuts) private var pinnedShortcuts = ""
     @AppStorage(Prefs.Key.ignoredApps) private var ignoredAppsRaw = Prefs.defaultIgnoredApps
 
     var body: some View {
@@ -45,6 +49,23 @@ struct SettingsView: View {
                     Text("5.000 Clips").tag(5000)
                     Text("20.000 Clips").tag(20000)
                 }
+            }
+
+            Section {
+                Picker("Shelf öffnet mit", selection: $shelfStartTab) {
+                    Text("Clips").tag("clips")
+                    Text("Nook").tag("nook")
+                    Text("Ablage").tag("tray")
+                }
+                Toggle("Live-Aktivität neben der Notch, wenn Musik läuft", isOn: $liveActivity)
+                Toggle("Dateien zur Notch ziehen öffnet die Ablage", isOn: $fileDragOpensTray)
+                TextField("Kurzbefehle im Nook", text: $pinnedShortcuts, prompt: Text("Namen, kommagetrennt"))
+            } header: {
+                Text("Notch")
+            } footer: {
+                Text("Medien funktionieren mit Musik und Spotify. Beim ersten Mal fragt macOS, ob Clipline sie steuern darf.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
             }
 
             Section("Erfassen") {
@@ -95,7 +116,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 480, height: 760)
+        .frame(width: 500, height: 820)
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             refresher.refresh()
         }
