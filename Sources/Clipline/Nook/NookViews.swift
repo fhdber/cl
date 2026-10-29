@@ -312,6 +312,7 @@ struct MirrorWidget: View {
         ZStack {
             if mirror.isRunning {
                 CameraPreview(session: mirror.session)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 VStack {
                     HStack {
                         Spacer()

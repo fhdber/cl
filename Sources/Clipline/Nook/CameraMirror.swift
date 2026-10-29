@@ -64,26 +64,23 @@ struct CameraPreview: NSViewRepresentable {
     func makeNSView(context: Context) -> PreviewHostView { PreviewHostView(session: session) }
     func updateNSView(_ view: PreviewHostView, context: Context) {}
 
+    /// The preview layer *is* the view's backing layer, so AppKit keeps it exactly the view's size.
+    /// macOS already mirrors the front camera in previews, so no extra flip is needed.
     final class PreviewHostView: NSView {
-        private let preview: AVCaptureVideoPreviewLayer
+        private let session: AVCaptureSession
 
         init(session: AVCaptureSession) {
-            preview = AVCaptureVideoPreviewLayer(session: session)
+            self.session = session
             super.init(frame: .zero)
             wantsLayer = true
-            preview.videoGravity = .resizeAspectFill
-            preview.transform = CATransform3DMakeScale(-1, 1, 1) // mirror, like a real mirror
-            layer?.addSublayer(preview)
         }
 
         required init?(coder: NSCoder) { nil }
 
-        override func layout() {
-            super.layout()
-            CATransaction.begin()
-            CATransaction.setDisableActions(true)
-            preview.frame = bounds
-            CATransaction.commit()
+        override func makeBackingLayer() -> CALayer {
+            let preview = AVCaptureVideoPreviewLayer(session: session)
+            preview.videoGravity = .resizeAspectFill
+            return preview
         }
     }
 }
