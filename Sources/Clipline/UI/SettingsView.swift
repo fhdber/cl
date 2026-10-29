@@ -3,102 +3,94 @@ import ServiceManagement
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Re-renders the settings when values outside SwiftUI change (login item, Accessibility).
+/// Re-renders settings when values outside SwiftUI change (login item, Accessibility).
 final class SettingsRefresher: ObservableObject {
+    static let shared = SettingsRefresher()
     func refresh() { objectWillChange.send() }
 }
 
-struct SettingsView: View {
+/// Native preferences window: icon tabs in the toolbar, one calm grouped form per tab.
+final class SettingsWindowController {
+    private var window: NSWindow?
+    private let store: ClipStore
+
+    static let contentSize = CGSize(width: 560, height: 540)
+
+    init(store: ClipStore) {
+        self.store = store
+    }
+
+    func show() {
+        if window == nil { window = makeWindow() }
+        SettingsRefresher.shared.refresh()
+        NSApp.activate()
+        window?.makeKeyAndOrderFront(nil)
+    }
+
+    private func makeWindow() -> NSWindow {
+        let tabs = NSTabViewController()
+        tabs.tabStyle = .toolbar
+        tabs.canPropagateSelectedChildViewControllerTitle = true
+
+        func add<Content: View>(_ title: String, _ symbol: String, _ view: Content) {
+            let host = NSHostingController(rootView: view.frame(width: Self.contentSize.width,
+                                                                height: Self.contentSize.height))
+            host.title = title
+            let item = NSTabViewItem(viewController: host)
+            item.label = title
+            item.image = NSImage(systemSymbolName: symbol, accessibilityDescription: title)
+            tabs.addTabViewItem(item)
+        }
+
+        add("Allgemein", "gearshape", GeneralSettingsView(store: store, refresher: .shared))
+        add("Notch", "rectangle.topthird.inset.filled", NotchSettingsView())
+        add("Claude", "sparkle", ClaudeSettingsView(keys: .shared))
+        add("Diktat", "mic", DictationSettingsView())
+        add("Aufnahme", "camera.viewfinder", CaptureSettingsView())
+        add("Ablage", "tray.full", TraySettingsView())
+        add("Kurzbefehle", "command", ShortcutsSettingsView())
+
+        let window = NSWindow(contentViewController: tabs)
+        window.styleMask = [.titled, .closable]
+        window.toolbarStyle = .preference
+        window.isReleasedWhenClosed = false
+        window.center()
+        return window
+    }
+}
+
+// MARK: - Allgemein
+
+struct GeneralSettingsView: View {
     let store: ClipStore
     @ObservedObject var refresher: SettingsRefresher
 
     @AppStorage(Prefs.Key.historyLimit) private var historyLimit = 1000
-    @AppStorage(Prefs.Key.captureScreenshots) private var captureScreenshots = true
-    @AppStorage(Prefs.Key.ocrEnabled) private var ocrEnabled = true
-    @AppStorage(Prefs.Key.notchHover) private var notchHover = true
-    @AppStorage(Prefs.Key.shelfSize) private var shelfSize = "auto"
-    @AppStorage(Prefs.Key.shelfStartTab) private var shelfStartTab = "clips"
-    @AppStorage(Prefs.Key.liveActivity) private var liveActivity = true
-    @AppStorage(Prefs.Key.fileDragOpensTray) private var fileDragOpensTray = true
-    @AppStorage(Prefs.Key.pinnedShortcuts) private var pinnedShortcuts = ""
+    @AppStorage(Prefs.Key.paused) private var paused = false
     @AppStorage(Prefs.Key.ignoredApps) private var ignoredAppsRaw = Prefs.defaultIgnoredApps
 
     var body: some View {
-        TabView {
-            general
-                .tabItem { Label("Allgemein", systemImage: "gearshape") }
-            ClaudeSettingsView(keys: .shared)
-                .tabItem { Label("Claude", systemImage: "sparkle") }
-            DictationSettingsView()
-                .tabItem { Label("Diktat", systemImage: "mic") }
-            CaptureSettingsView()
-                .tabItem { Label("Aufnahme", systemImage: "camera.viewfinder") }
-            TraySettingsView()
-                .tabItem { Label("Ablage", systemImage: "tray.full") }
-        }
-        .frame(width: 540, height: 760)
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            refresher.refresh()
-        }
-    }
-
-    private var general: some View {
         Form {
-            Section("Allgemein") {
+            Section {
                 Toggle("Beim Anmelden starten", isOn: launchAtLogin)
-                Toggle("Shelf einblenden, wenn die Maus in die Menüleiste fährt", isOn: $notchHover)
-                Picker("Shelf-Größe", selection: $shelfSize) {
-                    Text("Automatisch").tag("auto")
-                    Text("Mini").tag("mini")
-                    Text("Groß").tag("full")
-                }
-            }
-
-            Section("Kurzbefehle") {
-                LabeledContent("Quick Paste") { KeyHint(text: "⌃ ⌘ V") }
-                LabeledContent("Shelf") { KeyHint(text: "⌥ ⌘ V") }
-                LabeledContent("Bibliothek") { KeyHint(text: "⌃ ⌘ L") }
-                LabeledContent("Letzte 10 Clips einfügen") { KeyHint(text: "⌃ ⌘ 0 … 9") }
-                LabeledContent("Claude fragen") { KeyHint(text: "⌃ ⌘ C") }
-                LabeledContent("Diktat (halten)") { KeyHint(text: "⌃ ⌥ D") }
-                LabeledContent("Bereich · Fenster · Bildschirm") { KeyHint(text: "⌃ ⌥ ⌘ 4 · 5 · 3") }
-                LabeledContent("Text erkennen") { KeyHint(text: "⌃ ⌥ ⌘ T") }
             }
 
             Section("Verlauf") {
-                Picker("Verlauf behalten", selection: $historyLimit) {
+                Picker("Aufbewahren", selection: $historyLimit) {
                     Text("200 Clips").tag(200)
                     Text("1.000 Clips").tag(1000)
                     Text("5.000 Clips").tag(5000)
                     Text("20.000 Clips").tag(20000)
                 }
-            }
-
-            Section {
-                Picker("Shelf öffnet mit", selection: $shelfStartTab) {
-                    Text("Clips").tag("clips")
-                    Text("Nook").tag("nook")
-                    Text("Ablage").tag("tray")
+                Toggle("Aufnahme pausieren", isOn: $paused)
+                LabeledContent("Gesamten Verlauf") {
+                    Button("Löschen …", role: .destructive, action: confirmClearHistory)
                 }
-                Toggle("Live-Aktivität neben der Notch, wenn Musik läuft", isOn: $liveActivity)
-                Toggle("Dateien zur Notch ziehen öffnet die Ablage", isOn: $fileDragOpensTray)
-                TextField("Kurzbefehle im Nook", text: $pinnedShortcuts, prompt: Text("Namen, kommagetrennt"))
-            } header: {
-                Text("Notch")
-            } footer: {
-                Text("Medien funktionieren mit Musik und Spotify. Beim ersten Mal fragt macOS, ob Clipline sie steuern darf.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section("Erfassen") {
-                Toggle("Gespeicherte Screenshots übernehmen", isOn: $captureScreenshots)
-                Toggle("Text in Bildern erkennen (OCR)", isOn: $ocrEnabled)
             }
 
             Section {
                 ForEach(installedIgnoredApps, id: \.self) { bundleID in
-                    HStack {
+                    HStack(spacing: 8) {
                         if let icon = AppIcons.icon(for: bundleID) {
                             Image(nsImage: icon).resizable().frame(width: 18, height: 18)
                         }
@@ -114,28 +106,26 @@ struct SettingsView: View {
                 }
                 Button("App hinzufügen …", action: addIgnoredApp)
             } header: {
-                Text("Nie aufnehmen aus")
+                Text("Datenschutz")
             } footer: {
-                Text("Inhalte, die Passwort-Manager als vertraulich markieren, werden immer ignoriert.")
+                Text("Aus diesen Apps wird nichts aufgenommen. Inhalte, die Passwort-Manager als vertraulich markieren, werden immer ignoriert.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
 
-            Section("Bedienungshilfen") {
-                HStack {
-                    Label(trusted ? "Auto-Einfügen aktiv" : "Nur Kopieren – ⌘V drückst du selbst",
-                          systemImage: trusted ? "checkmark.circle.fill" : "exclamationmark.triangle")
-                        .foregroundStyle(trusted ? Color.green : Color.orange)
-                    Spacer()
-                    if !trusted {
-                        Button("Zugriff erlauben") { Paster.requestAccess() }
-                    }
-                }
-            }
-
             Section {
-                Button("Verlauf löschen", role: .destructive, action: confirmClearHistory)
-                Button("Clipline beenden") { NSApp.terminate(nil) }
+                LabeledContent {
+                    if trusted {
+                        Label("Erlaubt", systemImage: "checkmark.circle.fill").foregroundStyle(Color.green)
+                    } else {
+                        Button("Erlauben …") { Paster.requestAccess() }
+                    }
+                } label: {
+                    Text("Bedienungshilfen")
+                    Text("Nötig, damit Clipline für dich einfügen und markierten Text an Claude geben kann.")
+                }
+            } header: {
+                Text("Berechtigungen")
             }
         }
         .formStyle(.grouped)
@@ -161,7 +151,7 @@ struct SettingsView: View {
     private func confirmClearHistory() {
         let alert = NSAlert()
         alert.messageText = "Gesamten Verlauf löschen?"
-        alert.informativeText = "Angeheftete Clips und Sammlungen bleiben erhalten."
+        alert.informativeText = "Favoriten und Clips in Kategorien bleiben erhalten."
         alert.addButton(withTitle: "Löschen")
         alert.addButton(withTitle: "Abbrechen")
         alert.buttons.first?.hasDestructiveAction = true
@@ -188,5 +178,86 @@ struct SettingsView: View {
         guard panel.runModal() == .OK else { return }
         let ids = panel.urls.compactMap { Bundle(url: $0)?.bundleIdentifier }
         ignoredAppsRaw = Array(Set(ignoredApps + ids)).sorted().joined(separator: ",")
+    }
+}
+
+// MARK: - Notch
+
+struct NotchSettingsView: View {
+    @AppStorage(Prefs.Key.notchHover) private var notchHover = true
+    @AppStorage(Prefs.Key.shelfSize) private var shelfSize = "auto"
+    @AppStorage(Prefs.Key.shelfStartTab) private var shelfStartTab = "clips"
+    @AppStorage(Prefs.Key.liveActivity) private var liveActivity = true
+    @AppStorage(Prefs.Key.fileDragOpensTray) private var fileDragOpensTray = true
+    @AppStorage(Prefs.Key.pinnedShortcuts) private var pinnedShortcuts = ""
+
+    var body: some View {
+        Form {
+            Section("Shelf") {
+                Toggle("Öffnen, wenn die Maus an die Notch fährt", isOn: $notchHover)
+                Picker("Größe", selection: $shelfSize) {
+                    Text("Automatisch").tag("auto")
+                    Text("Mini").tag("mini")
+                    Text("Groß").tag("full")
+                }
+                Picker("Startet mit", selection: $shelfStartTab) {
+                    Text("Clips").tag("clips")
+                    Text("Nook").tag("nook")
+                    Text("Ablage").tag("tray")
+                }
+            }
+
+            Section {
+                Toggle("Live-Aktivität, wenn Musik läuft", isOn: $liveActivity)
+                Toggle("Dateien zur Notch ziehen öffnet die Ablage", isOn: $fileDragOpensTray)
+                TextField("Kurzbefehle", text: $pinnedShortcuts, prompt: Text("Namen, durch Komma getrennt"))
+            } header: {
+                Text("Nook & Ablage")
+            } footer: {
+                Text("„Automatisch“ nimmt auf Bildschirmen unter 1600 pt das Mini-Shelf. Medien funktionieren mit Musik und Spotify.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .formStyle(.grouped)
+    }
+}
+
+// MARK: - Kurzbefehle
+
+struct ShortcutsSettingsView: View {
+    var body: some View {
+        Form {
+            Section("Zwischenablage") {
+                row("Quick Paste", "⌃ ⌘ V")
+                row("Shelf", "⌥ ⌘ V")
+                row("Bibliothek", "⌃ ⌘ L")
+                row("Einen der letzten 10 Clips einfügen", "⌃ ⌘ 0 … 9")
+            }
+            Section("Claude & Diktat") {
+                row("Claude fragen (mit Markierung)", "⌃ ⌘ C")
+                row("Diktat – halten und sprechen", "⌃ ⌥ D")
+            }
+            Section("Aufnahme") {
+                row("Bereich", "⌃ ⌥ ⌘ 4")
+                row("Fenster", "⌃ ⌥ ⌘ 5")
+                row("Bildschirm", "⌃ ⌥ ⌘ 3")
+                row("Text erkennen", "⌃ ⌥ ⌘ T")
+            }
+            Section("Im Shelf") {
+                row("Tabs Clips · Nook · Ablage", "⌘ 1 · 2 · 3")
+                row("Vorschau", "Leertaste")
+                row("Einfügen", "↩")
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    private func row(_ title: String, _ keys: String) -> some View {
+        LabeledContent(title) {
+            Text(keys)
+                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .foregroundStyle(.secondary)
+        }
     }
 }

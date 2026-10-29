@@ -20,7 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var dictationHUD: DictationHUD!
     private var hotKeys: [HotKey] = []
     private var statusItem: NSStatusItem!
-    private var settingsWindow: NSWindow?
+    private var settings: SettingsWindowController!
     private var defaultsObserver: NSObjectProtocol?
     private var settingsApplyPending = false
 
@@ -478,17 +478,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc func openSettings() {
         shelf.hideNow()
         quickPaste.hideNow()
-        if settingsWindow == nil {
-            let host = NSHostingController(rootView: SettingsView(store: store, refresher: SettingsRefresher()))
-            let window = NSWindow(contentViewController: host)
-            window.title = "Clipline"
-            window.styleMask = [.titled, .closable]
-            window.isReleasedWhenClosed = false
-            window.center()
-            settingsWindow = window
-        }
-        NSApp.activate()
-        settingsWindow?.makeKeyAndOrderFront(nil)
+        if settings == nil { settings = SettingsWindowController(store: store) }
+        settings.show()
     }
 
     // MARK: - Settings changes

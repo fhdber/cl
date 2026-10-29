@@ -7,12 +7,12 @@ set -euo pipefail
 NAME="Clipline Local Signing"
 KEYCHAIN="$HOME/Library/Keychains/login.keychain-db"
 
-if security find-certificate -c "$NAME" "$KEYCHAIN" >/dev/null 2>&1; then
-  echo "✓ Zertifikat „$NAME“ ist schon da"
+if security find-certificate -c "${NAME}" "$KEYCHAIN" >/dev/null 2>&1; then
+  echo "✓ Zertifikat „${NAME}“ ist schon da"
   exit 0
 fi
 
-echo "→ Lege das lokale Signatur-Zertifikat „$NAME“ an (einmalig) …"
+echo "→ Lege das lokale Signatur-Zertifikat „${NAME}“ an (einmalig) …"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
@@ -22,7 +22,7 @@ distinguished_name = dn
 x509_extensions = ext
 prompt = no
 [ dn ]
-CN = $NAME
+CN = ${NAME}
 [ ext ]
 basicConstraints = critical,CA:false
 keyUsage = critical,digitalSignature
@@ -33,7 +33,7 @@ CNF
 /usr/bin/openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
   -keyout "$TMP/key.pem" -out "$TMP/cert.pem" -config "$TMP/cert.cnf" 2>/dev/null
 /usr/bin/openssl pkcs12 -export -inkey "$TMP/key.pem" -in "$TMP/cert.pem" \
-  -out "$TMP/cert.p12" -passout pass:clipline -name "$NAME"
+  -out "$TMP/cert.p12" -passout pass:clipline -name "${NAME}"
 
 # -T lets codesign use the key without asking every time.
 security import "$TMP/cert.p12" -k "$KEYCHAIN" -P clipline -T /usr/bin/codesign >/dev/null

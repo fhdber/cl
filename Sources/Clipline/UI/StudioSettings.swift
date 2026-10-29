@@ -95,11 +95,12 @@ struct ClaudeSettingsView: View {
                 }
             }
 
-            Section("So nutzt du Claude") {
-                LabeledContent("Markierten Text bearbeiten") { KeyHint(text: "⌃ ⌘ C") }
-                Text("Rechtsklick auf einen Clip → Claude, der ✦-Button im Shelf, die Claude-Kachel in der Ablage oder „Claude“ auf der Screenshot-Karte.")
-                    .font(.footnote)
+            Section {
+                Text("⌃⌘C mit markiertem Text, Rechtsklick auf einen Clip, der ✦-Button im Shelf, die Claude-Kachel in der Ablage oder „Claude“ auf der Screenshot-Karte.")
+                    .font(.callout)
                     .foregroundStyle(.secondary)
+            } header: {
+                Text("So nutzt du Claude")
             }
         }
         .formStyle(.grouped)
@@ -119,7 +120,7 @@ struct DictationSettingsView: View {
     var body: some View {
         Form {
             Section {
-                Toggle("Diktat mit ⌃ ⌥ D", isOn: $enabled)
+                Toggle("Diktat mit ⌃⌥D", isOn: $enabled)
                 Picker("Bedienung", selection: $mode) {
                     Text("Gedrückt halten zum Sprechen").tag("hold")
                     Text("Einmal drücken: Start / Stopp").tag("toggle")
@@ -169,6 +170,8 @@ struct DictationSettingsView: View {
 // MARK: - Capture
 
 struct CaptureSettingsView: View {
+    @AppStorage(Prefs.Key.captureScreenshots) private var captureScreenshots = true
+    @AppStorage(Prefs.Key.ocrEnabled) private var ocrEnabled = true
     @AppStorage(Prefs.Key.captureCopies) private var copies = true
     @AppStorage(Prefs.Key.captureQuickAccess) private var quickAccess = true
     @AppStorage(Prefs.Key.captureSaveFolder) private var saveFolder = "~/Desktop"
@@ -189,11 +192,15 @@ struct CaptureSettingsView: View {
                     }
                 }
             }
-            Section("Kurzbefehle") {
-                LabeledContent("Bereich") { KeyHint(text: "⌃ ⌥ ⌘ 4") }
-                LabeledContent("Fenster") { KeyHint(text: "⌃ ⌥ ⌘ 5") }
-                LabeledContent("Bildschirm") { KeyHint(text: "⌃ ⌥ ⌘ 3") }
-                LabeledContent("Text erkennen") { KeyHint(text: "⌃ ⌥ ⌘ T") }
+            Section {
+                Toggle("Gespeicherte Screenshots in den Verlauf übernehmen", isOn: $captureScreenshots)
+                Toggle("Text in Bildern erkennen (OCR)", isOn: $ocrEnabled)
+            } header: {
+                Text("Erfassen")
+            } footer: {
+                Text("Gilt auch für Screenshots mit den macOS-Kürzeln ⇧⌘3 und ⇧⌘4.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
