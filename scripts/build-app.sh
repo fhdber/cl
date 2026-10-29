@@ -40,10 +40,16 @@ fi
 echo "✓ $APP"
 
 if [[ "${1:-}" == "--install" ]]; then
+  # Quit the running copy and wait until it's really gone – launching too early fails with -600.
   pkill -x Clipline 2>/dev/null || true
+  for _ in $(seq 1 25); do
+    pgrep -x Clipline >/dev/null || break
+    sleep 0.2
+  done
+  pkill -9 -x Clipline 2>/dev/null || true
   rm -rf /Applications/Clipline.app
   cp -R "$APP" /Applications/
   touch /Applications/Clipline.app # refresh the Finder/Dock icon cache
-  open /Applications/Clipline.app
+  open /Applications/Clipline.app || { sleep 1; open /Applications/Clipline.app; }
   echo "✓ installiert & gestartet"
 fi
