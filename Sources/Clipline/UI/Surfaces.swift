@@ -463,7 +463,7 @@ struct LibraryView: View {
                 SearchRow(model: model) {
                     RoundButton(symbol: "gearshape.fill", help: "Einstellungen") { model.onOpenSettings?() }
                 }
-                .padding(.leading, 66) // sits on the title bar, next to the traffic lights
+                .padding(.leading, 62) // sits on the title bar, next to the traffic lights
                 .frame(height: 30)
 
                 FilterBar(model: model, store: store, allTitle: "Verlauf", showsAllCount: true)
@@ -480,9 +480,10 @@ struct LibraryView: View {
                         .onChange(of: columns, initial: true) { model.columns = columns }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 1)
-            .padding(.bottom, 4)
+            // Clear of the window's rounded corners; the top row lines up with the traffic lights.
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 6)
 
             if let item = model.cursorItem, model.selection.count == 1 {
                 Rectangle().fill(Theme.hairline).frame(width: 1)

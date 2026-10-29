@@ -14,7 +14,7 @@ final class SettingsWindowController {
     private var window: NSWindow?
     private let store: ClipStore
 
-    static let contentSize = CGSize(width: 560, height: 540)
+    static let contentSize = CGSize(width: 600, height: 620)
 
     init(store: ClipStore) {
         self.store = store
@@ -33,8 +33,12 @@ final class SettingsWindowController {
         tabs.canPropagateSelectedChildViewControllerTitle = true
 
         func add<Content: View>(_ title: String, _ symbol: String, _ view: Content) {
-            let host = NSHostingController(rootView: view.frame(width: Self.contentSize.width,
-                                                                height: Self.contentSize.height))
+            // Explicit margins: inside a tab view controller the grouped form otherwise runs edge to edge.
+            let content = view
+                .contentMargins(.horizontal, 28, for: .scrollContent)
+                .contentMargins(.vertical, 20, for: .scrollContent)
+                .frame(width: Self.contentSize.width, height: Self.contentSize.height)
+            let host = NSHostingController(rootView: content)
             host.title = title
             let item = NSTabViewItem(viewController: host)
             item.label = title
