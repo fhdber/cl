@@ -389,8 +389,8 @@ struct TrayView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            AirDropTile(tray: tray, compact: model.isMini)
-                .frame(width: model.isMini ? 84 : 120)
+            TrayActions(model: model, tray: tray)
+                .frame(width: model.isMini ? 214 : 302)
         }
     }
 }
@@ -428,32 +428,89 @@ private struct TrayFileTile: View {
     }
 }
 
-/// Tap to AirDrop everything in the tray, or drop files right onto it.
-private struct AirDropTile: View {
+/// Dropzone-style action grid: drop files onto a tile, or tap it to apply it to everything in the tray.
+private struct TrayActions: View {
+    @ObservedObject var model: PanelModel
     @ObservedObject var tray: TrayStore
-    let compact: Bool
+
+    struct Action: Identifiable {
+        let id: String
+        let title: String
+        let symbol: String
+        var icon: NSImage?
+        let run: ([URL]) -> Void
+    }
+
+    private var actions: [Action] {
+        var actions: [Action] = [
+            Action(id: "airdrop", title: "AirDrop", symbol: "dot.radiowaves.up.forward") { tray.airDrop($0) },
+            Action(id: "zip", title: "ZIP", symbol: "doc.zipper") { FileActions.zip($0) },
+            Action(id: "claude", title: "Claude", symbol: "sparkle") { urls in model.onAskClaudeFiles?(urls) },
+        ]
+        guard !model.isMini else { return actions }
+        actions += [
+            Action(id: "resize", title: "Verkleinern", symbol: "arrow.down.right.and.arrow.up.left") { FileActions.resize($0) },
+            Action(id: "jpg", title: "In JPG", symbol: "photo") { FileActions.convert($0, to: "jpeg") },
+        ]
+        for path in Prefs.trayFolders.prefix(2) {
+            let url = URL(fileURLWithPath: path, isDirectory: true)
+            actions.append(Action(id: "folder-\(path)", title: url.lastPathComponent, symbol: "folder",
+                                  icon: NSWorkspace.shared.icon(forFile: path)) { FileActions.send($0, to: url) })
+        }
+        for path in Prefs.trayApps.prefix(1) {
+            let url = URL(fileURLWithPath: path)
+            actions.append(Action(id: "app-\(path)", title: url.deletingPathExtension().lastPathComponent, symbol: "app",
+                                  icon: NSWorkspace.shared.icon(forFile: path)) { FileActions.open($0, withApplicationAt: url) })
+        }
+        return Array(actions.prefix(8))
+    }
 
     var body: some View {
-        Button { tray.airDrop(tray.files) } label: {
-            VStack(spacing: 6) {
-                Image(systemName: "dot.radiowaves.up.forward")
-                    .font(.system(size: compact ? 18 : 26, weight: .medium))
-                    .foregroundStyle(Theme.selection)
-                Text("AirDrop")
-                    .font(.system(size: compact ? 10.5 : 12, weight: .semibold))
-                if !compact {
-                    Text(tray.files.isEmpty ? "Datei hier ablegen" : "Alle senden")
-                        .font(.system(size: 10))
-                        .foregroundStyle(Theme.secondaryText)
+        let columns = model.isMini ? 3 : 4
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: columns), spacing: 6) {
+            ForEach(actions) { action in
+                ActionTile(action: action, compact: model.isMini, enabled: !tray.files.isEmpty) {
+                    action.run(tray.files)
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.card))
-            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .frame(maxHeight: .infinity, alignment: .center)
+    }
+}
+
+private struct ActionTile: View {
+    let action: TrayActions.Action
+    let compact: Bool
+    let enabled: Bool
+    let tap: () -> Void
+
+    var body: some View {
+        Button(action: tap) {
+            VStack(spacing: 5) {
+                if let icon = action.icon {
+                    Image(nsImage: icon).resizable().frame(width: compact ? 20 : 24, height: compact ? 20 : 24)
+                } else {
+                    Image(systemName: action.symbol)
+                        .font(.system(size: compact ? 15 : 17, weight: .medium))
+                        .foregroundStyle(action.id == "airdrop" ? Theme.selection
+                                         : action.id == "claude" ? Color(red: 0.85, green: 0.47, blue: 0.34)
+                                         : Color.white.opacity(0.85))
+                }
+                Text(action.title)
+                    .font(.system(size: compact ? 9.5 : 10.5, weight: .medium))
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: compact ? 60 : 72)
+            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.card))
+            .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .buttonStyle(.plain)
+        .opacity(enabled ? 1 : 0.85)
+        .help(enabled ? "\(action.title): auf alle Dateien in der Ablage anwenden – oder Dateien hierher ziehen"
+                      : "Dateien hierher ziehen")
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in
-            TrayStore.loadURLs(from: providers) { urls in tray.airDrop(urls) }
+            TrayStore.loadURLs(from: providers) { urls in action.run(urls) }
             return true
         }
     }

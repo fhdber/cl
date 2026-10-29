@@ -154,6 +154,9 @@ struct ShelfView: View {
                 .foregroundStyle(.orange)
         }
         if model.tab == .clips {
+            RoundButton(symbol: "sparkle", help: "Claude fragen (⌃⌘C)") {
+                if let item = model.cursorItem ?? model.visibleItems.first { model.onAskClaude?(item, nil) }
+            }
             RoundButton(symbol: "text.viewfinder", help: "Text aus Bildschirmbereich erkennen") {
                 model.onCaptureText?()
             }

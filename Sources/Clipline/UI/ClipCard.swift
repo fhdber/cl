@@ -250,32 +250,54 @@ struct ClipContextMenu: View {
     let model: PanelModel
     let store: ClipStore
 
+    private var isImage: Bool { item.kind == .image || item.kind == .screenshot }
+
     var body: some View {
         let targets = model.targets(for: item)
         let ids = targets.map(\.id)
 
-        Button(targets.count > 1 ? "\(targets.count) Clips einfügen" : "Einfügen") { model.paste(targets) }
-        Button("Kopieren") { model.copy(targets) }
+        Group {
+            Button(targets.count > 1 ? "\(targets.count) Clips einfügen" : "Einfügen") { model.paste(targets) }
+            Button("Kopieren") { model.copy(targets) }
+        }
         Divider()
-        Button(item.pinned ? "Aus Favoriten entfernen" : "Zu Favoriten") { store.togglePin(ids) }
-        Menu("Kategorie") {
-            ForEach(store.collections, id: \.self) { name in
-                Button(name) { store.setCollection(name, for: ids) }
-            }
-            if !store.collections.isEmpty { Divider() }
-            Button("Neue Kategorie …") { model.beginNewCollection(for: targets) }
-            if item.collection != nil {
-                Button("Aus Kategorie entfernen") { store.setCollection(nil, for: ids) }
+        Menu("Claude") {
+            Button("Claude fragen …") { model.onAskClaude?(item, nil) }
+            Divider()
+            ForEach(isImage ? ClaudeAction.imageActions : ClaudeAction.textActions) { action in
+                Button(action.title) { model.onAskClaude?(item, action) }
             }
         }
-        if let ocr = item.ocrText {
-            Button("Erkannten Text kopieren") { model.copyText(ocr) }
+        if isImage {
+            Group {
+                Button("Bearbeiten …") { model.onEditImage?(item) }
+                Button("Am Bildschirm anheften") { model.onPinImage?(item) }
+            }
         }
-        if let url = item.fileURLs?.first ?? (item.kind == .link ? nil : store.imageURL(for: item)) {
-            Button("Im Finder zeigen") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
+        Divider()
+        Group {
+            Button(item.pinned ? "Aus Favoriten entfernen" : "Zu Favoriten") { store.togglePin(ids) }
+            Menu("Kategorie") {
+                ForEach(store.collections, id: \.self) { name in
+                    Button(name) { store.setCollection(name, for: ids) }
+                }
+                if !store.collections.isEmpty { Divider() }
+                Button("Neue Kategorie …") { model.beginNewCollection(for: targets) }
+                if item.collection != nil {
+                    Button("Aus Kategorie entfernen") { store.setCollection(nil, for: ids) }
+                }
+            }
         }
-        if item.kind == .link, let url = URL(string: item.text ?? "") {
-            Button("Im Browser öffnen") { NSWorkspace.shared.open(url) }
+        Group {
+            if let ocr = item.ocrText {
+                Button("Erkannten Text kopieren") { model.copyText(ocr) }
+            }
+            if let url = item.fileURLs?.first ?? (item.kind == .link ? nil : store.imageURL(for: item)) {
+                Button("Im Finder zeigen") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
+            }
+            if item.kind == .link, let url = URL(string: item.text ?? "") {
+                Button("Im Browser öffnen") { NSWorkspace.shared.open(url) }
+            }
         }
         Divider()
         Button("Löschen", role: .destructive) { model.delete(targets) }

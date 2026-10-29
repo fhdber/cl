@@ -34,6 +34,10 @@
     <string>Clipline zeigt deine nächsten Termine im Nook.</string>
     <key>NSCameraUsageDescription</key>
     <string>Der Spiegel im Nook zeigt dein Kamerabild – nur solange du ihn eingeschaltet hast.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Clipline nimmt deine Stimme nur auf, solange du das Diktat-Kürzel gedrückt hältst.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Clipline wandelt dein Diktat in Text um – wenn möglich direkt auf dem Mac.</string>
     <key>NSDesktopFolderUsageDescription</key>
     <string>Clipline übernimmt Screenshots, die auf deinem Schreibtisch gespeichert werden.</string>
     <key>NSHighResolutionCapable</key>

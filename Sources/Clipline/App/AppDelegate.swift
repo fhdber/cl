@@ -12,6 +12,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var notchHover: NotchHover!
     private var dragWatcher: DragWatcher!
     private var liveActivity: LiveActivityController!
+    private var claude: ClaudeController!
+    private var capture: CaptureService!
+    private var quickAccess: QuickAccessController!
+    private var pins: PinController!
+    private var editor: AnnotationEditorController!
+    private var dictationHUD: DictationHUD!
     private var hotKeys: [HotKey] = []
     private var statusItem: NSStatusItem!
     private var settingsWindow: NSWindow?
@@ -43,6 +49,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         shelf.model.onPickColor = { [weak self] in self?.pickColor() }
 
         registerHotKeys()
+        setupStudio()
 
         notchHover = NotchHover { [weak self] in
             guard let self, !self.shelf.isOpen else { return }
@@ -124,6 +131,127 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         Paster.write([store.items[index]], store: store)
         monitor.skipCurrentChange()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { Paster.sendPasteKeystroke() }
+    }
+
+    // MARK: - Studio: Claude, capture, dictation
+
+    private func setupStudio() {
+        claude = ClaudeController(store: store)
+        claude.onOpenSettings = { [weak self] in self?.openSettings() }
+
+        pins = PinController()
+        editor = AnnotationEditorController()
+        editor.onPin = { [weak self] image in self?.pins.pin(image) }
+
+        quickAccess = QuickAccessController()
+        quickAccess.onCopy = { [weak self] url in
+            guard let data = try? Data(contentsOf: url) else { return }
+            CaptureService.writeImage(data)
+            self?.monitor.skipCurrentChange()
+            Toast.show("Kopiert", symbol: "doc.on.doc")
+        }
+        quickAccess.onEdit = { [weak self] url in self?.editor.open(url: url) }
+        quickAccess.onPin = { [weak self] url in
+            if let image = NSImage(contentsOf: url) { self?.pins.pin(image) }
+        }
+        quickAccess.onClaude = { [weak self] url in
+            guard let data = try? Data(contentsOf: url) else { return }
+            self?.claude.show(context: .image(data, title: url.deletingPathExtension().lastPathComponent))
+        }
+        quickAccess.onRecognizeText = { url in
+            TextRecognizer.recognize(imageAt: url) { text in
+                guard let text else { return Toast.show("Kein Text gefunden", symbol: "text.viewfinder") }
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(text, forType: .string)
+                Toast.show("Text kopiert", symbol: "text.viewfinder")
+            }
+        }
+
+        capture = CaptureService(store: store, monitor: monitor)
+        capture.onWillCapture = { [weak self] in
+            self?.shelf.hideNow()
+            self?.quickPaste.hideNow()
+        }
+        capture.onCaptured = { [weak self] url in self?.quickAccess.show(url) }
+
+        dictationHUD = DictationHUD()
+
+        for model in [shelf.model, quickPaste.model, library.model] {
+            model.onAskClaude = { [weak self] item, action in self?.askClaude(about: item, action: action) }
+            model.onEditImage = { [weak self] item in
+                guard let self, let url = self.store.imageURL(for: item) else { return }
+                self.shelf.hideNow()
+                self.quickPaste.hideNow()
+                self.editor.open(url: url)
+            }
+            model.onPinImage = { [weak self] item in
+                guard let self, let url = self.store.imageURL(for: item), let image = NSImage(contentsOf: url) else { return }
+                self.shelf.hideNow()
+                self.quickPaste.hideNow()
+                self.pins.pin(image)
+            }
+            model.onAskClaudeFiles = { [weak self] urls in
+                guard let self, let context = ClaudeController.context(forFiles: urls) else { return }
+                self.shelf.hideNow()
+                self.claude.show(context: context)
+            }
+        }
+
+        let controlCommand = UInt32(controlKey | cmdKey)
+        let controlOptionCommand = UInt32(controlKey | optionKey | cmdKey)
+        // ⌃⌘C Claude with whatever is selected in the frontmost app
+        hotKeys.append(HotKey(keyCode: UInt32(kVK_ANSI_C), modifiers: controlCommand) { [weak self] in
+            self?.openClaudeWithSelection()
+        })
+        // ⌃⌥⌘4 area · ⌃⌥⌘5 window · ⌃⌥⌘3 screen · ⌃⌥⌘T text
+        hotKeys.append(HotKey(keyCode: UInt32(kVK_ANSI_4), modifiers: controlOptionCommand) { [weak self] in
+            self?.capture.capture(.area)
+        })
+        hotKeys.append(HotKey(keyCode: UInt32(kVK_ANSI_5), modifiers: controlOptionCommand) { [weak self] in
+            self?.capture.capture(.window)
+        })
+        hotKeys.append(HotKey(keyCode: UInt32(kVK_ANSI_3), modifiers: controlOptionCommand) { [weak self] in
+            self?.capture.capture(.screen)
+        })
+        hotKeys.append(HotKey(keyCode: UInt32(kVK_ANSI_T), modifiers: controlOptionCommand) { [weak self] in
+            self?.captureText()
+        })
+        // ⌃⌥D dictation: hold to talk (or press to start/stop in toggle mode)
+        hotKeys.append(HotKey(keyCode: UInt32(kVK_ANSI_D), modifiers: UInt32(controlKey | optionKey), action: {
+            guard Prefs.dictationEnabled else { return }
+            if Prefs.dictationMode == "toggle" { Dictation.shared.toggle() } else { Dictation.shared.start() }
+        }, release: {
+            guard Prefs.dictationEnabled, Prefs.dictationMode != "toggle" else { return }
+            Dictation.shared.stop()
+        }))
+    }
+
+    /// Grabs the selection in the frontmost app (⌘C); falls back to the newest clip.
+    private func openClaudeWithSelection() {
+        shelf.hideNow()
+        quickPaste.hideNow()
+        let pasteboard = NSPasteboard.general
+        let before = pasteboard.changeCount
+        let app = NSWorkspace.shared.frontmostApplication?.localizedName
+        Paster.sendCopyKeystroke()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+            guard let self else { return }
+            if pasteboard.changeCount != before, let text = pasteboard.string(forType: .string),
+               !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                self.claude.show(context: .text(text, source: app))
+            } else if let latest = self.store.items.first {
+                self.claude.show(context: ClaudeController.context(for: latest, store: self.store))
+            } else {
+                self.claude.show(context: nil)
+            }
+        }
+    }
+
+    private func askClaude(about item: ClipItem, action: ClaudeAction?) {
+        shelf.hideNow()
+        quickPaste.hideNow()
+        claude.show(context: ClaudeController.context(for: item, store: store))
+        if let action { claude.session.run(action) }
     }
 
     // MARK: - Shelf tools
@@ -253,6 +381,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         addItem(to: menu, "Bibliothek öffnen", #selector(openLibraryFromMenu), key: "l", modifiers: [.control, .command])
         addItem(to: menu, "Quick Paste …", #selector(openQuickPasteFromMenu), key: "v", modifiers: [.control, .command])
         addItem(to: menu, "Shelf öffnen", #selector(openShelfFromMenu), key: "v", modifiers: [.option, .command])
+        addItem(to: menu, "Claude fragen …", #selector(openClaudeFromMenu), key: "c", modifiers: [.control, .command])
+        menu.addItem(.separator())
+
+        let captureMenu = NSMenu()
+        addItem(to: captureMenu, CaptureService.Mode.area.title, #selector(captureAreaFromMenu), key: "4",
+                modifiers: [.control, .option, .command])
+        addItem(to: captureMenu, CaptureService.Mode.window.title, #selector(captureWindowFromMenu), key: "5",
+                modifiers: [.control, .option, .command])
+        addItem(to: captureMenu, CaptureService.Mode.screen.title, #selector(captureScreenFromMenu), key: "3",
+                modifiers: [.control, .option, .command])
+        addItem(to: captureMenu, "Text erkennen", #selector(captureTextFromMenu), key: "t",
+                modifiers: [.control, .option, .command])
+        captureMenu.addItem(.separator())
+        addItem(to: captureMenu, CaptureService.Mode.toolbar.title, #selector(captureToolbarFromMenu))
+        let captureItem = NSMenuItem(title: "Aufnehmen", action: nil, keyEquivalent: "")
+        captureItem.submenu = captureMenu
+        menu.addItem(captureItem)
+        addItem(to: menu, Dictation.shared.state == .idle ? "Diktat starten" : "Diktat beenden",
+                #selector(toggleDictationFromMenu), key: "d", modifiers: [.control, .option])
 
         let history = NSMenu()
         for (index, item) in store.items.prefix(10).enumerated() {
@@ -278,7 +425,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(.separator())
 
         addItem(to: menu, "Einstellungen …", #selector(openSettings), key: ",", modifiers: [.command])
-        addItem(to: menu, Prefs.paused ? "Aufnahme fortsetzen" : "Aufnahme pausieren", #selector(togglePause))
+        addItem(to: menu, Prefs.paused ? "Verlauf fortsetzen" : "Verlauf pausieren", #selector(togglePause))
         addItem(to: menu, "Verlauf löschen …", #selector(confirmClearHistory))
         menu.addItem(.separator())
         addItem(to: menu, "Clipline beenden", #selector(quit), key: "q", modifiers: [.command])
@@ -298,6 +445,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func openLibraryFromMenu() { DispatchQueue.main.async { self.openLibrary() } }
     @objc private func openQuickPasteFromMenu() { DispatchQueue.main.async { self.toggleQuickPaste() } }
     @objc private func openShelfFromMenu() { DispatchQueue.main.async { self.toggleShelf() } }
+
+    @objc private func openClaudeFromMenu() { DispatchQueue.main.async { self.openClaudeWithSelection() } }
+    @objc private func captureAreaFromMenu() { capture.capture(.area) }
+    @objc private func captureWindowFromMenu() { capture.capture(.window) }
+    @objc private func captureScreenFromMenu() { capture.capture(.screen) }
+    @objc private func captureToolbarFromMenu() { capture.capture(.toolbar) }
+    @objc private func captureTextFromMenu() { captureText() }
+    @objc private func toggleDictationFromMenu() { Dictation.shared.toggle() }
 
     @objc private func pasteFromMenu(_ sender: NSMenuItem) {
         guard let index = sender.representedObject as? Int else { return }

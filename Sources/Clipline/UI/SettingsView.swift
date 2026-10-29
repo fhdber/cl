@@ -24,6 +24,25 @@ struct SettingsView: View {
     @AppStorage(Prefs.Key.ignoredApps) private var ignoredAppsRaw = Prefs.defaultIgnoredApps
 
     var body: some View {
+        TabView {
+            general
+                .tabItem { Label("Allgemein", systemImage: "gearshape") }
+            ClaudeSettingsView(keys: .shared)
+                .tabItem { Label("Claude", systemImage: "sparkle") }
+            DictationSettingsView()
+                .tabItem { Label("Diktat", systemImage: "mic") }
+            CaptureSettingsView()
+                .tabItem { Label("Aufnahme", systemImage: "camera.viewfinder") }
+            TraySettingsView()
+                .tabItem { Label("Ablage", systemImage: "tray.full") }
+        }
+        .frame(width: 540, height: 760)
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            refresher.refresh()
+        }
+    }
+
+    private var general: some View {
         Form {
             Section("Allgemein") {
                 Toggle("Beim Anmelden starten", isOn: launchAtLogin)
@@ -40,6 +59,10 @@ struct SettingsView: View {
                 LabeledContent("Shelf") { KeyHint(text: "⌥ ⌘ V") }
                 LabeledContent("Bibliothek") { KeyHint(text: "⌃ ⌘ L") }
                 LabeledContent("Letzte 10 Clips einfügen") { KeyHint(text: "⌃ ⌘ 0 … 9") }
+                LabeledContent("Claude fragen") { KeyHint(text: "⌃ ⌘ C") }
+                LabeledContent("Diktat (halten)") { KeyHint(text: "⌃ ⌥ D") }
+                LabeledContent("Bereich · Fenster · Bildschirm") { KeyHint(text: "⌃ ⌥ ⌘ 4 · 5 · 3") }
+                LabeledContent("Text erkennen") { KeyHint(text: "⌃ ⌥ ⌘ T") }
             }
 
             Section("Verlauf") {
@@ -116,10 +139,6 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 500, height: 820)
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            refresher.refresh()
-        }
     }
 
     private var trusted: Bool { Paster.isTrusted }

@@ -90,6 +90,11 @@ final class PanelModel: ObservableObject {
     var onOpenLibrary: (() -> Void)?
     var onCaptureText: (() -> Void)?
     var onPickColor: (() -> Void)?
+    /// Ask Claude about a clip, optionally running one of the quick actions right away.
+    var onAskClaude: ((ClipItem, ClaudeAction?) -> Void)?
+    var onEditImage: ((ClipItem) -> Void)?
+    var onPinImage: ((ClipItem) -> Void)?
+    var onAskClaudeFiles: (([URL]) -> Void)?
     private var collectionTargets: [UUID] = []
 
     init(store: ClipStore) {

@@ -52,6 +52,19 @@ enum Paster {
         }
     }
 
+    /// ⌘C into the frontmost app – grabs the current selection (needs Accessibility, like paste).
+    static func sendCopyKeystroke() {
+        guard isTrusted else { return }
+        let source = CGEventSource(stateID: .combinedSessionState)
+        let cKey = CGKeyCode(8)
+        let down = CGEvent(keyboardEventSource: source, virtualKey: cKey, keyDown: true)
+        let up = CGEvent(keyboardEventSource: source, virtualKey: cKey, keyDown: false)
+        down?.flags = .maskCommand
+        up?.flags = .maskCommand
+        down?.post(tap: .cgAnnotatedSessionEventTap)
+        up?.post(tap: .cgAnnotatedSessionEventTap)
+    }
+
     static func sendPasteKeystroke() {
         guard isTrusted else { return }
         let source = CGEventSource(stateID: .combinedSessionState)
