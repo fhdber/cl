@@ -77,7 +77,7 @@ final class NowPlaying: ObservableObject {
             if track != nil { track = nil }
             if isPlaying { isPlaying = false }
             if self.source != nil { self.source = nil }
-            artwork = nil
+            if artwork != nil { artwork = nil }
             artworkKey = nil
             return
         }
@@ -88,7 +88,9 @@ final class NowPlaying: ObservableObject {
         if self.source != source { self.source = source }
         let playing = fields[0] == "playing"
         if isPlaying != playing { isPlaying = playing }
-        position = Self.number(fields[4])
+        // Publish only real changes – every assignment would redraw all observers.
+        let newPosition = Self.number(fields[4])
+        if abs(newPosition - position) >= 0.5 { position = newPosition }
 
         let key = "\(source.rawValue)|\(newTrack.title)|\(newTrack.artist)|\(newTrack.album)"
         if key != artworkKey {

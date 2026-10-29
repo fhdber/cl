@@ -43,13 +43,14 @@ final class LiveActivityController {
         update()
     }
 
+    /// Touches the window only when something actually changes, so nothing blinks at the notch.
     private func update() {
         guard listening, !isSuppressed, player.isPlaying, let frame = Self.frame() else {
-            panel.orderOut(nil)
+            if panel.isVisible { panel.orderOut(nil) }
             return
         }
-        panel.setFrame(frame, display: true)
-        panel.orderFrontRegardless()
+        if panel.frame != frame { panel.setFrame(frame, display: true) }
+        if !panel.isVisible { panel.orderFrontRegardless() }
     }
 
     /// Only on screens with a notch: the band spans the notch plus a wing on each side.

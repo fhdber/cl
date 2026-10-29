@@ -16,6 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem!
     private var settingsWindow: NSWindow?
     private var defaultsObserver: NSObjectProtocol?
+    private var settingsApplyPending = false
 
     /// kVK_ANSI_0 … kVK_ANSI_9
     private static let digitKeyCodes = [kVK_ANSI_0, kVK_ANSI_1, kVK_ANSI_2, kVK_ANSI_3, kVK_ANSI_4,
@@ -338,15 +339,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // MARK: - Settings changes
 
     private func observeDefaults() {
+        // Coalesced: macOS writes defaults often (window frames, status item position), and every
+        // notification used to re-apply all settings at once.
         defaultsObserver = NotificationCenter.default.addObserver(
             forName: UserDefaults.didChangeNotification, object: nil, queue: .main
         ) { [weak self] _ in
-            guard let self else { return }
-            if Prefs.captureScreenshots { self.screenshots.start() } else { self.screenshots.stop() }
-            if Prefs.notchHover { self.notchHover.start() } else { self.notchHover.stop() }
-            if Prefs.fileDragOpensTray { self.dragWatcher.start() } else { self.dragWatcher.stop() }
-            self.liveActivity.setEnabled(Prefs.liveActivity)
-            self.store.prune()
+            guard let self, !self.settingsApplyPending else { return }
+            self.settingsApplyPending = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                self?.settingsApplyPending = false
+                self?.applySettings()
+            }
         }
+    }
+
+    private func applySettings() {
+        if Prefs.captureScreenshots { screenshots.start() } else { screenshots.stop() }
+        if Prefs.notchHover { notchHover.start() } else { notchHover.stop() }
+        if Prefs.fileDragOpensTray { dragWatcher.start() } else { dragWatcher.stop() }
+        liveActivity.setEnabled(Prefs.liveActivity)
+        store.prune()
     }
 }
