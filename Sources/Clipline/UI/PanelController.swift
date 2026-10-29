@@ -77,7 +77,11 @@ final class SurfaceController {
 
         resignObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.didResignKeyNotification, object: panel, queue: .main
-        ) { [weak self] _ in self?.hide() }
+        ) { [weak self] _ in
+            // A system permission dialog (camera) takes focus – keep the shelf open behind it.
+            guard !CameraMirror.shared.isRequestingAccess else { return }
+            self?.hide()
+        }
 
         if surface == .shelf {
             // The preview and the mini/full switch resize the shelf.
@@ -234,6 +238,7 @@ final class SurfaceController {
         }
         // Clicks in other apps close the panel.
         clickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            guard !CameraMirror.shared.isRequestingAccess else { return } // clicks in the permission dialog
             self?.hide()
         }
         if let local = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown], handler: { [weak self] event in
@@ -256,7 +261,7 @@ final class SurfaceController {
     }
 
     private func checkPointerLeft() {
-        guard autoHidesOnLeave, isOpen else { return }
+        guard autoHidesOnLeave, isOpen, !CameraMirror.shared.isRequestingAccess else { return }
         let inside = NSMouseInRect(NSEvent.mouseLocation, panel.frame.insetBy(dx: -16, dy: -16), false)
             || NotchHover.pointerInZone()
         guard !inside else {

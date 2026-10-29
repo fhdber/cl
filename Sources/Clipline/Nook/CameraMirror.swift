@@ -10,6 +10,8 @@ final class CameraMirror: ObservableObject {
     let session = AVCaptureSession()
     @Published private(set) var isRunning = false
     @Published private(set) var denied = false
+    /// The camera permission dialog is up. It takes focus, but the shelf must stay open meanwhile.
+    @Published private(set) var isRequestingAccess = false
 
     private let queue = DispatchQueue(label: "clipline.camera")
     private var configured = false
@@ -19,8 +21,10 @@ final class CameraMirror: ObservableObject {
         case .authorized:
             run()
         case .notDetermined:
+            isRequestingAccess = true
             AVCaptureDevice.requestAccess(for: .video) { granted in
                 DispatchQueue.main.async {
+                    self.isRequestingAccess = false
                     if granted { self.run() } else { self.denied = true }
                 }
             }

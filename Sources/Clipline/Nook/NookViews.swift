@@ -321,11 +321,24 @@ struct MirrorWidget: View {
                 }
                 .padding(6)
             } else {
-                Button { mirror.start() } label: {
+                Button {
+                    if mirror.denied {
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Camera") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    } else {
+                        mirror.start()
+                    }
+                } label: {
                     VStack(spacing: 6) {
-                        Image(systemName: mirror.denied ? "video.slash" : "person.crop.square")
-                            .font(.system(size: 22, weight: .light))
-                        Text(mirror.denied ? "Kamera nicht erlaubt" : "Spiegel")
+                        if mirror.isRequestingAccess {
+                            ProgressView().controlSize(.small)
+                        } else {
+                            Image(systemName: mirror.denied ? "video.slash" : "person.crop.square")
+                                .font(.system(size: 22, weight: .light))
+                        }
+                        Text(mirror.denied ? "Kamera nicht erlaubt"
+                             : mirror.isRequestingAccess ? "Kamera freigeben …" : "Spiegel")
                             .font(.system(size: 11, weight: .medium))
                     }
                     .foregroundStyle(.white.opacity(0.75))
