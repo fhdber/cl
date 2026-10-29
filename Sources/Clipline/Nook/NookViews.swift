@@ -31,9 +31,10 @@ struct NookView: View {
                             ShortcutsWidget(shortcuts: shortcuts)
                         }
                     }
-                    .overlay(alignment: .topTrailing) { secondarySwitch }
+                    .padding(.trailing, 44) // keep the header clear of the switch
                     .widgetCard()
-                    .frame(width: 200)
+                    .frame(width: 210)
+                    .overlay(alignment: .topTrailing) { secondarySwitch.padding(8) }
                     MirrorWidget(mirror: mirror)
                         .widgetCard(padding: 0)
                         .frame(width: 150)
