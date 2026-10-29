@@ -33,11 +33,7 @@ final class SettingsWindowController {
         tabs.canPropagateSelectedChildViewControllerTitle = true
 
         func add<Content: View>(_ title: String, _ symbol: String, _ view: Content) {
-            // Explicit margins: inside a tab view controller the grouped form otherwise runs edge to edge.
-            let content = view
-                .contentMargins(.horizontal, 28, for: .scrollContent)
-                .contentMargins(.vertical, 20, for: .scrollContent)
-                .frame(width: Self.contentSize.width, height: Self.contentSize.height)
+            let content = view.frame(width: Self.contentSize.width, height: Self.contentSize.height)
             let host = NSHostingController(rootView: content)
             host.title = title
             let item = NSTabViewItem(viewController: host)
@@ -74,31 +70,40 @@ struct GeneralSettingsView: View {
     @AppStorage(Prefs.Key.ignoredApps) private var ignoredAppsRaw = Prefs.defaultIgnoredApps
 
     var body: some View {
-        Form {
-            Section {
-                Toggle("Beim Anmelden starten", isOn: launchAtLogin)
+        SettingsPage {
+            SettingsSection {
+                SettingsRow(title: "Beim Anmelden starten") { SettingsSwitch(isOn: launchAtLogin) }
             }
 
-            Section("Verlauf") {
-                Picker("Aufbewahren", selection: $historyLimit) {
-                    Text("200 Clips").tag(200)
-                    Text("1.000 Clips").tag(1000)
-                    Text("5.000 Clips").tag(5000)
-                    Text("20.000 Clips").tag(20000)
+            SettingsSection(title: "Verlauf") {
+                SettingsRow(title: "Aufbewahren") {
+                    Picker("", selection: $historyLimit) {
+                        Text("200 Clips").tag(200)
+                        Text("1.000 Clips").tag(1000)
+                        Text("5.000 Clips").tag(5000)
+                        Text("20.000 Clips").tag(20000)
+                    }
+                    .labelsHidden()
+                    .fixedSize()
                 }
-                Toggle("Aufnahme pausieren", isOn: $paused)
-                LabeledContent("Gesamten Verlauf") {
+                SettingsDivider()
+                SettingsRow(title: "Aufnahme pausieren", subtitle: "Neue Kopien werden nicht gespeichert.") {
+                    SettingsSwitch(isOn: $paused)
+                }
+                SettingsDivider()
+                SettingsRow(title: "Gesamten Verlauf löschen", subtitle: "Favoriten und Kategorien bleiben.") {
                     Button("Löschen …", role: .destructive, action: confirmClearHistory)
                 }
             }
 
-            Section {
+            SettingsSection(title: "Datenschutz",
+                            footer: "Aus diesen Apps wird nichts aufgenommen. Inhalte, die Passwort-Manager als vertraulich markieren, werden immer ignoriert.") {
                 ForEach(installedIgnoredApps, id: \.self) { bundleID in
-                    HStack(spacing: 8) {
+                    HStack(spacing: 10) {
                         if let icon = AppIcons.icon(for: bundleID) {
-                            Image(nsImage: icon).resizable().frame(width: 18, height: 18)
+                            Image(nsImage: icon).resizable().frame(width: 20, height: 20)
                         }
-                        Text(appName(for: bundleID))
+                        Text(appName(for: bundleID)).font(.system(size: 13))
                         Spacer()
                         Button {
                             ignoredAppsRaw = ignoredApps.filter { $0 != bundleID }.joined(separator: ",")
@@ -106,33 +111,33 @@ struct GeneralSettingsView: View {
                             Image(systemName: "minus.circle")
                         }
                         .buttonStyle(.borderless)
+                        .help("Entfernen")
                     }
+                    .padding(.horizontal, 14)
+                    .frame(minHeight: 40)
+                    SettingsDivider()
                 }
-                Button("App hinzufügen …", action: addIgnoredApp)
-            } header: {
-                Text("Datenschutz")
-            } footer: {
-                Text("Aus diesen Apps wird nichts aufgenommen. Inhalte, die Passwort-Manager als vertraulich markieren, werden immer ignoriert.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                HStack {
+                    Button("App hinzufügen …", action: addIgnoredApp)
+                    Spacer()
+                }
+                .padding(.horizontal, 14)
+                .frame(minHeight: 44)
             }
 
-            Section {
-                LabeledContent {
+            SettingsSection(title: "Berechtigungen") {
+                SettingsRow(title: "Bedienungshilfen",
+                            subtitle: "Damit Clipline für dich einfügen und markierten Text an Claude geben kann.") {
                     if trusted {
-                        Label("Erlaubt", systemImage: "checkmark.circle.fill").foregroundStyle(Color.green)
+                        Label("Erlaubt", systemImage: "checkmark.circle.fill")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(Color.green)
                     } else {
                         Button("Erlauben …") { Paster.requestAccess() }
                     }
-                } label: {
-                    Text("Bedienungshilfen")
-                    Text("Nötig, damit Clipline für dich einfügen und markierten Text an Claude geben kann.")
                 }
-            } header: {
-                Text("Berechtigungen")
             }
         }
-        .formStyle(.grouped)
     }
 
     private var trusted: Bool { Paster.isTrusted }
@@ -196,34 +201,49 @@ struct NotchSettingsView: View {
     @AppStorage(Prefs.Key.pinnedShortcuts) private var pinnedShortcuts = ""
 
     var body: some View {
-        Form {
-            Section("Shelf") {
-                Toggle("Öffnen, wenn die Maus an die Notch fährt", isOn: $notchHover)
-                Picker("Größe", selection: $shelfSize) {
-                    Text("Automatisch").tag("auto")
-                    Text("Mini").tag("mini")
-                    Text("Groß").tag("full")
+        SettingsPage {
+            SettingsSection(title: "Shelf",
+                            footer: "„Automatisch“ nimmt auf Bildschirmen unter 1600 pt – etwa dem MacBook Pro 14\" – das Mini-Shelf.") {
+                SettingsRow(title: "Öffnen, wenn die Maus an die Notch fährt") { SettingsSwitch(isOn: $notchHover) }
+                SettingsDivider()
+                SettingsRow(title: "Größe") {
+                    Picker("", selection: $shelfSize) {
+                        Text("Automatisch").tag("auto")
+                        Text("Mini").tag("mini")
+                        Text("Groß").tag("full")
+                    }
+                    .labelsHidden()
+                    .fixedSize()
                 }
-                Picker("Startet mit", selection: $shelfStartTab) {
-                    Text("Clips").tag("clips")
-                    Text("Nook").tag("nook")
-                    Text("Ablage").tag("tray")
+                SettingsDivider()
+                SettingsRow(title: "Startet mit") {
+                    Picker("", selection: $shelfStartTab) {
+                        Text("Clips").tag("clips")
+                        Text("Nook").tag("nook")
+                        Text("Ablage").tag("tray")
+                    }
+                    .labelsHidden()
+                    .fixedSize()
                 }
             }
 
-            Section {
-                Toggle("Live-Aktivität, wenn Musik läuft", isOn: $liveActivity)
-                Toggle("Dateien zur Notch ziehen öffnet die Ablage", isOn: $fileDragOpensTray)
-                TextField("Kurzbefehle", text: $pinnedShortcuts, prompt: Text("Namen, durch Komma getrennt"))
-            } header: {
-                Text("Nook & Ablage")
-            } footer: {
-                Text("„Automatisch“ nimmt auf Bildschirmen unter 1600 pt das Mini-Shelf. Medien funktionieren mit Musik und Spotify.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+            SettingsSection(title: "Nook & Ablage",
+                            footer: "Medien funktionieren mit Musik und Spotify. Beim ersten Mal fragt macOS, ob Clipline sie steuern darf.") {
+                SettingsRow(title: "Live-Aktivität", subtitle: "Cover und Equalizer an der Notch, wenn Musik läuft.") {
+                    SettingsSwitch(isOn: $liveActivity)
+                }
+                SettingsDivider()
+                SettingsRow(title: "Dateien zur Notch ziehen öffnet die Ablage") {
+                    SettingsSwitch(isOn: $fileDragOpensTray)
+                }
+                SettingsDivider()
+                SettingsRow(title: "Kurzbefehle im Nook", subtitle: "Namen, durch Komma getrennt.") {
+                    TextField("", text: $pinnedShortcuts, prompt: Text("z. B. Fokus, Timer"))
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 200)
+                }
             }
         }
-        .formStyle(.grouped)
     }
 }
 
@@ -231,37 +251,39 @@ struct NotchSettingsView: View {
 
 struct ShortcutsSettingsView: View {
     var body: some View {
-        Form {
-            Section("Zwischenablage") {
-                row("Quick Paste", "⌃ ⌘ V")
-                row("Shelf", "⌥ ⌘ V")
-                row("Bibliothek", "⌃ ⌘ L")
-                row("Einen der letzten 10 Clips einfügen", "⌃ ⌘ 0 … 9")
+        SettingsPage {
+            SettingsSection(title: "Zwischenablage") {
+                SettingsRow(title: "Quick Paste") { KeyCaps(keys: "⌃ ⌘ V") }
+                SettingsDivider()
+                SettingsRow(title: "Shelf") { KeyCaps(keys: "⌥ ⌘ V") }
+                SettingsDivider()
+                SettingsRow(title: "Bibliothek") { KeyCaps(keys: "⌃ ⌘ L") }
+                SettingsDivider()
+                SettingsRow(title: "Einen der letzten 10 Clips einfügen") { KeyCaps(keys: "⌃ ⌘ 0 … 9") }
             }
-            Section("Claude & Diktat") {
-                row("Claude fragen (mit Markierung)", "⌃ ⌘ C")
-                row("Diktat – halten und sprechen", "⌃ ⌥ D")
+            SettingsSection(title: "Claude & Diktat") {
+                SettingsRow(title: "Claude fragen", subtitle: "Mit dem Text, den du gerade markiert hast.") {
+                    KeyCaps(keys: "⌃ ⌘ C")
+                }
+                SettingsDivider()
+                SettingsRow(title: "Diktat", subtitle: "Halten und sprechen.") { KeyCaps(keys: "⌃ ⌥ D") }
             }
-            Section("Aufnahme") {
-                row("Bereich", "⌃ ⌥ ⌘ 4")
-                row("Fenster", "⌃ ⌥ ⌘ 5")
-                row("Bildschirm", "⌃ ⌥ ⌘ 3")
-                row("Text erkennen", "⌃ ⌥ ⌘ T")
+            SettingsSection(title: "Aufnahme") {
+                SettingsRow(title: "Bereich") { KeyCaps(keys: "⌃ ⌥ ⌘ 4") }
+                SettingsDivider()
+                SettingsRow(title: "Fenster") { KeyCaps(keys: "⌃ ⌥ ⌘ 5") }
+                SettingsDivider()
+                SettingsRow(title: "Bildschirm") { KeyCaps(keys: "⌃ ⌥ ⌘ 3") }
+                SettingsDivider()
+                SettingsRow(title: "Text erkennen") { KeyCaps(keys: "⌃ ⌥ ⌘ T") }
             }
-            Section("Im Shelf") {
-                row("Tabs Clips · Nook · Ablage", "⌘ 1 · 2 · 3")
-                row("Vorschau", "Leertaste")
-                row("Einfügen", "↩")
+            SettingsSection(title: "Im Shelf") {
+                SettingsRow(title: "Clips · Nook · Ablage") { KeyCaps(keys: "⌘ 1 · 2 · 3") }
+                SettingsDivider()
+                SettingsRow(title: "Vorschau") { KeyCaps(keys: "Leertaste") }
+                SettingsDivider()
+                SettingsRow(title: "Einfügen") { KeyCaps(keys: "↩") }
             }
-        }
-        .formStyle(.grouped)
-    }
-
-    private func row(_ title: String, _ keys: String) -> some View {
-        LabeledContent(title) {
-            Text(keys)
-                .font(.system(size: 12, weight: .medium, design: .rounded))
-                .foregroundStyle(.secondary)
         }
     }
 }
