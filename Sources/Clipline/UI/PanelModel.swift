@@ -70,6 +70,8 @@ final class PanelModel: ObservableObject {
     @Published var reveal: CGFloat = 1
     /// Compact shelf for smaller screens.
     @Published var isMini = false
+    /// Smallest shelf: one row of clips, no header.
+    @Published var isCompact = false
     @Published var tab: ShelfTab = .clips {
         didSet { if tab != .clips { previewID = nil } } // the clip preview belongs to the clips tab
     }
@@ -232,9 +234,12 @@ final class PanelModel: ObservableObject {
     }
 
     /// Switches shelf size and remembers the choice.
-    func setMini(_ mini: Bool) {
-        UserDefaults.standard.set(mini ? "mini" : "full", forKey: Prefs.Key.shelfSize)
-        isMini = mini
+    /// "full", "mini" or "compact"; remembered as the shelf size.
+    func setShelfSize(_ size: String) {
+        UserDefaults.standard.set(size, forKey: Prefs.Key.shelfSize)
+        isCompact = size == "compact"
+        isMini = size == "mini"
+        if isCompact { tab = .clips }
     }
 
     func togglePreview() {

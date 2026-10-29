@@ -14,6 +14,8 @@ struct ClipCard: View {
     let store: ClipStore
 
     private var compact: Bool { size.width < 110 }
+    /// Compact-shelf size: content plus app icon only.
+    private var tiny: Bool { size.width < 80 }
     private var radius: CGFloat { compact ? 10 : 12 }
     private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: radius, style: .continuous) }
 
@@ -27,9 +29,9 @@ struct ClipCard: View {
                                startPoint: UnitPoint(x: 0.5, y: 0.3), endPoint: .bottom)
             }
             VStack(alignment: .leading, spacing: compact ? 2 : 3) {
-                if isHovered { hoverBar }
+                if isHovered && !tiny { hoverBar }
                 Spacer(minLength: 0)
-                if let title {
+                if let title, !tiny || item.kind == .color {
                     Text(title)
                         .font(.system(size: compact ? 10.5 : 12.5, weight: .semibold))
                         .foregroundStyle(.white)
@@ -181,7 +183,16 @@ struct ClipCard: View {
         }
     }
 
+    @ViewBuilder
     private var metaRow: some View {
+        if tiny {
+            appIcon
+        } else {
+            fullMetaRow
+        }
+    }
+
+    private var fullMetaRow: some View {
         HStack(spacing: 4) {
             appIcon
             Text(PanelModel.relativeTime(item.createdAt))

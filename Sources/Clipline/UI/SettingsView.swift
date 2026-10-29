@@ -215,6 +215,7 @@ struct NotchSettingsView: View {
                 SettingsRow(title: "Größe") {
                     Picker("", selection: $shelfSize) {
                         Text("Automatisch").tag("auto")
+                        Text("Kompakt").tag("compact")
                         Text("Mini").tag("mini")
                         Text("Groß").tag("full")
                     }

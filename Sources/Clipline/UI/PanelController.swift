@@ -94,6 +94,10 @@ final class SurfaceController {
                 .removeDuplicates()
                 .sink { [weak self] _ in DispatchQueue.main.async { self?.relayout() } }
                 .store(in: &subscriptions)
+            model.$isCompact
+                .removeDuplicates()
+                .sink { [weak self] _ in DispatchQueue.main.async { self?.relayout() } }
+                .store(in: &subscriptions)
         }
     }
 
@@ -113,10 +117,14 @@ final class SurfaceController {
         self.screen = screen
 
         isOpen = true
-        if surface == .shelf { model.isMini = Layout.shelfIsMini(on: screen) }
+        if surface == .shelf {
+            let mode = Layout.shelfMode(on: screen)
+            model.isMini = mode == .mini
+            model.isCompact = mode == .compact
+        }
         model.prepareForShow()
         if surface == .shelf {
-            model.tab = tab ?? ShelfTab(rawValue: Prefs.shelfStartTab) ?? .clips
+            model.tab = model.isCompact ? .clips : (tab ?? ShelfTab(rawValue: Prefs.shelfStartTab) ?? .clips)
             NowPlaying.shared.start()
             onVisibilityChange?(true)
         }
@@ -190,7 +198,8 @@ final class SurfaceController {
     private func targetFrame(on screen: NSScreen, mouse: NSPoint) -> NSRect {
         switch surface {
         case .shelf:
-            let size = Layout.shelfSize(mini: model.isMini, preview: model.previewID != nil)
+            let mode: Layout.ShelfMode = model.isCompact ? .compact : model.isMini ? .mini : .full
+            let size = Layout.shelfSize(mode: mode, preview: model.previewID != nil)
             let width = min(size.width, screen.frame.width - 40)
             let height = size.height
             return NSRect(x: screen.frame.midX - width / 2, y: screen.frame.maxY - height, width: width, height: height)

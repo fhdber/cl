@@ -17,20 +17,35 @@ enum Layout {
     static let miniShelfHeight: CGFloat = 6 + 32 + 6 + miniCard.height + 12
     static let miniDetailHeight: CGFloat = 300
 
+    // Compact shelf – just a row of small clips under the notch; typing searches.
+    static let compactShelfWidth: CGFloat = 420
+    static let compactCard = CGSize(width: 74, height: 56)
+    static let compactBand: CGFloat = 30
+    static let compactShelfHeight: CGFloat = compactBand + compactCard.height + 10
+
+    enum ShelfMode { case full, mini, compact }
+
     /// "auto" picks the mini shelf on screens narrower than 1600 pt (14" MacBook Pro and smaller).
-    static func shelfIsMini(on screen: NSScreen) -> Bool {
+    static func shelfMode(on screen: NSScreen) -> ShelfMode {
         switch Prefs.shelfSize {
-        case "mini": return true
-        case "full": return false
-        default: return screen.frame.width < 1600
+        case "compact": return .compact
+        case "mini": return .mini
+        case "full": return .full
+        default: return screen.frame.width < 1600 ? .mini : .full
         }
     }
 
-    static func shelfSize(mini: Bool, preview: Bool) -> (width: CGFloat, height: CGFloat) {
-        let width = mini ? miniShelfWidth : shelfWidth
-        let base = mini ? miniShelfHeight : shelfHeight
-        let detail = preview ? detailGap + (mini ? miniDetailHeight : detailHeight) : 0
-        return (width, base + detail)
+    static func shelfIsMini(on screen: NSScreen) -> Bool { shelfMode(on: screen) != .full }
+
+    static func shelfSize(mode: ShelfMode, preview: Bool) -> (width: CGFloat, height: CGFloat) {
+        switch mode {
+        case .full:
+            return (shelfWidth, shelfHeight + (preview ? detailGap + detailHeight : 0))
+        case .mini:
+            return (miniShelfWidth, miniShelfHeight + (preview ? detailGap + miniDetailHeight : 0))
+        case .compact:
+            return (compactShelfWidth, compactShelfHeight + (preview ? detailGap + miniDetailHeight : 0))
+        }
     }
 
     // Quick paste
@@ -68,9 +83,10 @@ struct ShelfView: View {
     var body: some View {
         VStack(spacing: Layout.detailGap) {
             Group {
-                if model.isMini { miniShelf } else { shelf }
+                if model.isCompact { compactShelf } else if model.isMini { miniShelf } else { shelf }
             }
-                .frame(height: model.isMini ? Layout.miniShelfHeight : Layout.shelfHeight)
+                .frame(height: model.isCompact ? Layout.compactShelfHeight
+                       : model.isMini ? Layout.miniShelfHeight : Layout.shelfHeight)
                 .background(Self.shelfShape.fill(Theme.surface))
                 .overlay(
                     Self.shelfShape.stroke(Color.white.opacity(model.isDropTargeted ? 0.5 : 0), lineWidth: 4)
@@ -171,7 +187,7 @@ struct ShelfView: View {
             model.onOpenSettings?()
         }
         RoundButton(symbol: "arrow.down.right.and.arrow.up.left", help: "Mini-Shelf") {
-            model.setMini(true)
+            model.setShelfSize("mini")
         }
     }
 
@@ -224,8 +240,40 @@ struct ShelfView: View {
             }
             MiniFilterMenu(model: model, store: store)
         }
+        RoundButton(symbol: "arrow.down.right.and.arrow.up.left", diameter: 24, help: "Kompakt") {
+            model.setShelfSize("compact")
+        }
         RoundButton(symbol: "arrow.up.left.and.arrow.down.right", diameter: 24, help: "Großes Shelf") {
-            model.setMini(false)
+            model.setShelfSize("full")
+        }
+    }
+
+    // MARK: Compact
+
+    /// Only a row of small clips under the notch. Typing filters; a hidden field takes the keys.
+    private var compactShelf: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 10, weight: .semibold))
+                Text(model.query.isEmpty ? "Tippen zum Suchen" : model.query)
+                    .font(.system(size: 11, weight: .medium))
+                    .lineLimit(1)
+                Spacer()
+                RoundButton(symbol: "arrow.up.left.and.arrow.down.right", diameter: 20, help: "Größer") {
+                    model.setShelfSize("mini")
+                }
+            }
+            .foregroundStyle(model.query.isEmpty ? Theme.secondaryText : Color.white)
+            .padding(.horizontal, 16)
+            .frame(height: Layout.compactBand)
+            .background(
+                FocusableTextField(text: $model.query, placeholder: "", fontSize: 1, focusToken: model.focusToken)
+                    .frame(width: 1, height: 1)
+                    .opacity(0.01)
+            )
+
+            ShelfStrip(model: model, store: store, card: Layout.compactCard, showsDayLabels: false)
         }
     }
 }
