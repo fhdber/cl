@@ -46,10 +46,6 @@ final class ClaudeKeyModel: ObservableObject {
     }
 }
 
-// MARK: - Dictation
-
-// MARK: - Capture
-
 // MARK: - Tray targets
 
 /// Re-renders after the folder/app lists change (they live in plain UserDefaults arrays).
