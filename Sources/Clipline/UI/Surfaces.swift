@@ -18,7 +18,7 @@ enum Layout {
     static let miniDetailHeight: CGFloat = 300
 
     // Compact shelf – just a row of small clips under the notch; typing searches.
-    static let compactShelfWidth: CGFloat = 460
+    static let compactShelfWidth: CGFloat = 500
     static let compactCard = CGSize(width: 74, height: 56)
     static let compactBand: CGFloat = 30
     static let compactShelfHeight: CGFloat = compactBand + compactCard.height + 10
@@ -26,10 +26,14 @@ enum Layout {
     /// The camera housing on this screen: (width, height). Zero width where there is no notch.
     static func notch(on screen: NSScreen) -> CGSize {
         let menuBar = max(screen.frame.maxY - screen.visibleFrame.maxY, NSStatusBar.system.thickness)
-        guard screen.safeAreaInsets.top > 0,
-              let left = screen.auxiliaryTopLeftArea, let right = screen.auxiliaryTopRightArea
-        else { return CGSize(width: 0, height: menuBar) }
-        return CGSize(width: max(0, screen.frame.width - left.width - right.width), height: screen.safeAreaInsets.top)
+        guard screen.safeAreaInsets.top > 0 else { return CGSize(width: 0, height: menuBar) }
+        // Never trust a missing or implausible measurement: MacBook notches are ~185–210 pt wide.
+        var width: CGFloat = 210
+        if let left = screen.auxiliaryTopLeftArea, let right = screen.auxiliaryTopRightArea {
+            let measured = screen.frame.width - left.width - right.width
+            if measured > 120 && measured < 400 { width = measured }
+        }
+        return CGSize(width: max(width, 210), height: max(screen.safeAreaInsets.top, menuBar))
     }
 
     enum ShelfMode { case full, mini, compact }
@@ -265,13 +269,14 @@ struct ShelfView: View {
     /// Only a row of small clips under the notch. Typing filters; a hidden field takes the keys.
     /// The top band is as tall as the camera housing; text and button sit in the wings beside it.
     private var compactShelf: some View {
-        let wing = max(60, (Layout.compactShelfWidth - model.notchSize.width) / 2 - 10)
+        // Wings beside the camera, with breathing room towards it.
+        let wing = max(60, (Layout.compactShelfWidth - model.notchSize.width) / 2 - 16)
         return VStack(spacing: 0) {
             HStack(spacing: 0) {
                 HStack(spacing: 5) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 10, weight: .semibold))
-                    Text(model.query.isEmpty ? "Tippen zum Suchen" : model.query)
+                    Text(model.query.isEmpty ? "Suchen …" : model.query)
                         .font(.system(size: 11, weight: .medium))
                         .lineLimit(1)
                         .truncationMode(.head)
