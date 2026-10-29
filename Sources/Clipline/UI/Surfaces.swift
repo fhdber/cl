@@ -459,11 +459,17 @@ private struct SearchTile: View {
     let hasResults: Bool
 
     private var small: Bool { size.width < 90 }
+    private var noResults: Bool { !model.query.isEmpty && !hasResults }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 4) {
-                Image(systemName: "magnifyingglass")
+                // Small tiles have no room below the field – the "no results" hint takes the icon's place.
+                if small && noResults {
+                    Text("Kein Treffer").lineLimit(1)
+                } else {
+                    Image(systemName: "magnifyingglass")
+                }
                 Spacer(minLength: 0)
                 if !model.query.isEmpty {
                     Button { model.query = "" } label: { Image(systemName: "xmark.circle.fill") }
@@ -477,7 +483,7 @@ private struct SearchTile: View {
             FocusableTextField(text: $model.query, placeholder: "Suchen", fontSize: small ? 11 : 13,
                                focusToken: model.focusToken)
                 .frame(height: 18)
-            if !model.query.isEmpty && !hasResults {
+            if noResults && !small {
                 Text("Nichts gefunden")
                     .font(.system(size: 9.5))
                     .foregroundStyle(Theme.secondaryText)
@@ -485,6 +491,7 @@ private struct SearchTile: View {
         }
         .padding(8)
         .frame(width: size.width, height: size.height, alignment: .topLeading)
+        .clipped()
         .background(RoundedRectangle(cornerRadius: small ? 10 : 12, style: .continuous)
             .fill(model.query.isEmpty ? Theme.card : Theme.selection.opacity(0.12)))
         .overlay(RoundedRectangle(cornerRadius: small ? 10 : 12, style: .continuous)
