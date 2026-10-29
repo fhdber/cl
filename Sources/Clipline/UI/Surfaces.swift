@@ -73,7 +73,7 @@ struct ShelfView: View {
                 .frame(height: model.isMini ? Layout.miniShelfHeight : Layout.shelfHeight)
                 .background(Self.shelfShape.fill(Theme.surface))
                 .overlay(
-                    Self.shelfShape.strokeBorder(Color.white.opacity(model.isDropTargeted ? 0.5 : 0), lineWidth: 2)
+                    Self.shelfShape.stroke(Color.white.opacity(model.isDropTargeted ? 0.5 : 0), lineWidth: 4)
                 )
                 .clipShape(Self.shelfShape)
 

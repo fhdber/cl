@@ -67,7 +67,8 @@ final class NowPlaying: ObservableObject {
                 if fields.first == "playing" { best = (source, fields); break }
                 if best == nil { best = (source, fields) }
             }
-            DispatchQueue.main.async { self.apply(best) }
+            let result = best
+            DispatchQueue.main.async { self.apply(result) }
         }
     }
 

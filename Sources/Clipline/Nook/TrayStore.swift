@@ -41,20 +41,21 @@ final class TrayStore: ObservableObject {
 
     /// Reads file URLs from dropped item providers.
     static func loadURLs(from providers: [NSItemProvider], completion: @escaping ([URL]) -> Void) {
+        // A reference box instead of a captured `var`, so strict concurrency checking stays quiet.
+        final class Collected { var urls: [URL] = []; let lock = NSLock() }
+        let collected = Collected()
         let group = DispatchGroup()
-        var urls: [URL] = []
-        let lock = NSLock()
         for provider in providers {
             group.enter()
             _ = provider.loadObject(ofClass: URL.self) { url, _ in
                 if let url {
-                    lock.lock()
-                    urls.append(url)
-                    lock.unlock()
+                    collected.lock.lock()
+                    collected.urls.append(url)
+                    collected.lock.unlock()
                 }
                 group.leave()
             }
         }
-        group.notify(queue: .main) { completion(urls) }
+        group.notify(queue: .main) { completion(collected.urls) }
     }
 }
