@@ -9,7 +9,7 @@ Native SwiftUI und AppKit, die Daten bleiben lokal. Keine Abhängigkeiten.
 
 | | |
 |---|---|
-| **Notch-Shelf** | Ein schwarzes Panel hängt oben aus der Notch. Es wächst aus der Notch, wenn die Maus in die Menüleiste fährt, und zieht sich wieder zurück, wenn sie sie verlässt. Alternativ mit `⌥⌘V`. Die Karten sind nach Tagen gruppiert. |
+| **Notch-Shelf** | Ein schwarzes Panel hängt oben aus der Notch. Es wächst aus der Notch, wenn die Maus kurz in der Mitte der Menüleiste (an der Notch) verweilt, und zieht sich wieder zurück, wenn sie sie verlässt. Alternativ mit `⌥⌘V`. Die Karten sind nach Tagen gruppiert. |
 | **Mini-Shelf** | Kompakte Variante (460 × 126 pt) mit Suche, drei kleinen Buttons und einer Kartenreihe. Kategorien, Typen und Apps stecken im Filter-Menü. Auf Bildschirmen unter 1600 pt (z. B. MacBook Pro 14") automatisch aktiv. Per Button oder in den Einstellungen umschaltbar. |
 | **Nook** (Tab 2) | Widgets in der Notch: Medien für Musik und Spotify (Cover, Titel, Fortschritt, Steuerung), Kalender mit Blättern zwischen Tagen oder wahlweise Kurzbefehle, und ein Spiegel (Kamera nur auf Klick, aus beim Schließen). |
 | **Ablage** (Tab 3) | Dateien zur Notch ziehen öffnet das Shelf direkt auf der Ablage. Die Dateien bleiben dort, bis du sie wieder herausziehst. Mit AirDrop-Kachel zum Senden. |

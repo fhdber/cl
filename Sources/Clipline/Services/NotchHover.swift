@@ -32,11 +32,15 @@ final class NotchHover {
         pending = nil
     }
 
-    /// The menu bar strip above the shelf: full menu-bar height, as wide as the shelf.
+    /// Only the middle of the menu bar: the notch itself, or 160 pt where there is none –
+    /// so reaching for a menu or a status icon never pops the shelf.
     static func triggerZone(on screen: NSScreen) -> NSRect {
         let menuBarHeight = max(screen.frame.maxY - screen.visibleFrame.maxY, NSStatusBar.system.thickness)
-        let shelfWidth = Layout.shelfIsMini(on: screen) ? Layout.miniShelfWidth : Layout.shelfWidth
-        let width = min(shelfWidth, screen.frame.width - 40)
+        var width: CGFloat = 160
+        if screen.safeAreaInsets.top > 0,
+           let left = screen.auxiliaryTopLeftArea, let right = screen.auxiliaryTopRightArea {
+            width = max(120, screen.frame.width - left.width - right.width)
+        }
         return NSRect(x: screen.frame.midX - width / 2, y: screen.frame.maxY - menuBarHeight,
                       width: width, height: menuBarHeight)
     }
@@ -60,6 +64,6 @@ final class NotchHover {
             if Self.pointerInZone() { self?.onTrigger() }
         }
         pending = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: work)
     }
 }

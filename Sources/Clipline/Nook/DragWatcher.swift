@@ -44,8 +44,9 @@ final class DragWatcher {
     private static func pointerNearNotch() -> Bool {
         let point = NSEvent.mouseLocation
         guard let screen = NSScreen.screens.first(where: { NSMouseInRect(point, $0.frame, false) }) else { return false }
-        // A little more forgiving than the hover zone: anywhere in the menu bar strip plus 40 pt below.
+        // More forgiving than the hover zone – you're aiming with a file in hand: 120 pt wider, 30 pt deeper.
         let zone = NotchHover.triggerZone(on: screen)
-        return NSMouseInRect(point, zone.insetBy(dx: -40, dy: 0).offsetBy(dx: 0, dy: -20).union(zone), false)
+        let target = NSRect(x: zone.minX - 120, y: zone.minY - 30, width: zone.width + 240, height: zone.height + 30)
+        return NSMouseInRect(point, target, false)
     }
 }
