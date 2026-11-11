@@ -1,0 +1,7 @@
+{
+  "name": "getty-scout",
+  "version": "0.1.0",
+  "description": "Findet die besten Stockmotive auf Getty Images und iStock: Briefing → Bildidee → Such-Winkel → kuratierte Shortlist mit Lizenz-Check.",
+  "author": { "name": "Florian Hierholzer" },
+  "keywords": ["getty", "istock", "stock", "bildrecherche", "brand"]
+}
